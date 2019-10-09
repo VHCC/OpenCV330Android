@@ -1,0 +1,3 @@
+include ':app'
+rootProject.name='OpenCVTest20191007NoC'
+include ':openCVLibrary330'
