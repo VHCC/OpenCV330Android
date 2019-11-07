@@ -15,7 +15,7 @@
  */
 package acl.siot.opencvwpc20191007noc.theme;
 
-import android.support.annotation.ColorInt;
+import androidx.annotation.ColorInt;
 
 public class AppTheme {
 

@@ -15,7 +15,7 @@
  */
 package acl.siot.opencvwpc20191007noc.theme;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Alters the visual theme of a Hover demo menu.

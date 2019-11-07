@@ -18,7 +18,7 @@ package acl.siot.opencvwpc20191007noc;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -44,6 +44,10 @@ public class App extends Application {
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
+    // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
+    static {
+        System.loadLibrary("opencv_java3");
+    }
 
     @Override
     public void onCreate() {
@@ -127,7 +131,7 @@ public class App extends Application {
                     // real-time task
 
                     if (tick_count % 60 == 5) {
-                        mLog.d(TAG, "heartBeat");
+                        mLog.d(TAG, " * heartBeat * ");
                     }
 
                     if (tick_count % 60 == 6) {

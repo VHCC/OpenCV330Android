@@ -39,9 +39,9 @@ public class MLog {
         if (enableLocalLog) { Log.w(LOG_PREFIX +tag, msg);}
     }
 
-    public void e(String tag, String msg) {
+    public void e(String tag, String msg, Throwable tr) {
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.e(LOG_PREFIX +tag, msg);}
+        if (enableLocalLog) { Log.e(LOG_PREFIX +tag, msg, tr);}
     }
 
 }

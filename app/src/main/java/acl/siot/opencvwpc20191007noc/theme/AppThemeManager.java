@@ -16,11 +16,10 @@
 package acl.siot.opencvwpc20191007noc.theme;
 
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.util.MLog;
-import de.greenrobot.event.EventBus;
 
 
 public class AppThemeManager implements AppThemeMethods {

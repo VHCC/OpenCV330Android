@@ -23,17 +23,21 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
+import acl.siot.opencvwpc20191007noc.util.MLog;
+
 public class DetectActivity extends Activity implements
         CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
-    private final static String TAG = "opencvTest-";
+    private static final MLog mLog = new MLog(true);
+    private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
+
+    private CameraBridgeViewBase openCvCameraView;
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
     static {
         System.loadLibrary("opencv_java3");
     }
 
-    private CameraBridgeViewBase openCvCameraView;
     private CascadeClassifier classifier;
     private Mat mGray;
     private Mat mRgba;
@@ -44,7 +48,7 @@ public class DetectActivity extends Activity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, " * onCreate");
+        mLog.d(TAG, " * onCreate");
         super.onCreate(savedInstanceState);
 
         initWindowSettings();
@@ -73,7 +77,7 @@ public class DetectActivity extends Activity implements
                         long start_time_tick = System.currentTimeMillis();
 
                         if (tick_count % period == 0) {
-                            Log.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
+                            mLog.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
                             preview_frames = 0;
                             fps = 0;
                         }
@@ -119,7 +123,7 @@ public class DetectActivity extends Activity implements
 
     // 初始化人脸级联分类器，必须先初始化
     private void initClassifier() {
-        Log.d(TAG, " * initClassifier");
+        mLog.d(TAG, " * initClassifier");
         try {
             InputStream is = getResources()
                     .openRawResource(R.raw.lbpcascade_frontalface);
@@ -144,14 +148,14 @@ public class DetectActivity extends Activity implements
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-        Log.d(TAG, " * onCameraViewStarted");
+        mLog.d(TAG, " * onCameraViewStarted");
         mGray = new Mat();
         mRgba = new Mat();
     }
 
     @Override
     public void onCameraViewStopped() {
-        Log.d(TAG, " * onCameraViewStopped");
+        mLog.d(TAG, " * onCameraViewStopped");
         mGray.release();
         mRgba.release();
     }
@@ -159,12 +163,12 @@ public class DetectActivity extends Activity implements
     @Override
     // 这里执行人脸检测的逻辑, 根据OpenCV提供的例子实现(face-detection)
     public Mat onCameraFrame(final CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-//        Log.d(TAG, " * onCameraFrame");
+//        mLog.d(TAG, " * onCameraFrame");
         preview_frames++;
         mRgba = inputFrame.rgba();
 
         mGray = inputFrame.gray();
-//        Log.d(TAG, " * isFrontCamera= " + isFrontCamera);
+//        mLog.d(TAG, " * isFrontCamera= " + isFrontCamera);
         // 翻转矩阵以适配前后置摄像头
         if (isFrontCamera) {
             Core.flip(mRgba, mRgba, 1);//flip around Y-axis
@@ -187,12 +191,12 @@ public class DetectActivity extends Activity implements
             classifier.detectMultiScale(mGray, faces, 1.1, 2, 2,
                     new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
             Rect[] facesArray = faces.toArray();
-//            Log.d(TAG, " * facesArray= " + facesArray.length);
+//            mLog.d(TAG, " * facesArray= " + facesArray.length);
             Scalar faceRectColor = new Scalar(0, 255, 0, 255);
             for (Rect faceRect : facesArray) {
                 // tl :  top-left
                 // br : bottom-right
-//                Log.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
+//                mLog.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
                 Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
             }
 
@@ -204,7 +208,7 @@ public class DetectActivity extends Activity implements
 
     @Override
     protected void onResume() {
-        Log.d(TAG, " * onResume");
+        mLog.d(TAG, " * onResume");
         super.onResume();
         initClassifier();
 //        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this, mLoaderCallback);

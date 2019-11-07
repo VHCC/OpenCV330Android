@@ -22,3 +22,4 @@ gradle.properties
 import-summary.txt
 .idea/
 openCVLibrary330/build/
+*.zip
