@@ -1,4 +1,4 @@
-package acl.siot.opencvtest20191007noc;
+package acl.siot.opencvwpc20191007noc;
 
 import org.junit.Test;
 

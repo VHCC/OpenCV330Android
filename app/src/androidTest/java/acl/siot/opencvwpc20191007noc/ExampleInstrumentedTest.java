@@ -1,4 +1,4 @@
-package acl.siot.opencvtest20191007noc;
+package acl.siot.opencvwpc20191007noc;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("acl.siot.opencvtest20191007noc", appContext.getPackageName());
+        assertEquals("acl.siot.opencvwpc20191007noc", appContext.getPackageName());
     }
 }

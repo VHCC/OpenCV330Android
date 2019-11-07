@@ -1,4 +1,4 @@
-package acl.siot.opencvtest20191007noc.util;
+package acl.siot.opencvwpc20191007noc.util;
 
 import android.util.Log;
 
@@ -6,7 +6,7 @@ public class MLog {
 
     // General Field
     static final boolean ENABLE_GLOBAL_LOG = true;
-    static final String LOG_PREFIX = "opencvTest-, ";
+    static final String LOG_PREFIX = "Adventeh-WPC, ";
 
     // Local Field
     private final boolean enableLocalLog;
