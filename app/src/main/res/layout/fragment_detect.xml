@@ -7,8 +7,27 @@
     <org.opencv.android.JavaCameraView
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1" />
+        android:layout_height="match_parent" />
+
+    <acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout
+        android:id="@+id/circleOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:gravity="top"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- App Edition -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="#bbc4d1" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:gravity="bottom"
