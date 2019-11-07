@@ -1,10 +1,13 @@
 package acl.siot.opencvtest20191007noc;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.SparseIntArray;
+import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -23,23 +26,22 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-public class DetectActivity extends AppCompatActivity implements
+public class DetectActivity extends Activity implements
         CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
 
     private final static String TAG = "opencvTest-";
-
-    private CameraBridgeViewBase cameraView;
-    private CascadeClassifier classifier;
-    private Mat mGray;
-    private Mat mRgba;
-    private int mAbsoluteFaceSize = 0;
-    private boolean isFrontCamera;
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
     static {
         System.loadLibrary("opencv_java3");
     }
 
+    private CameraBridgeViewBase openCvCameraView;
+    private CascadeClassifier classifier;
+    private Mat mGray;
+    private Mat mRgba;
+    private int mAbsoluteFaceSize = 0;
+    private boolean isFrontCamera = true;
     private int preview_frames = 0;
     private int fps = 0;
 
@@ -47,12 +49,15 @@ public class DetectActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, " * onCreate");
         super.onCreate(savedInstanceState);
+
         initWindowSettings();
+
         setContentView(R.layout.activity_detect);
-        cameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
-        cameraView.setCvCameraViewListener(this); // 设置相机监听
+        openCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
+        openCvCameraView.setCvCameraViewListener(this); // 设置相机监听
+
         initClassifier();
-        cameraView.enableView();
+
         Button switchCamera = (Button) findViewById(R.id.switch_camera);
         switchCamera.setOnClickListener(this); // 切换相机镜头，默认后置
 
@@ -71,7 +76,7 @@ public class DetectActivity extends AppCompatActivity implements
                         long start_time_tick = System.currentTimeMillis();
 
                         if (tick_count % period == 0) {
-                            Log.d(TAG, "preview frames= " + ((float)preview_frames / period) + ", fps= " + ((float)fps / period));
+                            Log.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
                             preview_frames = 0;
                             fps = 0;
                         }
@@ -93,15 +98,15 @@ public class DetectActivity extends AppCompatActivity implements
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.switch_camera:
-                cameraView.disableView();
+                openCvCameraView.disableView();
                 if (isFrontCamera) {
-                    cameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
+                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
                     isFrontCamera = false;
                 } else {
-                    cameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
+                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
                     isFrontCamera = true;
                 }
-                cameraView.enableView();
+                openCvCameraView.enableView();
                 break;
             default:
         }
@@ -134,7 +139,10 @@ public class DetectActivity extends AppCompatActivity implements
             classifier = new CascadeClassifier(cascadeFile.getAbsolutePath());
         } catch (Exception e) {
             e.printStackTrace();
+            Log.e(TAG, "Error loading cascade", e);
         }
+        openCvCameraView.enableView();
+        openCvCameraView.enableFpsMeter();
     }
 
     @Override
@@ -157,16 +165,20 @@ public class DetectActivity extends AppCompatActivity implements
 //        Log.d(TAG, " * onCameraFrame");
         preview_frames++;
         mRgba = inputFrame.rgba();
+
         mGray = inputFrame.gray();
+//        Log.d(TAG, " * isFrontCamera= " + isFrontCamera);
         // 翻转矩阵以适配前后置摄像头
         if (isFrontCamera) {
-            Core.flip(mRgba, mRgba, 1);
+            Core.flip(mRgba, mRgba, 1);//flip around Y-axis
             Core.flip(mGray, mGray, 1);
         } else {
             Core.flip(mRgba, mRgba, -1);
             Core.flip(mGray, mGray, -1);
         }
-        float mRelativeFaceSize = 0.2f;
+
+
+        float mRelativeFaceSize = 0.1f;
         if (mAbsoluteFaceSize == 0) {
             int height = mGray.rows();
             if (Math.round(height * mRelativeFaceSize) > 0) {
@@ -180,8 +192,13 @@ public class DetectActivity extends AppCompatActivity implements
             Rect[] facesArray = faces.toArray();
 //            Log.d(TAG, " * facesArray= " + facesArray.length);
             Scalar faceRectColor = new Scalar(0, 255, 0, 255);
-            for (Rect faceRect : facesArray)
+            for (Rect faceRect : facesArray) {
+                // tl :  top-left
+                // br : bottom-right
+//                Log.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
                 Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
+            }
+
             fps++;
         }
 
@@ -189,16 +206,24 @@ public class DetectActivity extends AppCompatActivity implements
     }
 
     @Override
+    protected void onResume() {
+        Log.d(TAG, " * onResume");
+        super.onResume();
+        initClassifier();
+//        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_6, this, mLoaderCallback);
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
-        if (cameraView != null) {
-            cameraView.disableView();
+        if (openCvCameraView != null) {
+            openCvCameraView.disableView();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        cameraView.disableView();
+        openCvCameraView.disableView();
     }
 }

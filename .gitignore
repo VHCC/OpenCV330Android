@@ -21,3 +21,4 @@ gradle.properties
 .idea/codeStyles/Project.xml
 import-summary.txt
 .idea/
+openCVLibrary330/build/

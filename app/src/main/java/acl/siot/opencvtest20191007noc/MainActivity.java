@@ -1,6 +1,7 @@
 package acl.siot.opencvtest20191007noc;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -13,9 +14,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
-    private AppCompatActivity mainActivity = this;
+    private Activity  mainActivity = this;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
