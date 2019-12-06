@@ -18,11 +18,17 @@ package acl.siot.opencvwpc20191007noc;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.os.Build;
+
+import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
+import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.api.listUser.ListUser;
 import androidx.core.content.ContextCompat;
 
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HashMap;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -49,6 +55,9 @@ public class App extends Application {
         System.loadLibrary("opencv_java3");
     }
 
+    // Http Mechanism
+    private OnRequestListener mOnRequestListener = new OnRequestListener();
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -62,6 +71,9 @@ public class App extends Application {
 
         setupTheme();
         setupAppStateTracking();
+
+        // HTTP Mechanism
+        OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
     }
 
     private void setupTheme() {
@@ -135,6 +147,8 @@ public class App extends Application {
                     }
 
                     if (tick_count % 60 == 6) {
+                        HashMap<String, Object> mMap = new ListUser("test");
+                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_LIST_USER);
                     }
 
                     long end_time_tick = System.currentTimeMillis();
@@ -147,9 +161,30 @@ public class App extends Application {
                     tick_count++;
                 } catch (InterruptedException e) {
                     mLog.d(TAG, "appRunnable interrupted");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    mLog.d(TAG, "appRunnable interrupted");
                 }
             }
         }
     };
+
+
+    /**
+     * Http Mechanism Receiver
+     */
+    private class OnRequestListener implements OKHttpAgent.IRequestInterface {
+
+        @Override
+        public void onRequestSuccess(String response, int requestCode) {
+            mLog.d(TAG, "onRequestSuccess(), requestCode= " + requestCode);
+        }
+
+        @Override
+        public void onRequestFail(String errorResult) {
+            mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
+        }
+
+    }
 
 }
