@@ -72,21 +72,15 @@ public class OKHttpAgent {
 //            mIRequestInterface.showLoading();
             final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
             mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-            JSONObject aaa = new JSONObject(mData);
+            JSONObject jsonObjRaw = new JSONObject(mData);
             String json = null;
             try {
-                json = aaa.toString(4);
+                json = jsonObjRaw.toString(4);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
-//            mLog.d(TAG,  mData.get("image").toString());
             RequestBody body = RequestBody.create(JSON, json);
-
-//            RequestBody body = new FormBody.Builder()
-//                    .add("id", mData.get("id").toString())
-//                    .add("image", (String)mData.get("image"))
-//                    .build();
 
             Request request = new Request.Builder()
                     .url(mainURL)
@@ -135,6 +129,9 @@ public class OKHttpAgent {
                         switch (errorCode) {
                             case 0:
                                 mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
+                                break;
+                            default:
+                                mIRequestInterface.onRequestFail(jsonObj.getString("message"));
                                 break;
                         }
                     }

@@ -42,6 +42,9 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
+
 
 /**
  * Application class.
@@ -176,6 +179,7 @@ public class App extends Application {
     };
 
 
+
     /**
      * Http Mechanism Receiver
      */
@@ -184,6 +188,11 @@ public class App extends Application {
         @Override
         public void onRequestSuccess(String response, int requestCode) {
             mLog.d(TAG, "onRequestSuccess(), requestCode= " + requestCode);
+            switch (requestCode) {
+                case APP_CODE_UPDATE_IMAGE:
+                    AppBus.getInstance().post(new BusEvent("hide overlay", APP_CODE_UPDATE_IMAGE_SUCCESS));
+                    break;
+            }
         }
 
         @Override

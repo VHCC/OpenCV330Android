@@ -23,7 +23,7 @@ import androidx.annotation.RequiresApi;
  */
 public class OverLayLinearLayout extends LinearLayout {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
 

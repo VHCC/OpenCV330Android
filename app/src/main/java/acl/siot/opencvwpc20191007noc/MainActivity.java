@@ -1,8 +1,6 @@
 package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -10,6 +8,7 @@ import android.widget.Toast;
 
 import acl.siot.opencvwpc20191007noc.page.detect.DetectFragment;
 import acl.siot.opencvwpc20191007noc.page.home.HomeFragment;
+import acl.siot.opencvwpc20191007noc.page.result.ResultFragment;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.page.upload.UploadFragment;
@@ -115,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         static final int PAGE_WELCOME = 1;
         static final int PAGE_DETECT = 2;
         static final int PAGE_UPLOAD = 3;
+        static final int PAGE_RESULT = 4;
         static final int PAGE_SUB_PAGE = 999;
 
         // Fields
@@ -123,6 +123,7 @@ public class MainActivity extends AppCompatActivity {
                 PAGE_WELCOME,
                 PAGE_UPLOAD,
                 PAGE_DETECT,
+                PAGE_RESULT,
                 PAGE_SUB_PAGE
         };
         private final String[] PAGE_NAMES = new String[]{
@@ -130,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
                 "PAGE_WELCOME",
                 "PAGE_DETECT",
                 "PAGE_UPLOAD",
+                "PAGE_RESULT",
                 "PAGE_SUB_PAGE"
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
@@ -176,6 +178,13 @@ public class MainActivity extends AppCompatActivity {
                     UploadFragment uploadFragment = UploadFragment.newInstance();
                     uploadFragment.setOnFragmentInteractionListener(uploadPageInteractionListener);
                     fragment = uploadFragment;
+                }
+                break;
+
+                case PAGE_RESULT: {
+                    ResultFragment resultFragment = ResultFragment.newInstance();
+                    resultFragment.setOnFragmentInteractionListener(resultPageInteractionListener);
+                    fragment = resultFragment;
                 }
                 break;
 
@@ -245,9 +254,14 @@ public class MainActivity extends AppCompatActivity {
                 = new DetectFragment.OnFragmentInteractionListener() {
             @Override
             public void onClickCancelDetect() {
-//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
 //                MessageTools.showToast(mContext, "Logout Succeed!");
+            }
+
+            @Override
+            public void onDetectThreeFaces() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
             }
         };
 
@@ -259,24 +273,32 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void clickConfirm() {
+            public void uploadImageFinish() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT);
+            }
+        };
 
+        private ResultFragment.OnFragmentInteractionListener resultPageInteractionListener
+                = new ResultFragment.OnFragmentInteractionListener() {
+            @Override
+            public void clickFinished() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
             }
         };
 
     }
 
-    private long firsttime; // 监听两次返回
+    private long firstTime; // 监听两次返回
 
     //点击两次退出
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (System.currentTimeMillis() - firsttime < 3000) {
+            if (System.currentTimeMillis() - firstTime < 3000) {
                 finish();
                 return true;
             } else {
-                firsttime = System.currentTimeMillis();
+                firstTime = System.currentTimeMillis();
                 Toast.makeText(this, "再點一次退出應用", Toast.LENGTH_SHORT).show();
                 return false;
             }

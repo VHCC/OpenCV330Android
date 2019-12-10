@@ -5,7 +5,6 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +29,7 @@ import org.opencv.objdetect.CascadeClassifier;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
@@ -51,7 +51,13 @@ public class DetectFragment extends Fragment {
 
     // Constants
     static final int FACE_THRESHOLD = 200;
-    static final int FACE_THRESHOLD_COUNT = 3;
+    static final int FACE_THRESHOLD_COUNT = 10;
+
+    // handler event
+    final int OVER_LAY_GREEN = 1001;
+    final int OVER_LAY_BLUE = 1002;
+
+    final int FACE_DETECT_DONE = 2001;
 
     // Flag
     private boolean isFrontCamera = true;
@@ -170,6 +176,10 @@ public class DetectFragment extends Fragment {
 
             threadObject.setRunning(true);
 
+            if (detectPageThread != null && detectPageThread.isAlive()) {
+                detectPageThread.interrupt();
+            }
+
             // Task Schedule handle thread
             detectPageThread = new Thread(detectPageRunnable);
             detectPageThread.start();
@@ -186,7 +196,6 @@ public class DetectFragment extends Fragment {
     public void onResume() {
         mLog.d(TAG, " * onResume");
         super.onResume();
-
     }
 
     @Override
@@ -195,6 +204,10 @@ public class DetectFragment extends Fragment {
         super.onPause();
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
+        }
+
+        if (detectPageThread != null && detectPageThread.isAlive()) {
+            detectPageThread.interrupt();
         }
     }
 
@@ -212,6 +225,8 @@ public class DetectFragment extends Fragment {
     // -------------------------------------------
     public interface OnFragmentInteractionListener {
         void onClickCancelDetect();
+
+        void onDetectThreeFaces();
     }
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {
@@ -265,6 +280,7 @@ public class DetectFragment extends Fragment {
         @Override
         public void onCameraViewStarted(int width, int height) {
             mLog.d(TAG, " * onCameraViewStarted");
+            faceCacheArray = new ArrayList<>();
             display = getActivity().getWindowManager().getDefaultDisplay();
             display.getSize(size);
             screenWidth = size.x;
@@ -318,18 +334,29 @@ public class DetectFragment extends Fragment {
                     // br : bottom-right
                     if (faceRect.width > FACE_THRESHOLD && faceRect.height > FACE_THRESHOLD) {
 //                        circleOverlay.setVisibility(View.GONE);
-                        AppBus.getInstance().post(new BusEvent("show overlay", 1001));
+                        AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
                         noDetectCount = 0;
-                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
 
                         final Bitmap bitmap =
                                 Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
                         Utils.matToBitmap(mRgba, bitmap);
-                        faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+                        Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+
+                        if (getBitmapFlag) {
+                            mLog.d(TAG, " * cacheIndex= " + cacheIndex);
+                            faceCacheArray.add(cacheIndex++, faceImageBitmap);
+                            getBitmapFlag = false;
+                            if (cacheIndex == 3) {
+                                cacheIndex = 0;
+                                AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
+                            }
+                        }
 
                         Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
                     } else {
                         noDetectCount ++;
+                        cacheIndex = 0;
                     }
                 }
 
@@ -338,7 +365,8 @@ public class DetectFragment extends Fragment {
                 }
 
                 if (noDetectCount > FACE_THRESHOLD_COUNT) {
-                    AppBus.getInstance().post(new BusEvent("show overlay", 1002));
+                    AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
+                    cacheIndex = 0;
 //                        Imgproc.rectangle(mRgba,
 //                                new org.opencv.core.Point(0,0),
 //                                new org.opencv.core.Point(screenWidth, screenHeight),
@@ -350,19 +378,31 @@ public class DetectFragment extends Fragment {
         }
     }
 
-    public static Bitmap faceImageBitmap;
+    private int cacheIndex = 0;
+
+    public static ArrayList<Bitmap> faceCacheArray = new ArrayList<>();
 
     public void onEventMainThread(BusEvent event){
         switch (event.getEventType()) {
-            case 1001:
+            case OVER_LAY_GREEN:
                 circleOverlay.setVisibility(View.GONE);
                 circleOverlay_green.setVisibility(View.VISIBLE);
                 promptTv.setText("Please Stay the Position for 3 Seconds");
                 break;
-            case 1002:
+            case OVER_LAY_BLUE:
                 circleOverlay.setVisibility(View.VISIBLE);
                 circleOverlay_green.setVisibility(View.GONE);
                 promptTv.setText("Please Come Closer to Camera");
+                break;
+            case FACE_DETECT_DONE:
+                if (openCvCameraView != null) {
+                    openCvCameraView.disableView();
+                }
+                if (detectPageThread.isAlive()) {
+                    detectPageThread.interrupt();
+                    threadObject.setRunning(false);
+                }
+                onFragmentInteractionListener.onDetectThreeFaces();
                 break;
         }
     }
@@ -393,6 +433,9 @@ public class DetectFragment extends Fragment {
 
     final ThreadObject threadObject = new ThreadObject();
 
+
+    private boolean getBitmapFlag = false;
+
     // Thread
     private Thread detectPageThread;
     private Runnable detectPageRunnable = new Runnable() {
@@ -415,6 +458,11 @@ public class DetectFragment extends Fragment {
                         fps = 0;
                     }
 
+                    if (tick_count % 1 == 0 && (noDetectCount == 0)) {
+                        mLog.d(TAG, "getFace, faceCacheArray= " + faceCacheArray.size());
+                        getBitmapFlag = true;
+                    }
+
                     long end_time_tick = System.currentTimeMillis();
 
                     Thread.sleep(task_minimum_tick_time_msec);
@@ -422,7 +470,6 @@ public class DetectFragment extends Fragment {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
             }
         }
     };

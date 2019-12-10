@@ -21,17 +21,19 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
+import acl.siot.opencvwpc20191007noc.AppBus;
+import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
-import acl.siot.opencvwpc20191007noc.api.listUser.ListUser;
 import acl.siot.opencvwpc20191007noc.api.updateImage.UpdateImage;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import static acl.siot.opencvwpc20191007noc.page.detect.DetectFragment.faceImageBitmap;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.page.detect.DetectFragment.faceCacheArray;
 
 /**
  * Created by IChen.Chu on 2019/12/06
@@ -81,7 +83,7 @@ public class UploadFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
-
+        AppBus.getInstance().register(this);
     }
 
 
@@ -121,9 +123,10 @@ public class UploadFragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mLog.d(TAG, " * faceSelected= " + faceSelected);
 
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                faceImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                faceCacheArray.get(faceSelected).compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
                 byte[] byteArray = byteArrayOutputStream .toByteArray();
 
                 String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
@@ -142,6 +145,8 @@ public class UploadFragment extends Fragment {
         img1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                faceSelected = 0;
+                mLog.d(TAG, " * faceSelected= " + faceSelected);
                 img1.setSelected(true);
                 img2.setSelected(false);
                 img3.setSelected(false);
@@ -151,6 +156,8 @@ public class UploadFragment extends Fragment {
         img2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                faceSelected = 1;
+                mLog.d(TAG, " * faceSelected= " + faceSelected);
                 img1.setSelected(false);
                 img2.setSelected(true);
                 img3.setSelected(false);
@@ -160,12 +167,16 @@ public class UploadFragment extends Fragment {
         img3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                faceSelected = 2;
+                mLog.d(TAG, " * faceSelected= " + faceSelected);
                 img1.setSelected(false);
                 img2.setSelected(false);
                 img3.setSelected(true);
             }
         });
     }
+
+    public static int faceSelected = 0;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -191,9 +202,9 @@ public class UploadFragment extends Fragment {
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint()) {
-            img1.setImageBitmap(faceImageBitmap);
-            img2.setImageBitmap(faceImageBitmap);
-            img3.setImageBitmap(faceImageBitmap);
+            img1.setImageBitmap(faceCacheArray.get(0));
+            img2.setImageBitmap(faceCacheArray.get(1));
+            img3.setImageBitmap(faceCacheArray.get(2));
         }
     }
 
@@ -224,14 +235,24 @@ public class UploadFragment extends Fragment {
     @Override
     public void onDestroy() {
         mLog.d(TAG, " * onDestroy");
+        AppBus.getInstance().unregister(this);
         super.onDestroy();
+    }
+
+    public void onEventMainThread(BusEvent event){
+        switch (event.getEventType()) {
+            case APP_CODE_UPDATE_IMAGE_SUCCESS:
+                mLog.d(TAG, " * upload face Success!");
+                onFragmentInteractionListener.uploadImageFinish();
+                break;
+        }
     }
 
     // -------------------------------------------
     public interface OnFragmentInteractionListener {
         void clickRetry();
 
-        void clickConfirm();
+        void uploadImageFinish();
     }
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {
