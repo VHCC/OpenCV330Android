@@ -21,6 +21,7 @@ import android.os.Build;
 
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.api.getFace.GetFace;
 import acl.siot.opencvwpc20191007noc.api.listUser.ListUser;
 import androidx.core.content.ContextCompat;
 
@@ -147,8 +148,13 @@ public class App extends Application {
                     }
 
                     if (tick_count % 60 == 6) {
-                        HashMap<String, Object> mMap = new ListUser("test");
-                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_LIST_USER);
+//                        HashMap<String, String> mMap = new ListUser("test");
+//                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_LIST_USER);
+                    }
+
+                    if (tick_count % 60 == 6) {
+//                        HashMap<String, String> mMap = new GetFace("5de8a9b11cce9e1a10b14391");
+//                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
                     long end_time_tick = System.currentTimeMillis();
@@ -161,9 +167,9 @@ public class App extends Application {
                     tick_count++;
                 } catch (InterruptedException e) {
                     mLog.d(TAG, "appRunnable interrupted");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    mLog.d(TAG, "appRunnable interrupted");
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    mLog.d(TAG, "appRunnable interrupted");
                 }
             }
         }

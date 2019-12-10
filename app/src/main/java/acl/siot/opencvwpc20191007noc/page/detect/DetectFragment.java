@@ -2,6 +2,7 @@ package acl.siot.opencvwpc20191007noc.page.detect;
 
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 import com.blankj.utilcode.util.AppUtils;
 
 import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -48,7 +50,7 @@ public class DetectFragment extends Fragment {
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants
-    static final int FACE_THRESHOLD = 450;
+    static final int FACE_THRESHOLD = 200;
     static final int FACE_THRESHOLD_COUNT = 3;
 
     // Flag
@@ -56,8 +58,10 @@ public class DetectFragment extends Fragment {
 
     // View
     private TextView appVersion;
+    private TextView promptTv;
     private Button cancelDetectBtn;
     private OverLayLinearLayout circleOverlay;
+    private OverLayLinearLayout circleOverlay_green;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -116,12 +120,14 @@ public class DetectFragment extends Fragment {
 
     private void initViewIDs(View rootView) {
         appVersion = rootView.findViewById(R.id.appVersion);
+        promptTv = rootView.findViewById(R.id.promptTv);
 
         openCvCameraView = rootView.findViewById(R.id.camera_view);
         cancelDetectBtn = rootView.findViewById(R.id.cancelDetectBtn);
 
         // OverLay
         circleOverlay = rootView.findViewById(R.id.circleOverlay);
+        circleOverlay_green = rootView.findViewById(R.id.circleOverlay_green);
     }
 
     private void initViewsFeature() {
@@ -315,6 +321,12 @@ public class DetectFragment extends Fragment {
                         AppBus.getInstance().post(new BusEvent("show overlay", 1001));
                         noDetectCount = 0;
                         mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+
+                        final Bitmap bitmap =
+                                Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
+                        Utils.matToBitmap(mRgba, bitmap);
+                        faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+
                         Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
                     } else {
                         noDetectCount ++;
@@ -338,13 +350,19 @@ public class DetectFragment extends Fragment {
         }
     }
 
+    public static Bitmap faceImageBitmap;
+
     public void onEventMainThread(BusEvent event){
         switch (event.getEventType()) {
             case 1001:
                 circleOverlay.setVisibility(View.GONE);
+                circleOverlay_green.setVisibility(View.VISIBLE);
+                promptTv.setText("Please Stay the Position for 3 Seconds");
                 break;
             case 1002:
                 circleOverlay.setVisibility(View.VISIBLE);
+                circleOverlay_green.setVisibility(View.GONE);
+                promptTv.setText("Please Come Closer to Camera");
                 break;
         }
     }

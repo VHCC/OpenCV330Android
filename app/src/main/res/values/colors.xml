@@ -6,4 +6,7 @@
 
     <!--QR Code Scan Layer-->
     <color name="qrCodeScanLayer">#FF000000</color>
+    <color name="qrScanBoundaryLayer_blue">#0093EE</color>
+    <color name="qrScanBoundaryLayer_red">#FF4D4D</color>
+    <color name="qrScanBoundaryLayer_green">#00B200</color>
 </resources>

@@ -5,4 +5,8 @@
         <attr name="swipeable" format="boolean" />
     </declare-styleable>
 
+    <declare-styleable name="OverLayLinearLayout">
+        <attr name="frame_color" format="integer"/>
+    </declare-styleable>
+
 </resources>

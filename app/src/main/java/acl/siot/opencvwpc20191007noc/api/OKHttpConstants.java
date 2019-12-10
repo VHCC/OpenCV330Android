@@ -16,6 +16,8 @@ public class OKHttpConstants {
      */
     public static class RequestCode {
         public static final int APP_CODE_LIST_USER = 1005;
+        public static final int APP_CODE_UPDATE_IMAGE = 1006;
+        public static final int APP_CODE_GET_FACE = 1007;
     }
 
 }

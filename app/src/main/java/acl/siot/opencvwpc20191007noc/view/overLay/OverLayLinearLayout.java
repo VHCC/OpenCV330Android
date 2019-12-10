@@ -1,6 +1,7 @@
 package acl.siot.opencvwpc20191007noc.view.overLay;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -25,25 +26,38 @@ public class OverLayLinearLayout extends LinearLayout {
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
+
+    private int frameType = 0;
     private Bitmap bitmap;
 
     private final int BOUND_WIDTH = 8;
 
     public OverLayLinearLayout(Context context) {
         super(context);
+        mLog.d(TAG, "OverLayLinearLayout 1");
     }
 
     public OverLayLinearLayout(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        mLog.d(TAG, "OverLayLinearLayout 2");
+        TypedArray typeAttr = context.obtainStyledAttributes(attrs, R.styleable.OverLayLinearLayout);
+        try {
+            frameType = typeAttr.getInt(R.styleable.OverLayLinearLayout_frame_color, 0);
+        } finally {
+            typeAttr.recycle();
+        }
     }
 
     public OverLayLinearLayout(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mLog.d(TAG, "OverLayLinearLayout 3");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public OverLayLinearLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        mLog.d(TAG, "OverLayLinearLayout 4");
+
     }
 
     protected void createQRCodeFrame() {
@@ -80,6 +94,7 @@ public class OverLayLinearLayout extends LinearLayout {
     }
 
     protected void createDetectFrame() {
+        mLog.d(TAG, "createDetectFrame, frameType= " + frameType);
         bitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
         Canvas mainCanvas = new Canvas(bitmap);
         float centerX = getWidth() / 2;
@@ -93,7 +108,18 @@ public class OverLayLinearLayout extends LinearLayout {
 
         // Blue Rect
         Paint paintFrame = new Paint();
-        paintFrame.setColor(Color.RED);
+        switch (frameType) {
+            case 0:
+                paintFrame.setColor(getResources().getColor(R.color.qrScanBoundaryLayer_blue));
+                break;
+            case 1:
+                paintFrame.setColor(getResources().getColor(R.color.qrScanBoundaryLayer_red));
+                break;
+            case 2:
+                paintFrame.setColor(getResources().getColor(R.color.qrScanBoundaryLayer_green));
+                break;
+        }
+//        paintFrame.setColor(getResources().getColor(R.color.qrScanBoundaryLayer_blue));
         RectF rectangleRed = new RectF(0, 0, getWidth(), getHeight());
         mainCanvas.drawRect(rectangleRed, paintFrame);
 

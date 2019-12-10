@@ -1,15 +1,26 @@
 package acl.siot.opencvwpc20191007noc.api;
 
 
+import android.content.Context;
+import android.os.Environment;
+import android.util.Log;
+
+import com.blankj.utilcode.util.ActivityUtils;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import okhttp3.FormBody;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -61,9 +72,21 @@ public class OKHttpAgent {
 //            mIRequestInterface.showLoading();
             final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
             mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-            String json = new JSONObject(mData).toString();
+            JSONObject aaa = new JSONObject(mData);
+            String json = null;
+            try {
+                json = aaa.toString(4);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
+//            mLog.d(TAG,  mData.get("image").toString());
             RequestBody body = RequestBody.create(JSON, json);
+
+//            RequestBody body = new FormBody.Builder()
+//                    .add("id", mData.get("id").toString())
+//                    .add("image", (String)mData.get("image"))
+//                    .build();
 
             Request request = new Request.Builder()
                     .url(mainURL)
@@ -97,11 +120,14 @@ public class OKHttpAgent {
         }
 
         private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
+//            System.out.println(jsonObj.toString());
+            writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
                 mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
             } else {
                 mLog.d(TAG, "PostThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
+
                 try {
                     if (jsonObj.toString().contains("code")) {
                         int errorCode = jsonObj.getInt("code");
@@ -123,7 +149,7 @@ public class OKHttpAgent {
 
 
     public synchronized void postRequest(HashMap mData, int requestCode) throws IOException {
-        mLog.d(TAG, "request post= " + mData.toString());
+//        mLog.d(TAG, "request post= " + mData.toString());
         PostThread postThread = new PostThread(mData, requestCode);
         postThread.start();
     }
@@ -137,5 +163,36 @@ public class OKHttpAgent {
 
     public void setRequestListener(IRequestInterface listener) {
         mIRequestInterface = listener;
+    }
+
+    public void writeToFile(String data) {
+        // Get the directory for the user's public pictures directory.
+        final File path = Environment.getExternalStoragePublicDirectory(
+                                //Environment.DIRECTORY_PICTURES
+                                Environment.DIRECTORY_DOWNLOADS);
+
+        // Make sure the path directory exists.
+        if (!path.exists()) {
+            // Make it, if it doesn't exit
+            path.mkdirs();
+        }
+
+        final File file = new File(path, "log.txt");
+
+        // Save your stream, don't forget to flush() it before closing it.
+
+        try {
+            file.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(file);
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            myOutWriter.append(data);
+
+            myOutWriter.close();
+
+            fOut.flush();
+            fOut.close();
+        } catch (IOException e) {
+            Log.e("Exception", "File write failed: " + e.toString());
+        }
     }
 }

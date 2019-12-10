@@ -5,12 +5,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import acl.siot.opencvwpc20191007noc.page.detect.DetectFragment;
 import acl.siot.opencvwpc20191007noc.page.home.HomeFragment;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
+import acl.siot.opencvwpc20191007noc.page.upload.UploadFragment;
 import acl.siot.opencvwpc20191007noc.page.welcome.WelcomeFragment;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
@@ -112,12 +114,14 @@ public class MainActivity extends AppCompatActivity {
         static final int PAGE_HOME = 0;
         static final int PAGE_WELCOME = 1;
         static final int PAGE_DETECT = 2;
-        static final int PAGE_SUB_PAGE = 3;
+        static final int PAGE_UPLOAD = 3;
+        static final int PAGE_SUB_PAGE = 999;
 
         // Fields
         private final int[] PAGE_GROUP = new int[]{
                 PAGE_HOME,
                 PAGE_WELCOME,
+                PAGE_UPLOAD,
                 PAGE_DETECT,
                 PAGE_SUB_PAGE
         };
@@ -125,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                 "PAGE_HOME",
                 "PAGE_WELCOME",
                 "PAGE_DETECT",
+                "PAGE_UPLOAD",
                 "PAGE_SUB_PAGE"
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
@@ -164,6 +169,13 @@ public class MainActivity extends AppCompatActivity {
                     DetectFragment dashboardMainFragment = DetectFragment.newInstance();
                     dashboardMainFragment.setOnFragmentInteractionListener(detectPageInteractionListener);
                     fragment = dashboardMainFragment;
+                }
+                break;
+
+                case PAGE_UPLOAD: {
+                    UploadFragment uploadFragment = UploadFragment.newInstance();
+                    uploadFragment.setOnFragmentInteractionListener(uploadPageInteractionListener);
+                    fragment = uploadFragment;
                 }
                 break;
 
@@ -233,12 +245,43 @@ public class MainActivity extends AppCompatActivity {
                 = new DetectFragment.OnFragmentInteractionListener() {
             @Override
             public void onClickCancelDetect() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
 //                MessageTools.showToast(mContext, "Logout Succeed!");
             }
-
         };
 
+        private UploadFragment.OnFragmentInteractionListener uploadPageInteractionListener
+                = new UploadFragment.OnFragmentInteractionListener() {
+            @Override
+            public void clickRetry() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT);
+            }
+
+            @Override
+            public void clickConfirm() {
+
+            }
+        };
+
+    }
+
+    private long firsttime; // 监听两次返回
+
+    //点击两次退出
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (System.currentTimeMillis() - firsttime < 3000) {
+                finish();
+                return true;
+            } else {
+                firsttime = System.currentTimeMillis();
+                Toast.makeText(this, "再點一次退出應用", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+        return false;
     }
 
 }

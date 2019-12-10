@@ -1,0 +1,128 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:background="@mipmap/clear_bg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:gravity="center|bottom"
+        android:textColor="#FFFFFF"
+        android:text="Please Select One Photo to Upload"
+        android:textSize="28dp"
+        android:layout_width="match_parent"
+        android:layout_height="150dp">
+
+    </TextView>
+
+    <LinearLayout
+        android:weightSum="3"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="450dp">
+
+        <ImageView
+            android:layout_weight="1"
+            android:id="@+id/img1"
+            android:background="@drawable/selector_upload_image_frame"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginLeft="50dp"
+            android:padding="5dp"
+            android:layout_margin="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+        <ImageView
+            android:layout_weight="1"
+            android:id="@+id/img2"
+            android:background="@drawable/selector_upload_image_frame"
+            android:src="@mipmap/ic_launcher"
+            android:padding="5dp"
+            android:layout_margin="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+        <ImageView
+            android:layout_weight="1"
+            android:id="@+id/img3"
+            android:background="@drawable/selector_upload_image_frame"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginRight="50dp"
+            android:padding="5dp"
+            android:layout_margin="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:background="@drawable/selector_upload_tap_to_retry"
+            android:id="@+id/retryBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        </ImageButton>
+
+        <ImageButton
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:background="@drawable/selector_upload_tap_to_confirm"
+            android:id="@+id/confirmBtn"
+            android:layout_margin="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        </ImageButton>
+
+    </LinearLayout>
+
+
+
+    <LinearLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- App Edition -->
+        <TextView
+            android:id="@+id/appVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginLeft="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginRight="@dimen/common_edit_text_margin_left_right_double"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="#bbc4d1" />
+
+        <!-- CopyRight-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/common_edit_text_margin_bottom_top"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Advantech 2020 WPC"
+            android:textColor="#bbc4d1" />
+
+    </LinearLayout>
+
+</LinearLayout>

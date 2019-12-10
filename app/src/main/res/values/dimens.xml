@@ -6,4 +6,6 @@
     <dimen name="common_edit_text_margin_left_right_double">40dp</dimen>
     <dimen name="common_edit_text_margin_bottom_top">15dp</dimen>
 
+    <!-- Common -->
+    <dimen name="common_corner_radius_10">10dp</dimen>
 </resources>
