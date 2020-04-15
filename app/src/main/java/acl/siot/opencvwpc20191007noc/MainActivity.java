@@ -4,12 +4,15 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.View;
 import android.widget.Toast;
 
 import acl.siot.opencvwpc20191007noc.page.detect.DetectFragment;
 import acl.siot.opencvwpc20191007noc.page.home.HomeFragment;
 import acl.siot.opencvwpc20191007noc.page.result.ResultFragment;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
+import acl.siot.opencvwpc20191007noc.page.tranform.ABaseTransformer;
+import acl.siot.opencvwpc20191007noc.page.tranform.NoneTransformer;
 import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.page.upload.UploadFragment;
 import acl.siot.opencvwpc20191007noc.page.welcome.WelcomeFragment;
@@ -62,6 +65,12 @@ public class MainActivity extends AppCompatActivity {
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(mSectionsPagerAdapter);
         mViewPager.setPageTransformer(true, new ScaleInOutTransformer());
+//        mViewPager.setPageTransformer(true, new ABaseTransformer() {
+//            @Override
+//            protected void onTransform(View page, float position) {
+//                mLog.d(TAG, "* onTransform(), page= " + page + ", position= " + position);
+//            }
+//        });
 
 //        Button faceDetect = (Button) findViewById(R.id.face_detect);
 //        faceDetect.setOnClickListener(new View.OnClickListener() {
@@ -153,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
                     homeFragment.setHomeFragmentListener(new HomeFragment.OnHomeFragmentInteractionListener() {
                         public void onShowEnd() {
                             mLog.d(TAG, "onShowEnd()");
-                            mViewPager.setCurrentItem(PAGE_WELCOME);
+                            mViewPager.setCurrentItem(PAGE_WELCOME, false);
                         }
                     });
                     fragment = homeFragment;
@@ -245,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
                 = new WelcomeFragment.OnFragmentInteractionListener() {
             @Override
             public void clickToDetectPage() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT, false);
 //                MessageTools.showToast(mContext, "登入成功");
             }
         };
@@ -254,14 +263,14 @@ public class MainActivity extends AppCompatActivity {
                 = new DetectFragment.OnFragmentInteractionListener() {
             @Override
             public void onClickCancelDetect() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME, false);
 //                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
 //                MessageTools.showToast(mContext, "Logout Succeed!");
             }
 
             @Override
             public void onDetectThreeFaces() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD, false);
             }
         };
 
@@ -269,12 +278,12 @@ public class MainActivity extends AppCompatActivity {
                 = new UploadFragment.OnFragmentInteractionListener() {
             @Override
             public void clickRetry() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT, false);
             }
 
             @Override
             public void uploadImageFinish() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT, false);
             }
         };
 

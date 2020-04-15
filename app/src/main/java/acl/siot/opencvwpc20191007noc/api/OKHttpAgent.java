@@ -105,11 +105,11 @@ public class OKHttpAgent {
             } catch (IOException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             } catch (JSONException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             }
         }
 
@@ -131,7 +131,7 @@ public class OKHttpAgent {
                                 mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
                                 break;
                             default:
-                                mIRequestInterface.onRequestFail(jsonObj.getString("message"));
+                                mIRequestInterface.onRequestFail(jsonObj.getString("message"), postCode);
                                 break;
                         }
                     }
@@ -154,7 +154,7 @@ public class OKHttpAgent {
     public interface IRequestInterface {
         void onRequestSuccess(String result, int requestCode);
 
-        void onRequestFail(String errorResult);
+        void onRequestFail(String errorResult, int requestCode);
 
     }
 

@@ -11,7 +11,7 @@
         android:layout_gravity="center"
         android:gravity="center"
         android:layout_width="968dp"
-        android:layout_height="600dp">
+        android:layout_height="550dp">
 
         <org.opencv.android.JavaCameraView
             android:id="@+id/camera_view"
@@ -93,8 +93,8 @@
             android:id="@+id/promptTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="67dp"
-            android:textSize="36dp"
+            android:layout_marginTop="88dp"
+            android:textSize="28dp"
             android:layout_gravity="top"
             android:gravity="center"
             android:text="Advantech 2020 WPC"

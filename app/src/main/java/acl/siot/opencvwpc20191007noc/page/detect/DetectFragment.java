@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -40,13 +41,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import static android.provider.ContactsContract.Intents.Insert.ACTION;
+
 /**
  * Created by IChen.Chu on 2018/9/25
  * A fragment to show detect page.
  */
 public class DetectFragment extends Fragment {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants
@@ -143,9 +146,25 @@ public class DetectFragment extends Fragment {
         cancelDetectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                backToWelcomePage();
+                mLog.d(TAG, " * isClickable= " + cancelDetectBtn.isClickable());
+                if (cancelDetectBtn.isClickable()) {
+//                    backToWelcomePage();
+                }
             }
         });
+
+        cancelDetectBtn.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mLog.d(TAG, " * onTouch, event= " + event);
+                if ((event.getAction()) == (MotionEvent.ACTION_DOWN)) {
+                    backToWelcomePage();
+                }
+                return false;
+            }
+        });
+
+        cancelDetectBtn.setClickable(false);
     }
 
     @Override
@@ -265,7 +284,7 @@ public class DetectFragment extends Fragment {
             mLog.e(TAG, "Error loading cascade", e);
         }
         openCvCameraView.enableView();
-        openCvCameraView.enableFpsMeter();
+//        openCvCameraView.enableFpsMeter();
     }
 
     Display display;
@@ -281,6 +300,7 @@ public class DetectFragment extends Fragment {
         public void onCameraViewStarted(int width, int height) {
             mLog.d(TAG, " * onCameraViewStarted");
             faceCacheArray = new ArrayList<>();
+            cacheIndex = 0;
             display = getActivity().getWindowManager().getDefaultDisplay();
             display.getSize(size);
             screenWidth = size.x;
@@ -295,6 +315,8 @@ public class DetectFragment extends Fragment {
             mGray.release();
             mRgba.release();
         }
+
+        private final int bitmapPadding = 110;
 
         @Override
         public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
@@ -313,6 +335,13 @@ public class DetectFragment extends Fragment {
                 Core.flip(mGray, mGray, -1);
             }
 
+//            # rotate 90º counter-clockwise
+//            Core.flip(mRgba.t(), mRgba, 1); //mRgba.t() is the transpose
+
+//            Mat dst = new Mat();
+//            Mat rotateMat = Imgproc.getRotationMatrix2D(new org.opencv.core.Point(mGray.rows()/2,mGray.cols()/2), 270, 1);
+//            Imgproc.warpAffine(mRgba, dst, rotateMat, dst.size());
+
 
             float mRelativeFaceSize = 0.1f;
             if (mAbsoluteFaceSize == 0) {
@@ -321,6 +350,16 @@ public class DetectFragment extends Fragment {
                     mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
                 }
             }
+
+//            Mat mGrayT = mGray.t();
+//            Core.flip(mGray.t(), mGrayT, 1);
+//            Imgproc.resize(mGrayT, mGrayT, mGray.size());
+//
+//            Mat mRgbaT = mRgba.t();
+//            Core.flip(mRgba.t(), mRgbaT, 1);
+//            Imgproc.resize(mRgbaT, mRgbaT, mRgba.size());
+
+
             MatOfRect faces = new MatOfRect();
             if (classifier != null) {
                 classifier.detectMultiScale(mGray, faces, 1.1, 3, 2,
@@ -329,36 +368,77 @@ public class DetectFragment extends Fragment {
 //                mLog.d(TAG, " * facesArray= " + facesArray.length);
                 Scalar faceRectColor = new Scalar(0, 255, 0, 255);
                 Scalar faceRectColor_no_detect = new Scalar(0, 255, 255, 255);
-                for (Rect faceRect : facesArray) {
-                    // tl : top-left
-                    // br : bottom-right
-                    if (faceRect.width > FACE_THRESHOLD && faceRect.height > FACE_THRESHOLD) {
-//                        circleOverlay.setVisibility(View.GONE);
-                        AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
-                        noDetectCount = 0;
-//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
 
-                        final Bitmap bitmap =
-                                Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
-                        Utils.matToBitmap(mRgba, bitmap);
-                        Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
+                Rect faceRect = null;
 
-                        if (getBitmapFlag) {
-                            mLog.d(TAG, " * cacheIndex= " + cacheIndex);
-                            faceCacheArray.add(cacheIndex++, faceImageBitmap);
-                            getBitmapFlag = false;
-                            if (cacheIndex == 3) {
-                                cacheIndex = 0;
-                                AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
-                            }
-                        }
+                if (facesArray.length > 0) {
+                    faceRect = facesArray[0];
+                }
 
-                        Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
-                    } else {
-                        noDetectCount ++;
-                        cacheIndex = 0;
+                for (int index = 0; index < facesArray.length; index ++) {
+                    if (facesArray[index].height > faceRect.height) {
+                        faceRect = facesArray[index];
                     }
                 }
+
+//                for (Rect faceRect : facesArray) {
+                    if (faceRect != null) {
+                        // tl : top-left
+                        // br : bottom-right
+                        if (faceRect.width > FACE_THRESHOLD && faceRect.height > FACE_THRESHOLD &&
+                                faceRect.y > 0 && faceRect.x > 0) {
+//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+//                        mLog.d(TAG, " * faceRect.x= " + faceRect.x + ", faceRect.y= " + faceRect.y);
+//                        circleOverlay.setVisibility(View.GONE);
+                            AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
+                            noDetectCount = 0;
+//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+
+                            final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
+                            Utils.matToBitmap(mRgba, bitmap);
+
+                            mLog.d(TAG, " * bitmap.getWidth= " + bitmap.getWidth() + ", bitmap.getHeight= " + bitmap.getHeight());
+                            mLog.d(TAG, " * faceRect.x= " + faceRect.x + ", faceRect.y= " + faceRect.y + ", width= " + faceRect.width + ", height= " + faceRect.height);
+                            Bitmap faceImageBitmap = null;
+                            try {
+                                faceImageBitmap = Bitmap.createBitmap(bitmap,
+                                        faceRect.x - 40 < 0 ? 0 : faceRect.x - 40,
+                                        faceRect.y - 80 < 0 ? 0 : faceRect.y - 80,
+//                                    faceRect.width + faceRect.x >= bitmap.getWidth() ? bitmap.getWidth() - faceRect.x :
+                                        faceRect.width + 40 + (faceRect.x - 40)>= bitmap.getWidth() ? bitmap.getWidth() - faceRect.x : faceRect.width + 40,
+                                        faceRect.height + 100 + (faceRect.y - 80)>= bitmap.getHeight() ? bitmap.getHeight() - faceRect.y : faceRect.height + 100);
+
+                                if (getBitmapFlag) {
+                                    mLog.d(TAG, " * cacheIndex= " + cacheIndex);
+                                    mLog.d(TAG, " * faceImageBitmap.getWidth= " + faceImageBitmap.getWidth() +
+                                            ", faceImageBitmap.getHeight= " + faceImageBitmap.getHeight());
+                                    faceCacheArray.add(cacheIndex++, faceImageBitmap);
+                                    getBitmapFlag = false;
+                                    if (cacheIndex == 3) {
+                                        cacheIndex = 0;
+                                        AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
+                                    }
+                                }
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+
+
+
+
+
+                            Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
+                        } else {
+//                        mLog.d(TAG, " **** not suit, width= " + faceRect.width + ", height= " + faceRect.height);
+                            noDetectCount ++;
+//                        cacheIndex = 0;
+                        }
+                    }
+
+
+//                }
 
                 if (facesArray.length == 0) {
                     noDetectCount ++;
@@ -374,6 +454,8 @@ public class DetectFragment extends Fragment {
                 }
                 fps++;
             }
+
+
             return mRgba;
         }
     }

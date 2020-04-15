@@ -188,7 +188,7 @@ public class DetectActivity extends Activity implements
         }
         MatOfRect faces = new MatOfRect();
         if (classifier != null) {
-            classifier.detectMultiScale(mGray, faces, 1.1, 2, 2,
+            classifier.detectMultiScale(mGray, faces, 1.1, 3, 2,
                     new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
             Rect[] facesArray = faces.toArray();
 //            mLog.d(TAG, " * facesArray= " + facesArray.length);

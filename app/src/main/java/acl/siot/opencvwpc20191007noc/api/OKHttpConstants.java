@@ -21,6 +21,12 @@ public class OKHttpConstants {
         public static final int APP_CODE_UPDATE_IMAGE_SUCCESS = 10061;
 
         public static final int APP_CODE_GET_FACE = 1007;
+
+        public static final int APP_CODE_GET_USER = 1009;
+        public static final int APP_CODE_GET_USER_SUCCESS = 10091;
+        public static final int APP_CODE_GET_USER_FAIL = 10092;
+
+        public static final int APP_CODE_EVENT_QRCODE_ID_RESET = 9009;
     }
 
 }

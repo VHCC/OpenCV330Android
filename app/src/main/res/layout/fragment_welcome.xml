@@ -1,18 +1,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:background="@mipmap/start_1"
+    android:background="@mipmap/start_2"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
+        android:visibility="gone"
         android:id="@+id/testText"
         android:gravity="center_horizontal|center_vertical"
         android:layout_width="match_parent"
         android:layout_height="500dp"
         android:text="Welcome Page"/>
 
+    <EditText
+        android:layout_marginTop="-100dp"
+        android:id="@+id/qrcodeID"
+        android:gravity="center"
+        android:textSize="28dp"
+        android:layout_gravity="center"
+        android:layout_width="600dp"
+        android:layout_height="50dp">
+
+    </EditText>
+
     <ImageButton
+        android:visibility="invisible"
+        android:layout_marginTop="550dp"
         android:gravity="center"
         android:layout_gravity="center"
         android:background="@drawable/selector_welcome_tap_to_scan"

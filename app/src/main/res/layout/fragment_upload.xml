@@ -6,10 +6,11 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/uploadtxt"
         android:gravity="center|bottom"
         android:textColor="#FFFFFF"
         android:text="Please Select One Photo to Upload"
-        android:textSize="28dp"
+        android:textSize="24dp"
         android:layout_width="match_parent"
         android:layout_height="150dp">
 
@@ -73,7 +74,7 @@
         <ImageButton
             android:gravity="center"
             android:layout_gravity="center"
-            android:background="@drawable/selector_upload_tap_to_retry"
+            android:background="@mipmap/retry_btn"
             android:id="@+id/retryBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
@@ -83,7 +84,7 @@
         <ImageButton
             android:gravity="center"
             android:layout_gravity="center"
-            android:background="@drawable/selector_upload_tap_to_confirm"
+            android:background="@mipmap/confirm_btn"
             android:id="@+id/confirmBtn"
             android:layout_margin="15dp"
             android:layout_width="wrap_content"

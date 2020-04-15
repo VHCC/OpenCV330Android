@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 
 import static acl.siot.opencvwpc20191007noc.page.detect.DetectFragment.faceCacheArray;
 import static acl.siot.opencvwpc20191007noc.page.upload.UploadFragment.faceSelected;
+import static acl.siot.opencvwpc20191007noc.page.welcome.WelcomeFragment.userName;
 
 /**
  * Created by IChen.Chu on 2019/12/10

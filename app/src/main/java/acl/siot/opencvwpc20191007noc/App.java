@@ -42,6 +42,10 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_EVENT_QRCODE_ID_RESET;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER_FAIL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 
@@ -146,8 +150,9 @@ public class App extends Application {
                     long start_time_tick = System.currentTimeMillis();
                     // real-time task
 
-                    if (tick_count % 60 == 5) {
+                    if (tick_count % 5 == 3) {
                         mLog.d(TAG, " * heartBeat * ");
+                        AppBus.getInstance().post(new BusEvent("back to home page", APP_CODE_EVENT_QRCODE_ID_RESET));
                     }
 
                     if (tick_count % 60 == 6) {
@@ -192,12 +197,20 @@ public class App extends Application {
                 case APP_CODE_UPDATE_IMAGE:
                     AppBus.getInstance().post(new BusEvent("hide overlay", APP_CODE_UPDATE_IMAGE_SUCCESS));
                     break;
+                case APP_CODE_GET_USER:
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_GET_USER_SUCCESS));
+                    break;
             }
         }
 
         @Override
-        public void onRequestFail(String errorResult) {
+        public void onRequestFail(String errorResult, int requestCode) {
             mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
+            switch (requestCode) {
+                case APP_CODE_GET_USER:
+                    AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_GET_USER_FAIL));
+                    break;
+            }
         }
 
     }

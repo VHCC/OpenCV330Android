@@ -34,6 +34,8 @@ import androidx.fragment.app.Fragment;
 
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.page.detect.DetectFragment.faceCacheArray;
+import static acl.siot.opencvwpc20191007noc.page.welcome.WelcomeFragment.TARGET_USER;
+import static acl.siot.opencvwpc20191007noc.page.welcome.WelcomeFragment.userName;
 
 /**
  * Created by IChen.Chu on 2019/12/06
@@ -48,6 +50,7 @@ public class UploadFragment extends Fragment {
 
     // View
     private TextView appVersion;
+    private TextView uploadtxt;
     private ImageButton retryBtn;
     private ImageButton confirmBtn;
 
@@ -101,6 +104,7 @@ public class UploadFragment extends Fragment {
 
     private void initViewIDs(View rootView) {
         appVersion = rootView.findViewById(R.id.appVersion);
+        uploadtxt = rootView.findViewById(R.id.uploadtxt);
         retryBtn = rootView.findViewById(R.id.retryBtn);
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
 
@@ -123,6 +127,7 @@ public class UploadFragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                confirmBtn.setClickable(false);
                 mLog.d(TAG, " * faceSelected= " + faceSelected);
 
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -130,7 +135,8 @@ public class UploadFragment extends Fragment {
                 byte[] byteArray = byteArrayOutputStream .toByteArray();
 
                 String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-                HashMap<String, String> mMap = new UpdateImage("5de8a9b11cce9e1a10b14391", encoded);
+//                HashMap<String, String> mMap = new UpdateImage("5de8a9b11cce9e1a10b14391", encoded);
+                HashMap<String, String> mMap = new UpdateImage(TARGET_USER, encoded);
                 writeToFile(encoded);
                 try {
                     OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE);
@@ -205,6 +211,8 @@ public class UploadFragment extends Fragment {
             img1.setImageBitmap(faceCacheArray.get(0));
             img2.setImageBitmap(faceCacheArray.get(1));
             img3.setImageBitmap(faceCacheArray.get(2));
+
+            uploadtxt.setText("Hi, " + userName + ", Please Select One Photo to Upload");
         }
     }
 
@@ -242,6 +250,7 @@ public class UploadFragment extends Fragment {
     public void onEventMainThread(BusEvent event){
         switch (event.getEventType()) {
             case APP_CODE_UPDATE_IMAGE_SUCCESS:
+                confirmBtn.setClickable(true);
                 mLog.d(TAG, " * upload face Success!");
                 onFragmentInteractionListener.uploadImageFinish();
                 break;
