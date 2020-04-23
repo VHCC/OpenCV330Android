@@ -27,6 +27,11 @@ public class OKHttpConstants {
         public static final int APP_CODE_GET_USER_FAIL = 10092;
 
         public static final int APP_CODE_EVENT_QRCODE_ID_RESET = 9009;
+
+        public static final int APP_CODE_THC_1101_HU_GET_TEMP = 11000;
+        public static final int APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS = 110001;
+
+
     }
 
 }

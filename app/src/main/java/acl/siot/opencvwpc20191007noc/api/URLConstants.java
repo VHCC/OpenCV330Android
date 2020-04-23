@@ -7,4 +7,6 @@ package acl.siot.opencvwpc20191007noc.api;
  */
 public class URLConstants {
     public final static String SERVER_URL = "http://172.22.20.97"; // Test Site
+
+    public final static String THC_1101_HU_URL = "http://192.168.4.1"; // Device ip
 }

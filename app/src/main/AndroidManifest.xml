@@ -19,7 +19,7 @@
         android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_wpc"
-        android:label="Add-Face"
+        android:label="THC-1101HU"
         android:roundIcon="@mipmap/ic_launcher_wpc_round"
         android:screenOrientation="portrait"
         android:supportsRtl="true"
@@ -37,6 +37,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".DisplayActivity"></activity>
 
     </application>
 

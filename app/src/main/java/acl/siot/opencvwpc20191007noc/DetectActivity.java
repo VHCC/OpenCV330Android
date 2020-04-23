@@ -1,7 +1,9 @@
 package acl.siot.opencvwpc20191007noc;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +11,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -22,8 +26,23 @@ import org.opencv.objdetect.CascadeClassifier;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 
+import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
+import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.api.getUser.GetUser;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.getFace.GetTemp;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_EVENT_QRCODE_ID_RESET;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER_FAIL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_GET_USER_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 
 public class DetectActivity extends Activity implements
         CameraBridgeViewBase.CvCameraViewListener2, View.OnClickListener {
@@ -46,12 +65,18 @@ public class DetectActivity extends Activity implements
     private int preview_frames = 0;
     private int fps = 0;
 
+    // Http Mechanism
+    private OnRequestListener mOnRequestListener = new OnRequestListener();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreate");
         super.onCreate(savedInstanceState);
 
         initWindowSettings();
+
+        // HTTP Mechanism
+        OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
 
         setContentView(R.layout.activity_detect);
         openCvCameraView = (CameraBridgeViewBase) findViewById(R.id.camera_view);
@@ -82,6 +107,11 @@ public class DetectActivity extends Activity implements
                             fps = 0;
                         }
 
+                        if (tick_count % 2 == 0) {
+                            HashMap<String, String> mMap = new GetTemp();
+                            OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                        }
+
                         long end_time_tick = System.currentTimeMillis();
 
                         Thread.sleep(task_minimum_tick_time_msec);
@@ -99,21 +129,24 @@ public class DetectActivity extends Activity implements
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.switch_camera:
-                openCvCameraView.disableView();
-                if (isFrontCamera) {
-                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
-                    isFrontCamera = false;
-                } else {
-                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
-                    isFrontCamera = true;
-                }
-                openCvCameraView.enableView();
+                Intent i = new Intent(getApplicationContext(), DisplayActivity.class);
+                startActivity(i);
+//                openCvCameraView.disableView();
+//                if (isFrontCamera) {
+//                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_BACK);
+//                    isFrontCamera = false;
+//                } else {
+//                    openCvCameraView.setCameraIndex(CameraBridgeViewBase.CAMERA_ID_FRONT);
+//                    isFrontCamera = true;
+//                }
+//                openCvCameraView.enableView();
                 break;
             default:
         }
     }
 
     // 初始化窗口设置, 包括全屏、横屏、常亮
+    @SuppressLint("SourceLockedOrientationActivity")
     private void initWindowSettings() {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -198,6 +231,7 @@ public class DetectActivity extends Activity implements
                 // br : bottom-right
 //                mLog.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
                 Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
+                Imgproc.putText(mRgba, df.format(person_temp), faceRect.tl(), Core.TYPE_MARKER, 10.0, new Scalar(255,0,0), 3);
             }
 
             fps++;
@@ -227,4 +261,40 @@ public class DetectActivity extends Activity implements
         super.onDestroy();
         openCvCameraView.disableView();
     }
+
+    static double person_temp = 0.0f;
+    private DecimalFormat df = new DecimalFormat("0.00");
+
+    /**
+     * Http Mechanism Receiver
+     */
+    private class OnRequestListener implements OKHttpAgent.IRequestInterface {
+
+        @Override
+        public void onRequestSuccess(String response, int requestCode) {
+            mLog.d(TAG, "onRequestSuccess(), requestCode= " + requestCode);
+            switch (requestCode) {
+                case APP_CODE_THC_1101_HU_GET_TEMP:
+                    try {
+                        JSONObject jsonObj = new JSONObject(response);
+                        person_temp = (float) jsonObj.getDouble("Temperature");
+//                        mLog.d(TAG, "person_temp= " + person_temp);
+                        mLog.d(TAG, "person_temp= " + df.format(person_temp));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
+                    break;
+            }
+        }
+
+        @Override
+        public void onRequestFail(String errorResult, int requestCode) {
+            mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
+            switch (requestCode) {
+            }
+        }
+
+    }
+
 }
