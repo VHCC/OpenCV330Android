@@ -9,12 +9,34 @@
         android:padding="5dp"
         android:layout_marginLeft="230dp"
         android:layout_marginTop="100dp"
-        android:id="@+id/resultImage"
+        android:id="@+id/resultImage_demo"
         android:background="@drawable/selector_upload_image_frame"
         android:layout_width="400dp"
         android:layout_height="400dp">
 
     </ImageView>
+
+    <TextView
+        android:id="@+id/status"
+        android:text="123"
+        android:layout_marginLeft="700dp"
+        android:layout_marginTop="100dp"
+        android:textSize="100px"
+        android:layout_width="400dp"
+        android:layout_height="200dp">
+
+    </TextView>
+
+    <TextView
+        android:id="@+id/temps"
+        android:text="50"
+        android:textSize="100px"
+        android:layout_marginLeft="740dp"
+        android:layout_marginTop="400dp"
+        android:layout_width="400dp"
+        android:layout_height="200dp">
+
+    </TextView>
 
     <ImageButton
         android:layout_marginTop="250dp"

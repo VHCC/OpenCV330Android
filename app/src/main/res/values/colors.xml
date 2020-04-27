@@ -9,4 +9,7 @@
     <color name="qrScanBoundaryLayer_blue">#0093EE</color>
     <color name="qrScanBoundaryLayer_red">#FF4D4D</color>
     <color name="qrScanBoundaryLayer_green">#00B200</color>
+
+    <color name="demo_red">#FF0000</color>
+    <color name="demo_green">#00FF00</color>
 </resources>

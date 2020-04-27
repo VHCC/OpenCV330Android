@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
@@ -27,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
@@ -112,6 +115,11 @@ public class DetectActivity extends Activity implements
                             OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                         }
 
+                        if (tick_count % 1 == 0) {
+                            mLog.d(TAG, "getFace, faceCacheArray= " + faceCacheArray.size());
+                            getBitmapFlag = true;
+                        }
+
                         long end_time_tick = System.currentTimeMillis();
 
                         Thread.sleep(task_minimum_tick_time_msec);
@@ -193,6 +201,14 @@ public class DetectActivity extends Activity implements
         mRgba.release();
     }
 
+    private int cacheIndex = 0;
+    public static ArrayList<Bitmap> faceCacheArray = new ArrayList<>();
+    private boolean getBitmapFlag = false;
+
+    // Constants
+    static final int FACE_THRESHOLD = 200;
+    static final int FACE_THRESHOLD_COUNT = 10;
+
     @Override
     // 这里执行人脸检测的逻辑, 根据OpenCV提供的例子实现(face-detection)
     public Mat onCameraFrame(final CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
@@ -226,19 +242,67 @@ public class DetectActivity extends Activity implements
             Rect[] facesArray = faces.toArray();
 //            mLog.d(TAG, " * facesArray= " + facesArray.length);
             Scalar faceRectColor = new Scalar(0, 255, 0, 255);
-            for (Rect faceRect : facesArray) {
-                // tl :  top-left
-                // br : bottom-right
-//                mLog.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
-                Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
-                Imgproc.putText(mRgba, df.format(person_temp), faceRect.tl(), Core.TYPE_MARKER, 10.0, new Scalar(255,0,0), 3);
+
+            Rect faceRect = null;
+
+            if (facesArray.length > 0) {
+                faceRect = facesArray[0];
             }
+
+            for (int index = 0; index < facesArray.length; index ++) {
+                if (facesArray[index].height > faceRect.height) {
+                    faceRect = facesArray[index];
+                }
+            }
+
+
+            if (faceRect != null) {
+                if (faceRect.width > FACE_THRESHOLD && faceRect.height > FACE_THRESHOLD &&
+                        faceRect.y > 0 && faceRect.x > 0) {
+                    // tl :  top-left
+                    // br : bottom-right
+//                mLog.d(TAG, " * tl= " + faceRect.tl() + ", br= " + faceRect.br());
+                    final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
+                    Utils.matToBitmap(mRgba, bitmap);
+
+                    faceImageBitmap = null;
+                    faceImageBitmap = Bitmap.createBitmap(bitmap,
+                            faceRect.x - 40 < 0 ? 0 : faceRect.x - 40,
+                            faceRect.y - 80 < 0 ? 0 : faceRect.y - 80,
+//                                    faceRect.width + faceRect.x >= bitmap.getWidth() ? bitmap.getWidth() - faceRect.x :
+                            faceRect.width + 40 + (faceRect.x - 40) >= bitmap.getWidth() ? bitmap.getWidth() - faceRect.x : faceRect.width + 40,
+                            faceRect.height + 100 + (faceRect.y - 80) >= bitmap.getHeight() ? bitmap.getHeight() - faceRect.y : faceRect.height + 100);
+
+                    if (getBitmapFlag) {
+                        mLog.d(TAG, " * cacheIndex= " + cacheIndex);
+                        mLog.d(TAG, " * faceImageBitmap.getWidth= " + faceImageBitmap.getWidth() +
+                                ", faceImageBitmap.getHeight= " + faceImageBitmap.getHeight());
+                        faceCacheArray.add(cacheIndex++, faceImageBitmap);
+                        getBitmapFlag = false;
+                        if (cacheIndex == 3) {
+                            cacheIndex = 0;
+                            Intent i = new Intent(getApplicationContext(), DisplayActivity.class);
+                            startActivity(i);
+                        }
+                    }
+
+                    Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
+//                Imgproc.putText(mRgba, df.format(person_temp), faceRect.tl(), Core.TYPE_MARKER, 10.0, new Scalar(255,0,0), 3);
+
+                }
+            }
+
+
+
+
 
             fps++;
         }
 
         return mRgba;
     }
+
+    static Bitmap faceImageBitmap = null;
 
     @Override
     protected void onResume() {
@@ -263,7 +327,7 @@ public class DetectActivity extends Activity implements
     }
 
     static double person_temp = 0.0f;
-    private DecimalFormat df = new DecimalFormat("0.00");
+    static DecimalFormat df = new DecimalFormat("0.0");
 
     /**
      * Http Mechanism Receiver
