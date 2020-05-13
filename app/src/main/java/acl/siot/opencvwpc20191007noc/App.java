@@ -55,7 +55,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_
  */
 public class App extends Application {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager

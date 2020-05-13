@@ -12,12 +12,24 @@ android {
     }
     buildTypes {
         release {
+            buildConfigField "Boolean", "DEBUG_MODE", "true"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            buildConfigField "Boolean", "DEBUG_MODE", "false"
+        }
     }
+
+    aaptOptions {
+        noCompress "tflite"
+    }
+
     sourceSets { main { jni.srcDirs = ['src/main/jni', 'src/main/jni/'] } }
 }
+
+// import DownloadModels task
+project.ext.ASSET_DIR = projectDir.toString() + '/src/main/assets'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -36,5 +48,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
 
+    implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
+    implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
+    implementation 'com.googlecode.efficient-java-matrix-library:ejml:0.25'
 
 }
