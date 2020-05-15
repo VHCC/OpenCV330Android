@@ -19,6 +19,9 @@ import android.app.ActivityManager;
 import android.app.Application;
 import android.os.Build;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
 import acl.siot.opencvwpc20191007noc.api.getFace.GetFace;
@@ -42,6 +45,9 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 
@@ -147,7 +153,7 @@ public class App extends Application {
                     // real-time task
 
                     if (tick_count % 60 == 5) {
-                        mLog.d(TAG, " * heartBeat * ");
+//                        mLog.d(TAG, " * heartBeat * ");
                     }
 
                     if (tick_count % 60 == 6) {
@@ -178,6 +184,7 @@ public class App extends Application {
         }
     };
 
+    public static String staticFRSSessionID;
 
 
     /**
@@ -192,12 +199,34 @@ public class App extends Application {
                 case APP_CODE_UPDATE_IMAGE:
                     AppBus.getInstance().post(new BusEvent("hide overlay", APP_CODE_UPDATE_IMAGE_SUCCESS));
                     break;
+                case APP_CODE_FRS_LOGIN:
+                    try {
+                        JSONObject loginResponse = new JSONObject(response);
+                        staticFRSSessionID = loginResponse.getString("sessionId");
+                        mLog.i(TAG, "sessionId= " + staticFRSSessionID);
+                        OKHttpAgent.getInstance().getFRSRequest();
+                    } catch (JSONException | IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case APP_CODE_FRS_GET_FACE_ORIGINAL:
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS));
+                    break;
             }
         }
 
         @Override
         public void onRequestFail(String errorResult) {
             mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
+        }
+
+        @Override
+        public void onRequestFail(String errorResult, int requestCode) {
+            mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult + ", requestCode= " + requestCode);
+            switch (requestCode) {
+                case APP_CODE_FRS_LOGIN:
+                    break;
+            }
         }
 
     }

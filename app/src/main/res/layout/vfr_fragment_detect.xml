@@ -1,0 +1,117 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@drawable/vfr_detection_bg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_marginTop="0dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_width="960dp"
+        android:layout_height="520dp">
+
+        <org.opencv.android.JavaCameraView
+            android:id="@+id/camera_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout
+            android:id="@+id/circleOverlay"
+            android:visibility="gone"
+            app:frame_color="0"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout
+            android:id="@+id/circleOverlay_green"
+            app:frame_color="2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+
+    </FrameLayout>
+
+
+
+    <LinearLayout
+        android:gravity="top"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- App Edition -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="#bbc4d1" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:layout_gravity="bottom|center_horizontal|left"
+            android:background="@drawable/vfr_back_to_home"
+            android:id="@+id/cancelDetectBtn"
+            android:layout_marginLeft="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
+
+        <Button
+            android:layout_gravity="bottom|center_horizontal|right"
+            android:background="@drawable/vfr_system_setting"
+            android:id="@+id/adminSettingBtn"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
+
+        <!-- App Edition -->
+        <TextView
+            android:id="@+id/appVersion"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="70dp"
+            android:text="1.0"
+            android:layout_gravity="bottom"
+            android:gravity="left"
+            android:textColor="#bbc4d1" />
+
+        <!-- CopyRight-->
+        <TextView
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/common_edit_text_margin_bottom_top"
+            android:layout_gravity="bottom"
+            android:layout_marginLeft="20dp"
+            android:gravity="left"
+            android:text="Advantech 2020 WPC"
+            android:textColor="#bbc4d1" />
+
+        <!-- prompt -->
+        <TextView
+            android:id="@+id/promptTv"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="67dp"
+            android:textSize="36dp"
+            android:layout_gravity="top"
+            android:gravity="center"
+            android:text="Advantech 2020 WPC"
+            android:textColor="#bbc4d1"/>
+
+    </FrameLayout>
+
+</FrameLayout>

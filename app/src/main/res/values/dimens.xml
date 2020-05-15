@@ -8,4 +8,5 @@
 
     <!-- Common -->
     <dimen name="common_corner_radius_10">10dp</dimen>
+    <dimen name="common_corner_radius_3">3dp</dimen>
 </resources>

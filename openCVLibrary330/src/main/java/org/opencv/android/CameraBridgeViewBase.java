@@ -411,7 +411,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             if (canvas != null) {
                 canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
                 if (BuildConfig.DEBUG)
-                    Log.d(TAG, "mStretch value: " + mScale);
+//                    Log.d(TAG, "mStretch value: " + mScale);
 
                 if (mScale != 0) {
                     canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
@@ -478,10 +478,13 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         int maxAllowedWidth = (mMaxWidth != MAX_UNSPECIFIED && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
         int maxAllowedHeight = (mMaxHeight != MAX_UNSPECIFIED && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
 
+//        Log.d(TAG, "surfaceWidth : " + surfaceWidth + ", surfaceHeight= " + surfaceHeight);
+//        Log.d(TAG, "maxAllowedWidth : " + maxAllowedWidth + ", maxAllowedHeight= " + maxAllowedHeight);
+
         for (Object size : supportedSizes) {
             int width = accessor.getWidth(size);
             int height = accessor.getHeight(size);
-
+//            Log.d(TAG, "supportedWidth : " + width + ", supportedHeight= " + height);
             if (width <= maxAllowedWidth && height <= maxAllowedHeight) {
                 if (width >= calcWidth && height >= calcHeight) {
                     calcWidth = (int) width;
@@ -490,6 +493,9 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             }
         }
 
-        return new Size(calcWidth, calcHeight);
+//        Log.d(TAG, "calcWidth : " + calcWidth + ", calcHeight= " + calcHeight);
+
+//        return new Size(calcWidth, calcHeight);
+        return new Size(1280, 720);
     }
 }

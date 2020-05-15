@@ -1,0 +1,165 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:background="@drawable/vfr_finished_ok_bg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:id="@+id/personTemperature"
+        android:text="36.0"
+        android:textSize="40dp"
+        android:layout_marginLeft="500dp"
+        android:layout_marginBottom="-50dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </TextView>
+
+    <TextView
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:id="@+id/personName"
+        android:text="Visitor"
+        android:textSize="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginBottom="300dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </TextView>
+
+    <TextView
+        android:gravity="center|bottom"
+        android:textColor="#FFFFFF"
+        android:id="@+id/personRole"
+        android:text="Employee"
+        android:layout_marginRight="130dp"
+        android:layout_marginBottom="170dp"
+        android:textSize="35dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </TextView>
+
+    <TextView
+        android:gravity="center|bottom"
+        android:textColor="#706666"
+        android:id="@+id/recognizedTime"
+        android:text="Timestamp"
+        android:layout_marginRight="-50dp"
+        android:layout_marginBottom="120dp"
+        android:textSize="35dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </TextView>
+
+    <FrameLayout
+        android:layout_marginTop="0dp"
+        android:layout_marginRight="218dp"
+        android:layout_marginBottom="80dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_width="330dp"
+        android:layout_height="330dp">
+
+        <ImageView
+            android:id="@+id/img1"
+            android:background="@drawable/vfr_selector_upload_image_frame"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginLeft="0dp"
+            android:padding="1dp"
+            android:layout_margin="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_marginTop="0dp"
+        android:layout_marginRight="290dp"
+        android:layout_marginBottom="77dp"
+        android:layout_gravity="bottom|center"
+        android:gravity="center"
+        android:layout_width="200dp"
+        android:layout_height="200dp">
+
+        <ImageView
+            android:id="@+id/imgOrigin"
+            android:src="@drawable/vfr_icon"
+            android:layout_marginLeft="0dp"
+            android:padding="1dp"
+            android:layout_margin="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <Button
+            android:layout_gravity="bottom|center_horizontal|right"
+            android:background="@drawable/vfr_return"
+            android:id="@+id/retryBtn"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="200dp"
+            android:layout_height="100dp"/>
+
+        <Button
+            android:layout_gravity="bottom|center_horizontal|right"
+            android:background="@drawable/vfr_system_setting"
+            android:id="@+id/verifyBtn"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
+
+    </FrameLayout>
+
+
+
+    <LinearLayout
+        android:visibility="gone"
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- App Edition -->
+        <TextView
+            android:id="@+id/appVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginLeft="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginRight="@dimen/common_edit_text_margin_left_right_double"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="#bbc4d1" />
+
+        <!-- CopyRight-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/common_edit_text_margin_bottom_top"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Advantech 2020 WPC"
+            android:textColor="#bbc4d1" />
+
+    </LinearLayout>
+
+</FrameLayout>
