@@ -22,7 +22,7 @@ import static acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment.staticV
  */
 public class FrsWebSocketClient  extends WebSocketClient {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
 
@@ -67,7 +67,7 @@ public class FrsWebSocketClient  extends WebSocketClient {
                         AppBus.getInstance().post(new BusEvent("verify unRecognized", APP_CODE_FRS_VERIFY_UN_RECOGNIZED));
                     }
                     staticVerifySwitch = false;
-                    AppBus.getInstance().post(new BusEvent("face detect done", 2001));
+//                    AppBus.getInstance().post(new BusEvent("face detect done", 2001));
                     break;
                 case 1: // success
                     if (staticVerifySwitch) {
@@ -75,7 +75,7 @@ public class FrsWebSocketClient  extends WebSocketClient {
                         AppBus.getInstance().post(new BusEvent("verify successfully", APP_CODE_FRS_VERIFY_SUCCESS));
                     }
                     staticVerifySwitch = false;
-                    AppBus.getInstance().post(new BusEvent("face detect done", 2001));
+//                    AppBus.getInstance().post(new BusEvent("face detect done", 2001));
                     break;
             }
 

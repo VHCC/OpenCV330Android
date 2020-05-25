@@ -2,14 +2,20 @@ package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
-import acl.siot.opencvwpc20191007noc.page.result.ResultFragment;
+import java.util.ArrayList;
+
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
+import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
+import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutTransformer;
 import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPasswordFragment;
+import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminSettingFragment;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 import acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment;
 import acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment;
@@ -61,7 +67,10 @@ public class VFRMainActivity extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.mainContainer);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.addOnPageChangeListener(mSectionsPagerAdapter);
-        mViewPager.setPageTransformer(true, new ScaleInOutTransformer());
+//        mViewPager.setPageTransformer(true, new ScaleInOutTransformer());
+//        mViewPager.setPageTransformer(true, new FadeInOutTransformer());
+        mViewPager.setPageTransformer(true, new FadeInOutBetterTransformer());
+        mViewPager.setOffscreenPageLimit(5);
 
     }
 
@@ -104,26 +113,29 @@ public class VFRMainActivity extends AppCompatActivity {
         // Constants
         static final int PAGE_HOME = 0;
         static final int PAGE_WELCOME = 1;
-        static final int PAGE_DETECT = 2;
-        static final int PAGE_UPLOAD = 3;
-        static final int PAGE_RESULT = 4;
+        static final int PAGE_DETECT = 3;
+        static final int PAGE_PWD = 4;
+        static final int PAGE_SETTING = 5;
+        static final int PAGE_VERIFY = 2;
         static final int PAGE_SUB_PAGE = 999;
 
         // Fields
         private final int[] PAGE_GROUP = new int[]{
                 PAGE_HOME,
                 PAGE_WELCOME,
-                PAGE_UPLOAD,
                 PAGE_DETECT,
-                PAGE_RESULT,
+                PAGE_VERIFY,
+                PAGE_PWD,
+                PAGE_SETTING,
                 PAGE_SUB_PAGE
         };
         private final String[] PAGE_NAMES = new String[]{
                 "PAGE_HOME",
                 "PAGE_WELCOME",
                 "PAGE_DETECT",
-                "PAGE_UPLOAD",
-                "PAGE_RESULT",
+                "PAGE_VERIFY",
+                "PAGE_PWD",
+                "PAGE_SETTING",
                 "PAGE_SUB_PAGE"
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
@@ -153,30 +165,37 @@ public class VFRMainActivity extends AppCompatActivity {
                 break;
 
                 case PAGE_WELCOME: {
-                    VFRWelcomeFragment loginFragment = VFRWelcomeFragment.newInstance();
-                    loginFragment.setOnFragmentInteractionListener(vfrWelcomePageInteractionListener);
-                    fragment = loginFragment;
+                    VFRWelcomeFragment vfrWelcomeFragment = VFRWelcomeFragment.newInstance();
+                    vfrWelcomeFragment.setOnFragmentInteractionListener(vfrWelcomePageInteractionListener);
+                    fragment = vfrWelcomeFragment;
                 }
                 break;
 
                 case PAGE_DETECT: {
-                    VFRDetectFragment dashboardMainFragment = VFRDetectFragment.newInstance();
-                    dashboardMainFragment.setOnFragmentInteractionListener(vfrDetectPageInteractionListener);
-                    fragment = dashboardMainFragment;
+                    VFRDetectFragment vfrDetectFragment = VFRDetectFragment.newInstance();
+                    vfrDetectFragment.setOnFragmentInteractionListener(vfrDetectPageInteractionListener);
+                    fragment = vfrDetectFragment;
                 }
                 break;
 
-                case PAGE_UPLOAD: {
-                    VFRVerifyFragment uploadFragment = VFRVerifyFragment.newInstance();
-                    uploadFragment.setOnFragmentInteractionListener(vfrUploadPageInteractionListener);
-                    fragment = uploadFragment;
+                case PAGE_VERIFY: {
+                    VFRVerifyFragment vfrVerifyFragment = VFRVerifyFragment.newInstance();
+                    vfrVerifyFragment.setOnFragmentInteractionListener(vfrVerifyPageInteractionListener);
+                    fragment = vfrVerifyFragment;
                 }
                 break;
 
-                case PAGE_RESULT: {
-                    ResultFragment resultFragment = ResultFragment.newInstance();
-                    resultFragment.setOnFragmentInteractionListener(resultPageInteractionListener);
-                    fragment = resultFragment;
+                case PAGE_PWD: {
+                    VFRAdminPasswordFragment vfrAdminPasswordFragment = VFRAdminPasswordFragment.newInstance();
+                    vfrAdminPasswordFragment.setOnFragmentInteractionListener(vfrAdminPasswordPageInteractionListener);
+                    fragment = vfrAdminPasswordFragment;
+                }
+                break;
+
+                case PAGE_SETTING: {
+                    VFRAdminSettingFragment vfrAdminSettingFragment = VFRAdminSettingFragment.newInstance();
+                    vfrAdminSettingFragment.setOnFragmentInteractionListener(vfrAdminSettingPageInteractionListener);
+                    fragment = vfrAdminSettingFragment;
                 }
                 break;
 
@@ -212,7 +231,7 @@ public class VFRMainActivity extends AppCompatActivity {
 
         @Override
         public void onPageSelected(int position) {
-            mLog.d(TAG, "onPageSelected(): " + PAGE_NAMES[lastPosition] + " >> " + PAGE_NAMES[position]);
+            mLog.d(TAG, "onPageSelected(): " + PAGE_NAMES[lastPosition] + " >> " + PAGE_NAMES[position] + ", position= " + position);
             switch (position) {
                 case PAGE_WELCOME:
                     if (lastPosition == PAGE_DETECT) {
@@ -252,12 +271,17 @@ public class VFRMainActivity extends AppCompatActivity {
             }
 
             @Override
+            public void onClickAdminSetting() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_PWD);
+            }
+
+            @Override
             public void onDetectThreeFaces() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_VERIFY);
             }
         };
 
-        private VFRVerifyFragment.OnFragmentInteractionListener vfrUploadPageInteractionListener
+        private VFRVerifyFragment.OnFragmentInteractionListener vfrVerifyPageInteractionListener
                 = new VFRVerifyFragment.OnFragmentInteractionListener() {
             @Override
             public void clickRetry() {
@@ -266,15 +290,33 @@ public class VFRMainActivity extends AppCompatActivity {
 
             @Override
             public void uploadImageFinish() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT);
+//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT);
             }
         };
 
-        private ResultFragment.OnFragmentInteractionListener resultPageInteractionListener
-                = new ResultFragment.OnFragmentInteractionListener() {
+        private VFRAdminPasswordFragment.OnFragmentInteractionListener vfrAdminPasswordPageInteractionListener
+                = new VFRAdminPasswordFragment.OnFragmentInteractionListener() {
             @Override
-            public void clickFinished() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+            public void clickBackToDetectPage() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT);
+            }
+
+            @Override
+            public void clickConfirmPWD() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_SETTING);
+            }
+        };
+
+        private VFRAdminSettingFragment.OnFragmentInteractionListener vfrAdminSettingPageInteractionListener
+                = new VFRAdminSettingFragment.OnFragmentInteractionListener() {
+            @Override
+            public void clickBackToDetectPage() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT);
+            }
+
+            @Override
+            public void clickConfirm() {
+
             }
         };
 

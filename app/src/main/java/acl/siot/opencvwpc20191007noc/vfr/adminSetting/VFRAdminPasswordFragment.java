@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.blankj.utilcode.util.AppUtils;
 
@@ -21,7 +20,7 @@ import androidx.fragment.app.Fragment;
  * Created by IChen.Chu on 2020/05/25
  * A fragment to show admin setting password page.
  */
-public class VFRAdminSettingFragment extends Fragment {
+public class VFRAdminPasswordFragment extends Fragment {
 
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
@@ -29,6 +28,7 @@ public class VFRAdminSettingFragment extends Fragment {
     // Constants
 
     // View
+    private TextView appVersion;
     private Button confirmBtn;
     private Button backBtn;
 
@@ -38,7 +38,7 @@ public class VFRAdminSettingFragment extends Fragment {
     // Fields
 
     // Constructor
-    public VFRAdminSettingFragment() {
+    public VFRAdminPasswordFragment() {
     }
 
     /**
@@ -47,8 +47,8 @@ public class VFRAdminSettingFragment extends Fragment {
      *
      * @return A new fragment instance of WelcomeFragment.
      */
-    public static VFRAdminSettingFragment newInstance() {
-        VFRAdminSettingFragment fragment = new VFRAdminSettingFragment();
+    public static VFRAdminPasswordFragment newInstance() {
+        VFRAdminPasswordFragment fragment = new VFRAdminPasswordFragment();
         Bundle args = new Bundle();
         fragment.setArguments(args);
         return fragment;
@@ -66,7 +66,7 @@ public class VFRAdminSettingFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreateView");
-        View rootView = inflater.inflate(R.layout.vfr_fragment_admin_setting, container, false);
+        View rootView = inflater.inflate(R.layout.vfr_fragment_admin_password, container, false);
 
         initViewIDs(rootView);
         initViewsFeature();
@@ -75,6 +75,7 @@ public class VFRAdminSettingFragment extends Fragment {
     }
 
     private void initViewIDs(View rootView) {
+        appVersion = rootView.findViewById(R.id.appVersion);
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
         backBtn = rootView.findViewById(R.id.backBtn);
 
@@ -82,13 +83,14 @@ public class VFRAdminSettingFragment extends Fragment {
 
 
     private void initViewsFeature() {
+        appVersion.setText("v " + AppUtils.getAppVersionName());
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
-                onFragmentInteractionListener.clickConfirm();
+                onFragmentInteractionListener.clickConfirmPWD();
             }
         });
+
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -159,7 +161,7 @@ public class VFRAdminSettingFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         void clickBackToDetectPage();
 
-        void clickConfirm();
+        void clickConfirmPWD();
     }
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {

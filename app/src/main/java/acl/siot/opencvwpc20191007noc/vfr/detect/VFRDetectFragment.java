@@ -163,7 +163,7 @@ public class VFRDetectFragment extends Fragment {
         adminSettingBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                goToAdminSettingPage();
             }
         });
     }
@@ -228,6 +228,7 @@ public class VFRDetectFragment extends Fragment {
 
         if (detectPageThread != null && detectPageThread.isAlive()) {
             detectPageThread.interrupt();
+            threadObject.setRunning(false);
         }
     }
 
@@ -245,6 +246,8 @@ public class VFRDetectFragment extends Fragment {
     // -------------------------------------------
     public interface OnFragmentInteractionListener {
         void onClickCancelDetect();
+
+        void onClickAdminSetting();
 
         void onDetectThreeFaces();
     }
@@ -295,12 +298,14 @@ public class VFRDetectFragment extends Fragment {
 
     int noDetectCount = 0;
 
+
     private class OpenCVCameraListener implements CameraBridgeViewBase.CvCameraViewListener2 {
 
         @Override
         public void onCameraViewStarted(int width, int height) {
             mLog.d(TAG, " * onCameraViewStarted");
             vfrFaceCacheArray = new ArrayList<>();
+            cacheIndex= 0;
             display = getActivity().getWindowManager().getDefaultDisplay();
             display.getSize(size);
             mLog.d(TAG, " * screenWidth= " + screenWidth + ", screenHeight= " + screenHeight);
@@ -357,7 +362,7 @@ public class VFRDetectFragment extends Fragment {
 //                        circleOverlay.setVisibility(View.GONE);
                         AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
                         noDetectCount = 0;
-//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
 
                         final Bitmap bitmap =
                                 Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
@@ -365,7 +370,7 @@ public class VFRDetectFragment extends Fragment {
                         Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
 
                         if (getBitmapFlag) {
-                            mLog.d(TAG, " * cacheIndex= " + cacheIndex);
+                            mLog.d(TAG, " ***** cacheIndex= " + cacheIndex);
                             vfrFaceCacheArray.add(cacheIndex++, faceImageBitmap);
                             getBitmapFlag = false;
                             if (cacheIndex == 3) {
@@ -386,7 +391,7 @@ public class VFRDetectFragment extends Fragment {
                                     e.printStackTrace();
                                 }
 
-
+                                mLog.d(TAG, " * detect done ");
                                 AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
                             }
 //                            cacheIndex = 0; // for debug
@@ -422,6 +427,7 @@ public class VFRDetectFragment extends Fragment {
     public static ArrayList<Bitmap> vfrFaceCacheArray = new ArrayList<>();
 
     public void onEventMainThread(BusEvent event){
+//        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case OVER_LAY_GREEN:
                 circleOverlay.setVisibility(View.GONE);
@@ -434,27 +440,32 @@ public class VFRDetectFragment extends Fragment {
                 promptTv.setText("Please Come Closer to Camera");
                 break;
             case FACE_DETECT_DONE:
-                if (openCvCameraView != null) {
-                    openCvCameraView.disableView();
+                stopCameraFunction();
+                if (getUserVisibleHint()) {
+                    onFragmentInteractionListener.onDetectThreeFaces();
                 }
-                if (detectPageThread.isAlive()) {
-                    detectPageThread.interrupt();
-                    threadObject.setRunning(false);
-                }
-                onFragmentInteractionListener.onDetectThreeFaces();
                 break;
         }
     }
 
-    private void backToWelcomePage() {
+    private void stopCameraFunction() {
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
         }
-        if (detectPageThread.isAlive()) {
+        if (detectPageThread != null && detectPageThread.isAlive()) {
             detectPageThread.interrupt();
             threadObject.setRunning(false);
         }
+    }
+
+    private void backToWelcomePage() {
+        stopCameraFunction();
         onFragmentInteractionListener.onClickCancelDetect();
+    }
+
+    private void goToAdminSettingPage() {
+        stopCameraFunction();
+        onFragmentInteractionListener.onClickAdminSetting();
     }
 
     private class ThreadObject extends Object {

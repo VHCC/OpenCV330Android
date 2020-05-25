@@ -233,7 +233,7 @@ public class VFRVerifyFragment extends Fragment {
     // -------------- Lazy Load --------------
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
-        if (getUserVisibleHint()) {
+        if (getUserVisibleHint() && vfrFaceCacheArray.size() > 0) {
             img1.setImageBitmap(vfrFaceCacheArray.get(0));
 //            img2.setImageBitmap(vfrFaceCacheArray.get(1));
 //            img3.setImageBitmap(vfrFaceCacheArray.get(2));
