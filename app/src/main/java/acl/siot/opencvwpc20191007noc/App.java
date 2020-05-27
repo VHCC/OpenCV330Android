@@ -26,12 +26,14 @@ import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
 import acl.siot.opencvwpc20191007noc.api.getFace.GetFace;
 import acl.siot.opencvwpc20191007noc.api.listUser.ListUser;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -48,6 +50,8 @@ import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 
@@ -57,7 +61,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_
  */
 public class App extends Application {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
@@ -166,6 +170,13 @@ public class App extends Application {
 //                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
+                    if (tick_count % 2 == 0) {
+                        HashMap<String, String> mMap = new GetTemp();
+                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    }
+
+
+
                     long end_time_tick = System.currentTimeMillis();
 
                     if (end_time_tick - start_time_tick > task_minimum_tick_time_msec) {
@@ -179,12 +190,17 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
     };
 
     public static String staticFRSSessionID;
+
+    static double person_temp = 0.0f;
+    private DecimalFormat df = new DecimalFormat("0.00");
 
 
     /**
@@ -212,6 +228,18 @@ public class App extends Application {
                 case APP_CODE_FRS_GET_FACE_ORIGINAL:
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS));
                     break;
+                case APP_CODE_THC_1101_HU_GET_TEMP:
+//                    try {
+//                        JSONObject jsonObj = new JSONObject(response);
+//                        person_temp = (float) jsonObj.getDouble("Temperature");
+////                        mLog.d(TAG, "person_temp= " + person_temp);
+//                        mLog.d(TAG, "person_temp= " + df.format(person_temp));
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
+                    break;
+
             }
         }
 

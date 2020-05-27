@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="172.23.23.103"
+        android:hint="Edge Ip Address"
         android:textSize="18dp"/>
 
     <EditText
@@ -36,7 +36,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="80"
+        android:hint="Edge port"
         android:textSize="18dp"/>
 
     <EditText
@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="H.S"
+        android:hint="Edge Account"
         android:textSize="18dp"/>
 
     <EditText
@@ -70,7 +70,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#FFFFFF"
         android:textColor="#FFFFFF"
-        android:hint="123456"
+        android:hint="Edge Password"
         android:textSize="18dp"/>
 
     <EditText
@@ -87,7 +87,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="5"
+        android:hint="Edge Tablet ID"
         android:textSize="18dp"/>
 
 
@@ -107,7 +107,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="192.168.4.1"
+        android:hint="Thermometer ip address"
         android:textSize="18dp"/>
 
 
@@ -125,7 +125,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="37.5"
+        android:hint="alert Temp"
         android:textSize="18dp"/>
 
     <EditText
@@ -142,7 +142,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="37.5"
+        android:hint="http cmd"
         android:textSize="18dp"/>
 
 
@@ -162,7 +162,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="12345"
+        android:hint="input new app setting password"
         android:textSize="18dp"/>
 
     <EditText
@@ -179,7 +179,7 @@
         android:layout_height="wrap_content"
         android:textColorHint="#686868"
         android:textColor="#FFFFFF"
-        android:hint="12345"
+        android:hint="input new app setting password again"
         android:textSize="18dp"/>
 
 

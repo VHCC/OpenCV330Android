@@ -38,6 +38,9 @@ public class VFRAppSetting {
     public void newInstance(Context context) {
         mContext = context;
         sp = context.getSharedPreferences(SHARE_APP_SETTING, Context.MODE_PRIVATE);
+        if (getPwd() == null) {
+            setPwd( "123456");
+        }
     }
 
     public static VFRAppSetting getInstance() {

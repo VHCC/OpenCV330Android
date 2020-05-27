@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
@@ -76,6 +77,7 @@ public class VFRMainActivity extends AppCompatActivity {
 
         VFREdgeCache.getInstance().newInstance(this);
         VFRThermometerCache.getInstance().newInstance(this);
+        VFRAppSetting.getInstance().newInstance(this);
 
     }
 

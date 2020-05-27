@@ -5,12 +5,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.blankj.utilcode.util.AppUtils;
 
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +34,8 @@ public class VFRAdminPasswordFragment extends Fragment {
     private TextView appVersion;
     private Button confirmBtn;
     private Button backBtn;
+
+    private EditText pwdEditTxt;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -79,6 +84,9 @@ public class VFRAdminPasswordFragment extends Fragment {
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
         backBtn = rootView.findViewById(R.id.backBtn);
 
+
+        pwdEditTxt = rootView.findViewById(R.id.pwdEditTxt);
+
     }
 
 
@@ -87,7 +95,11 @@ public class VFRAdminPasswordFragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onFragmentInteractionListener.clickConfirmPWD();
+                if (VFRAppSetting.getInstance().getPwd().equals(pwdEditTxt.getText().toString())) {
+                    onFragmentInteractionListener.clickConfirmPWD();
+                } else {
+                    Toast.makeText(getContext(), "App Setting Password is not correct.", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

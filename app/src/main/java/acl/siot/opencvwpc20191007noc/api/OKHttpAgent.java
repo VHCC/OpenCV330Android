@@ -377,6 +377,12 @@ public class OKHttpAgent {
         postFRSThread.start();
     }
 
+    public synchronized void getTempRequest(HashMap mData, int requestCode) throws IOException {
+        GetThread getThread = new GetThread(mData, requestCode);
+        getThread.start();
+    }
+
+
     public interface IRequestInterface {
         void onRequestSuccess(String result, int requestCode);
 

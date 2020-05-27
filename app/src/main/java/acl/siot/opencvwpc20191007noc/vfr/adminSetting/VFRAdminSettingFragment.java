@@ -104,6 +104,9 @@ public class VFRAdminSettingFragment extends Fragment {
         alertTempEditTxt = rootView.findViewById(R.id.alertTempEditTxt);
         httpCMDEditTxt = rootView.findViewById(R.id.httpCMDEditTxt);
 
+        changePWDEditTxt = rootView.findViewById(R.id.changePWDEditTxt);
+        changePWDAgainEditTxt = rootView.findViewById(R.id.changePWDAgainEditTxt);
+
     }
 
 
@@ -119,6 +122,9 @@ public class VFRAdminSettingFragment extends Fragment {
 
                 VFRThermometerCache.getInstance().setIpAddress(thermalIpEditTxt.getText().toString());
                 VFRThermometerCache.getInstance().setAlertTemp(Float.valueOf(alertTempEditTxt.getText().toString()));
+
+                mLog.i(TAG, changePWDEditTxt.getText().toString());
+                mLog.i(TAG, changePWDAgainEditTxt.getText().toString());
 
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
                 onFragmentInteractionListener.clickConfirm();

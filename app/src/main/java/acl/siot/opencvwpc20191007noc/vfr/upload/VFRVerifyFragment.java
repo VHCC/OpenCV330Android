@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -44,6 +45,7 @@ import androidx.fragment.app.Fragment;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY_UN_RECOGNIZED;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment.vfrFaceCacheArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
@@ -322,8 +324,23 @@ public class VFRVerifyFragment extends Fragment {
                 personRole.setText("");
                 imgOrigin.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.vfr_icon));
                 break;
+            case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
+                try {
+                    String response = event.getMessage();
+                    JSONObject jsonObj = new JSONObject(response);
+                    person_temp = (float) jsonObj.getDouble("Temperature");
+//                        mLog.d(TAG, "person_temp= " + person_temp);
+                    mLog.d(TAG, "person_temp= " + df.format(person_temp));
+                    personTemperature.setText(df.format(person_temp));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                break;
         }
     }
+
+    static double person_temp = 0.0f;
+    private DecimalFormat df = new DecimalFormat("0.00");
 
     // -------------------------------------------
     public interface OnFragmentInteractionListener {
@@ -402,5 +419,6 @@ public class VFRVerifyFragment extends Fragment {
             }
         }
     };
+
 
 }
