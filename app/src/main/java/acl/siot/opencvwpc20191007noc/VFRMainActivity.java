@@ -9,6 +9,8 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutTransformer;
@@ -71,6 +73,9 @@ public class VFRMainActivity extends AppCompatActivity {
 //        mViewPager.setPageTransformer(true, new FadeInOutTransformer());
         mViewPager.setPageTransformer(true, new FadeInOutBetterTransformer());
         mViewPager.setOffscreenPageLimit(5);
+
+        VFREdgeCache.getInstance().newInstance(this);
+        VFRThermometerCache.getInstance().newInstance(this);
 
     }
 

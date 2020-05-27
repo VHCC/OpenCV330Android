@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -12,6 +13,8 @@ import android.widget.Toast;
 import com.blankj.utilcode.util.AppUtils;
 
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +34,19 @@ public class VFRAdminSettingFragment extends Fragment {
     // View
     private Button confirmBtn;
     private Button backBtn;
+
+    private EditText ipAddressEditTxt;
+    private EditText portEditTxt;
+    private EditText userAccountEditTxt;
+    private EditText userPWDEditTxt;
+    private EditText tabletIDEditTxt;
+
+    private EditText thermalIpEditTxt;
+    private EditText alertTempEditTxt;
+    private EditText httpCMDEditTxt;
+
+    private EditText changePWDEditTxt;
+    private EditText changePWDAgainEditTxt;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -78,6 +94,16 @@ public class VFRAdminSettingFragment extends Fragment {
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
         backBtn = rootView.findViewById(R.id.backBtn);
 
+        ipAddressEditTxt = rootView.findViewById(R.id.ipAddressEditTxt);
+        portEditTxt = rootView.findViewById(R.id.portEditTxt);
+        userAccountEditTxt = rootView.findViewById(R.id.userAccountEditTxt);
+        userPWDEditTxt = rootView.findViewById(R.id.userPWDEditTxt);
+        tabletIDEditTxt = rootView.findViewById(R.id.tabletIDEditTxt);
+
+        thermalIpEditTxt = rootView.findViewById(R.id.thermalIpEditTxt);
+        alertTempEditTxt = rootView.findViewById(R.id.alertTempEditTxt);
+        httpCMDEditTxt = rootView.findViewById(R.id.httpCMDEditTxt);
+
     }
 
 
@@ -85,6 +111,15 @@ public class VFRAdminSettingFragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                VFREdgeCache.getInstance().setIpAddress(ipAddressEditTxt.getText().toString());
+                VFREdgeCache.getInstance().setPort(portEditTxt.getText().toString());
+                VFREdgeCache.getInstance().setUserAccount(userAccountEditTxt.getText().toString());
+                VFREdgeCache.getInstance().setUserPwd(userPWDEditTxt.getText().toString());
+                VFREdgeCache.getInstance().setTabletID(tabletIDEditTxt.getText().toString());
+
+                VFRThermometerCache.getInstance().setIpAddress(thermalIpEditTxt.getText().toString());
+                VFRThermometerCache.getInstance().setAlertTemp(Float.valueOf(alertTempEditTxt.getText().toString()));
+
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
                 onFragmentInteractionListener.clickConfirm();
             }
@@ -121,7 +156,14 @@ public class VFRAdminSettingFragment extends Fragment {
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint()) {
+            ipAddressEditTxt.setText(VFREdgeCache.getInstance().getIpAddress());
+            portEditTxt.setText(VFREdgeCache.getInstance().getPort());
+            userAccountEditTxt.setText(VFREdgeCache.getInstance().getUserAccount());
+            userPWDEditTxt.setText(VFREdgeCache.getInstance().getUserPwd());
+            tabletIDEditTxt.setText(VFREdgeCache.getInstance().getTabletID());
 
+            thermalIpEditTxt.setText(VFRThermometerCache.getInstance().getIpAddress());
+            alertTempEditTxt.setText(String.valueOf(VFRThermometerCache.getInstance().getAlertTemp()));
         }
     }
 

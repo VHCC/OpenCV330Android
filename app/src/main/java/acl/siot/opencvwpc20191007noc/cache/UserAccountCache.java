@@ -9,7 +9,7 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 
 /**
  * Feature to cache the account information.
- * Created by Ichen on 2017/11/15.
+ * Created by Ichen on 2020/05/25.
  */
 public class UserAccountCache {
     private static final MLog Log = new MLog(true);
