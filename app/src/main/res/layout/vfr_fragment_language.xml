@@ -1,28 +1,40 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:background="@mipmap/start_1"
+    android:background="@drawable/vfr_start_lan_bk"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/testText"
+        android:visibility="invisible"
         android:gravity="center_horizontal|center_vertical"
         android:layout_width="match_parent"
-        android:layout_height="500dp"
-        android:text="@string/face_detect_text"/>
+        android:layout_height="178dp"
+        android:text="VFR Welcome Page"/>
 
     <ImageButton
-        android:gravity="center"
+        android:id="@+id/changeBtn"
+        android:layout_marginLeft="258dp"
+        android:layout_marginTop="125dp"
         android:layout_gravity="center"
-        android:background="@drawable/selector_welcome_tap_to_scan"
-        android:id="@+id/scanBadgeBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:src="@drawable/vfr_start"
+        android:layout_width="190dp"
+        android:layout_height="114dp">
 
     </ImageButton>
 
+    <Spinner
+        android:layout_gravity="center"
+        android:id="@+id/spinner"
+        android:layout_marginLeft="45dp"
+        android:layout_marginTop="-50dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+
     <LinearLayout
+        android:visibility="gone"
         android:gravity="bottom"
         android:orientation="vertical"
         android:layout_width="match_parent"
@@ -51,5 +63,34 @@
             android:textColor="#bbc4d1" />
 
     </LinearLayout>
+
+    <FrameLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
+        <Button
+        android:layout_gravity="bottom|center_horizontal|right"
+        android:background="@drawable/vfr_confirm"
+        android:id="@+id/confirmBtn"
+        android:visibility="gone"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="20dp"
+        android:layout_width="200dp"
+        android:layout_height="100dp"/>
+
+        <Button
+            android:layout_gravity="bottom|center_horizontal|left"
+            android:background="@drawable/vfr_back"
+            android:id="@+id/backBtn"
+            android:layout_marginLeft="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="200dp"
+            android:layout_height="100dp"/>
+
+
+    </FrameLayout>
 
 </LinearLayout>

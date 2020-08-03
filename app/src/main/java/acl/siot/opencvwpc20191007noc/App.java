@@ -17,39 +17,49 @@ package acl.siot.opencvwpc20191007noc;
 
 import android.app.ActivityManager;
 import android.app.Application;
+import android.content.res.Configuration;
 import android.os.Build;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
-import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
-import acl.siot.opencvwpc20191007noc.api.getFace.GetFace;
-import acl.siot.opencvwpc20191007noc.api.listUser.ListUser;
-import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
-import androidx.core.content.ContextCompat;
-
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 
+import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
+import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
+import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
+import acl.siot.opencvwpc20191007noc.frsApi.login.FrsLogin;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import acl.siot.opencvwpc20191007noc.theme.AppTheme;
 import acl.siot.opencvwpc20191007noc.theme.AppThemeManager;
 import acl.siot.opencvwpc20191007noc.util.AppStateTracker;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
+import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
+import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
@@ -61,7 +71,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_
  */
 public class App extends Application {
 
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
@@ -72,10 +82,25 @@ public class App extends Application {
     // Http Mechanism
     private OnRequestListener mOnRequestListener = new OnRequestListener();
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onCreate() {
         super.onCreate();
         mLog.i(TAG, "========== app start ==========");
+
+//        mLog.d(TAG, LocaleList.getDefault().toLanguageTags());
+
+//        LocaleUtils.setLocale(new Locale("zh", "TW"));
+//        LocaleUtils.updateConfig(this, getBaseContext().getResources().getConfiguration());
+        Configuration config = getBaseContext().getResources().getConfiguration();
+        config.locale = new Locale("zh", "TW");
+        getBaseContext().getResources()
+                .updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+
+
+        VFREdgeCache.getInstance().newInstance(this);
+        VFRThermometerCache.getInstance().newInstance(this);
+        VFRAppSetting.getInstance().newInstance(this);
 
         trustHost();
 
@@ -88,6 +113,16 @@ public class App extends Application {
 
         // HTTP Mechanism
         OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
+
+        // register event Bus
+        AppBus.getInstance().register(this);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mLog.d(TAG, "onConfigurationChanged");
+//        LocaleUtils.updateConfig(this, newConfig);
     }
 
     private void setupTheme() {
@@ -172,7 +207,12 @@ public class App extends Application {
 
                     if (tick_count % 2 == 0) {
                         HashMap<String, String> mMap = new GetTemp();
-                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+//                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    }
+
+                    if (tick_count % 10 == 0) {
+                        // Check FRS Server
+
                     }
 
 
@@ -190,12 +230,18 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-                } catch (IOException e) {
-                    e.printStackTrace();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
                 }
             }
         }
     };
+
+    public void onEventMainThread(BusEvent event){
+        switch (event.getEventType()) {
+
+        }
+    }
 
     public static String staticFRSSessionID;
 
@@ -219,7 +265,7 @@ public class App extends Application {
                     try {
                         JSONObject loginResponse = new JSONObject(response);
                         staticFRSSessionID = loginResponse.getString("sessionId");
-                        mLog.i(TAG, "sessionId= " + staticFRSSessionID);
+                        mLog.i(TAG, "getFRS Customer List, sessionId= " + staticFRSSessionID);
                         OKHttpAgent.getInstance().getFRSRequest();
                     } catch (JSONException | IOException e) {
                         e.printStackTrace();
@@ -229,6 +275,7 @@ public class App extends Application {
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS));
                     break;
                 case APP_CODE_THC_1101_HU_GET_TEMP:
+                    isThermometerServerConnected = true;
 //                    try {
 //                        JSONObject jsonObj = new JSONObject(response);
 //                        person_temp = (float) jsonObj.getDouble("Temperature");
@@ -239,7 +286,9 @@ public class App extends Application {
 //                    }
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
                     break;
-
+                case APP_CODE_FRS_MODIFY_PERSON_INFO:
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS));
+                    break;
             }
         }
 
@@ -254,9 +303,69 @@ public class App extends Application {
             switch (requestCode) {
                 case APP_CODE_FRS_LOGIN:
                     break;
+                case APP_CODE_THC_1101_HU_GET_TEMP:
+                    isThermometerServerConnected = false;
+                    break;
             }
         }
 
     }
 
+    public static boolean isFRServerConnected = false;
+    public static boolean isThermometerServerConnected = false;
+
+    public void onEventBackgroundThread(BusEvent event){
+//        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
+        switch (event.getEventType()) {
+            case FRS_SERVER_CONNECT_TRY:
+                connectFRSServer();
+                break;
+            case APP_CODE_FRS_LOGIN_SUCCESS:
+                mLog.d(TAG, " *** APP_CODE_FRS_LOGIN_SUCCESS *** ");
+                break;
+        }
+    }
+
+    FrsWebSocketClient c;
+    FrsWebSocketClient c_un;
+
+    private void connectFRSServer () {
+        if (c != null) {
+            c.close();
+        }
+        c = null; // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
+        try {
+//            c = new FrsWebSocketClient( new URI( "ws://" + FRS_WEB_SOCKET_URL + ":80/fcsrecognizedresult" ));
+            c = new FrsWebSocketClient( new URI( "ws://" + VFREdgeCache.getInstance().getIpAddress() + ":" + VFREdgeCache.getInstance().getPort() + "/fcsrecognizedresult" ));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        c.connect();
+
+        if (c_un != null) {
+            c_un.close();
+        }
+        c_un = null; // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
+        try {
+//            c_un = new FrsWebSocketClient( new URI( "ws://" + FRS_WEB_SOCKET_URL + ":80/fcsnonrecognizedresult" ));
+            c_un = new FrsWebSocketClient( new URI( "ws://" + VFREdgeCache.getInstance().getIpAddress() + ":" + VFREdgeCache.getInstance().getPort() + "/fcsnonrecognizedresult" ));
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        c_un.connect();
+
+//        HashMap<String, String> mMap = new FrsLogin("ichen", "123456");
+//        mLog.i(TAG, VFREdgeCache.getInstance().getUserAccount());
+//        mLog.i(TAG, VFREdgeCache.getInstance().getUserPwd());
+        HashMap<String, String> mMap = new FrsLogin(VFREdgeCache.getInstance().getUserAccount(), VFREdgeCache.getInstance().getUserPwd());
+        try {
+            OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN);
+//            OKHttpAgent.getInstance().getFRSRequest();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // handler event
+    public static final int FRS_SERVER_CONNECT_TRY = 5001;
 }

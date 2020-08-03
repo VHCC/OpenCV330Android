@@ -68,7 +68,7 @@
         android:paddingLeft="10dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
-        android:textColorHint="#FFFFFF"
+        android:textColorHint="#686868"
         android:textColor="#FFFFFF"
         android:hint="Edge Password"
         android:textSize="18dp"/>
@@ -90,6 +90,40 @@
         android:hint="Edge Tablet ID"
         android:textSize="18dp"/>
 
+    <TextView
+        android:id="@+id/kkkk"
+        android:layout_marginLeft="-350dp"
+        android:layout_width="300dp"
+        android:maxLines="1"
+        android:inputType="text"
+        android:ellipsize="end"
+        android:gravity="left"
+        android:layout_marginBottom="-21dp"
+        android:paddingLeft="10dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content"
+        android:textColor="#A8A7A7"
+        android:text="Match Score："
+        android:textSize="18dp"/>
+
+    <EditText
+        android:id="@+id/matchScoreEditTxt"
+        android:background="#30FFFFFF"
+        android:layout_marginLeft="-222dp"
+        android:layout_width="298dp"
+        android:maxLines="1"
+        android:inputType="text"
+        android:paddingTop="8dp"
+        android:paddingLeft="10dp"
+        android:ellipsize="end"
+        android:gravity="left"
+        android:layout_marginBottom="-17dp"
+        android:layout_gravity="center"
+        android:layout_height="wrap_content"
+        android:textColorHint="#686868"
+        android:textColor="#FFFFFF"
+        android:hint="Match Score"
+        android:textSize="18dp"/>
 
 
 

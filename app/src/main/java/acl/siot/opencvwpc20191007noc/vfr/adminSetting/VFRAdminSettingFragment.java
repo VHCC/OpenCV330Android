@@ -12,13 +12,18 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import acl.siot.opencvwpc20191007noc.AppBus;
+import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
 
 /**
  * Created by IChen.Chu on 2020/05/25
@@ -40,6 +45,7 @@ public class VFRAdminSettingFragment extends Fragment {
     private EditText userAccountEditTxt;
     private EditText userPWDEditTxt;
     private EditText tabletIDEditTxt;
+    private EditText matchScoreEditTxt;
 
     private EditText thermalIpEditTxt;
     private EditText alertTempEditTxt;
@@ -47,6 +53,8 @@ public class VFRAdminSettingFragment extends Fragment {
 
     private EditText changePWDEditTxt;
     private EditText changePWDAgainEditTxt;
+
+    private TextView kkkk;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -99,6 +107,7 @@ public class VFRAdminSettingFragment extends Fragment {
         userAccountEditTxt = rootView.findViewById(R.id.userAccountEditTxt);
         userPWDEditTxt = rootView.findViewById(R.id.userPWDEditTxt);
         tabletIDEditTxt = rootView.findViewById(R.id.tabletIDEditTxt);
+        matchScoreEditTxt = rootView.findViewById(R.id.matchScoreEditTxt);
 
         thermalIpEditTxt = rootView.findViewById(R.id.thermalIpEditTxt);
         alertTempEditTxt = rootView.findViewById(R.id.alertTempEditTxt);
@@ -106,6 +115,8 @@ public class VFRAdminSettingFragment extends Fragment {
 
         changePWDEditTxt = rootView.findViewById(R.id.changePWDEditTxt);
         changePWDAgainEditTxt = rootView.findViewById(R.id.changePWDAgainEditTxt);
+
+        kkkk = rootView.findViewById(R.id.kkkk);
 
     }
 
@@ -117,16 +128,34 @@ public class VFRAdminSettingFragment extends Fragment {
                 VFREdgeCache.getInstance().setIpAddress(ipAddressEditTxt.getText().toString());
                 VFREdgeCache.getInstance().setPort(portEditTxt.getText().toString());
                 VFREdgeCache.getInstance().setUserAccount(userAccountEditTxt.getText().toString());
+                mLog.i(TAG, userPWDEditTxt.getText().toString());
                 VFREdgeCache.getInstance().setUserPwd(userPWDEditTxt.getText().toString());
                 VFREdgeCache.getInstance().setTabletID(tabletIDEditTxt.getText().toString());
+                VFREdgeCache.getInstance().setMatchScore(matchScoreEditTxt.getText().toString());
 
                 VFRThermometerCache.getInstance().setIpAddress(thermalIpEditTxt.getText().toString());
                 VFRThermometerCache.getInstance().setAlertTemp(Float.valueOf(alertTempEditTxt.getText().toString()));
 
-                mLog.i(TAG, changePWDEditTxt.getText().toString());
-                mLog.i(TAG, changePWDAgainEditTxt.getText().toString());
+                if (!changePWDEditTxt.getText().toString().isEmpty() && !changePWDAgainEditTxt.getText().toString().isEmpty()) {
+                    if ( changePWDEditTxt.getText() != null && changePWDAgainEditTxt.getText() != null ) {
+                        if (changePWDEditTxt.getText().toString().isEmpty() || changePWDAgainEditTxt.getText().toString().isEmpty()) {
+                            Toast.makeText(getContext(), "App setting password must not be empty.", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+//                    mLog.i(TAG, changePWDEditTxt.getText().toString());
+//                    mLog.i(TAG, changePWDAgainEditTxt.getText().toString());
+                        if (!changePWDEditTxt.getText().toString().equals(changePWDAgainEditTxt.getText().toString())) {
+                            Toast.makeText(getContext(), "App setting password are not consistent in main and retype.", Toast.LENGTH_SHORT).show();
+                            return;
+                        } else {
+                            VFRAppSetting.getInstance().setPwd(changePWDEditTxt.getText().toString());
+                        }
+                    }
+                }
+
 
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
+                AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
                 onFragmentInteractionListener.clickConfirm();
             }
         });
@@ -134,6 +163,13 @@ public class VFRAdminSettingFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 onFragmentInteractionListener.clickBackToDetectPage();
+            }
+        });
+
+        kkkk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onFragmentInteractionListener.clickLanguagePage();
             }
         });
     }
@@ -165,8 +201,10 @@ public class VFRAdminSettingFragment extends Fragment {
             ipAddressEditTxt.setText(VFREdgeCache.getInstance().getIpAddress());
             portEditTxt.setText(VFREdgeCache.getInstance().getPort());
             userAccountEditTxt.setText(VFREdgeCache.getInstance().getUserAccount());
+//            mLog.i(TAG, VFREdgeCache.getInstance().getUserPwd());
             userPWDEditTxt.setText(VFREdgeCache.getInstance().getUserPwd());
             tabletIDEditTxt.setText(VFREdgeCache.getInstance().getTabletID());
+            matchScoreEditTxt.setText(VFREdgeCache.getInstance().getMatchScore());
 
             thermalIpEditTxt.setText(VFRThermometerCache.getInstance().getIpAddress());
             alertTempEditTxt.setText(String.valueOf(VFRThermometerCache.getInstance().getAlertTemp()));
@@ -208,6 +246,8 @@ public class VFRAdminSettingFragment extends Fragment {
         void clickBackToDetectPage();
 
         void clickConfirm();
+
+        void clickLanguagePage();
     }
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {

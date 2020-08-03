@@ -28,7 +28,8 @@ public class VFREdgeCache {
     public static final String SHARE_EDGE_INFO_PORT = "share_edge_info_port";
     public static final String SHARE_EDGE_INFO_USER_ACCOUNT = "share_edge_info_user_account";
     public static final String SHARE_EDGE_INFO_USER_PASSWORD = "share_edge_info_user_password";
-    public static final String SHARE_EDGE_INFO_TABLET_ID = "share_edge_info_user_password";
+    public static final String SHARE_EDGE_INFO_TABLET_ID = "share_edge_info_tablet_id";
+    public static final String SHARE_EDGE_INFO_MATCH_SCORE = "share_edge_info_match_score";
 
 
     private String ipAddress = "";
@@ -36,6 +37,7 @@ public class VFREdgeCache {
     private String userAccount = "";
     private String userPwd = "";
     private String tabletID = "";
+    private String matchScore = "0.85";
 
 
     /* Instance */
@@ -112,4 +114,14 @@ public class VFREdgeCache {
         editor.putString(SHARE_EDGE_INFO_TABLET_ID, tabletID).commit();
     }
 
+    public String getMatchScore() {
+        Map<String, ?> map = sp.getAll();
+        return ((String) map.get(SHARE_EDGE_INFO_MATCH_SCORE)) == null ? "0.85" : ((String) map.get(SHARE_EDGE_INFO_MATCH_SCORE));
+    }
+
+    public void setMatchScore(String matchScore) {
+        this.matchScore = matchScore;
+        editor = sp.edit();
+        editor.putString(SHARE_EDGE_INFO_MATCH_SCORE, matchScore).commit();
+    }
 }

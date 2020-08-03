@@ -15,6 +15,9 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import acl.siot.opencvwpc20191007noc.AppBus;
+import acl.siot.opencvwpc20191007noc.BusEvent;
+import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -23,13 +26,15 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -263,11 +268,11 @@ public class OKHttpAgent {
             } catch (IOException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
+//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
             } catch (JSONException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
+//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
             }
         }
 
@@ -301,7 +306,8 @@ public class OKHttpAgent {
         @Override
         public void run() {
 
-            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
+//            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
+            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
             mLog.d(TAG, "get FRS persons request= " + mainURL);
             Request request = new Request.Builder()
                     .url(mainURL)
@@ -350,6 +356,7 @@ public class OKHttpAgent {
                 JSONObject personInfo = (JSONObject) person.get("person_info");
                 staticPersonsEmployeeNoArray.add(personInfo.getString("employeeno"));
             }
+            AppBus.getInstance().post(new BusEvent("login success", APP_CODE_FRS_LOGIN_SUCCESS));
 //            mLog.i(TAG, "staticPersonsEmployeeNoArray length= " + staticPersonsEmployeeNoArray.size());
             try {
 //                mIRequestInterface.onRequestDBUpdateSuccess(jsonObj.toString());
@@ -373,8 +380,8 @@ public class OKHttpAgent {
     }
 
     public synchronized void getFRSRequest() throws IOException {
-        GetFRSThread postFRSThread = new GetFRSThread();
-        postFRSThread.start();
+        GetFRSThread getFRSThread = new GetFRSThread();
+        getFRSThread.start();
     }
 
     public synchronized void getTempRequest(HashMap mData, int requestCode) throws IOException {

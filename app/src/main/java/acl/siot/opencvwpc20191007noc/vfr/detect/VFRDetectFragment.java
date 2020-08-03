@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.media.FaceDetector;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -14,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.blankj.utilcode.util.AppUtils;
@@ -49,6 +53,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import static acl.siot.opencvwpc20191007noc.App.isFRServerConnected;
+import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment.staticVerifySwitch;
 
 /**
@@ -62,13 +68,14 @@ public class VFRDetectFragment extends Fragment {
 
     // Constants
     static final int FACE_THRESHOLD = 200;
-    static final int FACE_THRESHOLD_COUNT = 10;
+    static final int FACE_THRESHOLD_COUNT = 7;
 
     // handler event
     final int OVER_LAY_GREEN = 1001;
     final int OVER_LAY_BLUE = 1002;
 
     final int FACE_DETECT_DONE = 2001;
+    final int FACE_DETECT_TEST = 20019;
 
     // Flag
     private boolean isFrontCamera = true;
@@ -80,6 +87,11 @@ public class VFRDetectFragment extends Fragment {
     private Button adminSettingBtn;
     private OverLayLinearLayout circleOverlay;
     private OverLayLinearLayout circleOverlay_green;
+
+    private FrameLayout detectBg;
+    private FrameLayout detectView;
+
+    private ImageView img1;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -147,6 +159,11 @@ public class VFRDetectFragment extends Fragment {
         // OverLay
         circleOverlay = rootView.findViewById(R.id.circleOverlay);
         circleOverlay_green = rootView.findViewById(R.id.circleOverlay_green);
+
+        detectBg = rootView.findViewById(R.id.detectBg);
+        detectView = rootView.findViewById(R.id.detectView);
+
+        img1 = rootView.findViewById(R.id.img1);
     }
 
     private void initViewsFeature() {
@@ -183,7 +200,19 @@ public class VFRDetectFragment extends Fragment {
         super.setUserVisibleHint(isVisibleToUser);
         mLog.d(TAG, "isVisibleToUser= " + isVisibleToUser);
         if (isVisibleToUser) {
-            lazyLoad();
+            mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
+            mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
+            if (!isFRServerConnected) {
+                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_not_connect_bk));
+                detectView.setVisibility(View.INVISIBLE);
+//            } else if (!isThermometerServerConnected) {
+//                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_not_connect_bk));
+//                detectView.setVisibility(View.INVISIBLE);
+            } else {
+                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_detection_bg));
+                detectView.setVisibility(View.VISIBLE);
+                lazyLoad();
+            }
         } else {
         }
     }
@@ -287,8 +316,9 @@ public class VFRDetectFragment extends Fragment {
             e.printStackTrace();
             mLog.e(TAG, "Error loading cascade", e);
         }
+        openCvCameraView.setMaxFrameSize(1366, 720);
         openCvCameraView.enableView();
-        openCvCameraView.enableFpsMeter();
+//        openCvCameraView.enableFpsMeter();
     }
 
     Display display;
@@ -311,6 +341,7 @@ public class VFRDetectFragment extends Fragment {
             mLog.d(TAG, " * screenWidth= " + screenWidth + ", screenHeight= " + screenHeight);
             screenWidth = size.x;
             screenHeight = size.y;
+            mLog.d(TAG, " * screenWidth= " + screenWidth + ", screenHeight= " + screenHeight);
             mGray = new Mat();
             mRgba = new Mat();
         }
@@ -321,6 +352,11 @@ public class VFRDetectFragment extends Fragment {
             mGray.release();
             mRgba.release();
         }
+
+        private int numberOfFace = 5;
+        private FaceDetector.Face[] myFace = new FaceDetector.Face[numberOfFace];
+        private FaceDetector myFaceDetect;
+        int numberOfFaceDetected;
 
         @Override
         public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
@@ -362,45 +398,61 @@ public class VFRDetectFragment extends Fragment {
 //                        circleOverlay.setVisibility(View.GONE);
                         AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
                         noDetectCount = 0;
-                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
+//                        mLog.d(TAG, " * width= " + faceRect.width + ", height= " + faceRect.height);
 
                         final Bitmap bitmap =
                                 Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
+
                         Utils.matToBitmap(mRgba, bitmap);
                         Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, faceRect.x, faceRect.y, faceRect.width, faceRect.height);
 
                         if (getBitmapFlag) {
                             mLog.d(TAG, " ***** cacheIndex= " + cacheIndex);
-                            vfrFaceCacheArray.add(cacheIndex++, faceImageBitmap);
+//                            vfrFaceCacheArray.add(cacheIndex++, faceImageBitmap);
+                            vfrFaceCacheArray.add(0, faceImageBitmap);
+                            cacheIndex++;
                             getBitmapFlag = false;
                             if (cacheIndex == 3) {
-                                cacheIndex = 0;
 
-                                staticVerifySwitch = true;
-                                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                                vfrFaceCacheArray.get(0).compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-                                byte[] byteArray = byteArrayOutputStream .toByteArray();
+                                myFaceDetect = new FaceDetector(faceImageBitmap.getWidth() , faceImageBitmap.getHeight() , numberOfFace);
+                                numberOfFaceDetected = myFaceDetect.findFaces(faceImageBitmap, myFace);
+                                mLog.d(TAG, " ***** faceImageBitmap numberOfFaceDetected= " + numberOfFaceDetected);
+                                AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_TEST));
+//                                if (numberOfFaceDetected == 0) {
 
-                                String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+                                    cacheIndex = 0;
+
+                                    staticVerifySwitch = true;
+                                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//                                    vfrFaceCacheArray.get(0).compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                                    faceImageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                                    byte[] byteArray = byteArrayOutputStream .toByteArray();
+
+                                    String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
 //                HashMap<String, String> mMap = new UpdateImage("5de8a9b11cce9e1a10b14391", encoded);
-                                FrsVerify mMap = new FrsVerify(encoded);
-                                writeToFile(encoded);
-                                try {
-                                    OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
+                                    FrsVerify mMap = new FrsVerify(encoded);
+                                    writeToFile(encoded);
+                                    try {
+                                        OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
 
-                                mLog.d(TAG, " * detect done ");
-                                AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
+                                    mLog.d(TAG, " * detect done ");
+                                    AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
+//                                }
+                            } else if (cacheIndex > 3) {
+                                cacheIndex = 0;
                             }
 //                            cacheIndex = 0; // for debug
                         }
 
                         Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
                     } else {
+                        mLog.d(TAG, "NO OVER FACE_THRESHOLD" + FACE_THRESHOLD + ", * width= " + faceRect.width + ", height= " + faceRect.height);
                         noDetectCount ++;
-                        cacheIndex = 0;
+//                        cacheIndex = 0;
                     }
                 }
 
@@ -444,6 +496,9 @@ public class VFRDetectFragment extends Fragment {
                 if (getUserVisibleHint()) {
                     onFragmentInteractionListener.onDetectThreeFaces();
                 }
+                break;
+            case FACE_DETECT_TEST:
+//                img1.setImageBitmap(vfrFaceCacheArray.get(0));
                 break;
         }
     }
@@ -509,7 +564,7 @@ public class VFRDetectFragment extends Fragment {
                     }
 
                     if (tick_count % 1 == 0 && (noDetectCount == 0)) {
-                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
+//                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
                         getBitmapFlag = true;
                     }
 

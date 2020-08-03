@@ -1,5 +1,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/verifyBg"
     android:orientation="vertical"
     android:background="@drawable/vfr_finished_ok_bg"
     android:layout_width="match_parent"
@@ -9,7 +10,7 @@
         android:gravity="center"
         android:textColor="#FFFFFF"
         android:id="@+id/personTemperature"
-        android:text="36.0"
+        android:text="N/A"
         android:textSize="40dp"
         android:layout_marginLeft="500dp"
         android:layout_marginBottom="-50dp"
@@ -19,15 +20,16 @@
     </TextView>
 
     <TextView
-        android:gravity="center"
-        android:textColor="#FFFFFF"
         android:id="@+id/personName"
-        android:text="Visitor"
-        android:textSize="50dp"
-        android:layout_marginLeft="50dp"
+        android:layout_width="400dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
         android:layout_marginBottom="300dp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_marginLeft="155dp"
+        android:gravity="left|center"
+        android:text="Visitor"
+        android:textColor="#FFFFFF"
+        android:textSize="50dp">
 
     </TextView>
 

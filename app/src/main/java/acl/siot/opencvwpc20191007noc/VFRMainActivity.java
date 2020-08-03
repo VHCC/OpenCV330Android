@@ -2,6 +2,7 @@ package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -19,6 +20,7 @@ import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPasswordFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminSettingFragment;
+import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRLanguageFragment;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 import acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment;
 import acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment;
@@ -75,10 +77,21 @@ public class VFRMainActivity extends AppCompatActivity {
         mViewPager.setPageTransformer(true, new FadeInOutBetterTransformer());
         mViewPager.setOffscreenPageLimit(5);
 
-        VFREdgeCache.getInstance().newInstance(this);
-        VFRThermometerCache.getInstance().newInstance(this);
-        VFRAppSetting.getInstance().newInstance(this);
 
+//        LocaleUtils.updateConfig(this);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        mLog.d(TAG, "* onConfigurationChanged()");
+        super.onConfigurationChanged(newConfig);
+
+        // Checks the orientation of the screen
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -120,29 +133,32 @@ public class VFRMainActivity extends AppCompatActivity {
         // Constants
         static final int PAGE_HOME = 0;
         static final int PAGE_WELCOME = 1;
+        static final int PAGE_VERIFY = 2;
         static final int PAGE_DETECT = 3;
         static final int PAGE_PWD = 4;
         static final int PAGE_SETTING = 5;
-        static final int PAGE_VERIFY = 2;
+        static final int PAGE_LANGUAGE = 6;
         static final int PAGE_SUB_PAGE = 999;
 
         // Fields
         private final int[] PAGE_GROUP = new int[]{
                 PAGE_HOME,
                 PAGE_WELCOME,
-                PAGE_DETECT,
                 PAGE_VERIFY,
+                PAGE_DETECT,
                 PAGE_PWD,
                 PAGE_SETTING,
+                PAGE_LANGUAGE,
                 PAGE_SUB_PAGE
         };
         private final String[] PAGE_NAMES = new String[]{
                 "PAGE_HOME",
                 "PAGE_WELCOME",
-                "PAGE_DETECT",
                 "PAGE_VERIFY",
+                "PAGE_DETECT",
                 "PAGE_PWD",
                 "PAGE_SETTING",
+                "PAGE_LANGUAGE",
                 "PAGE_SUB_PAGE"
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
@@ -164,7 +180,8 @@ public class VFRMainActivity extends AppCompatActivity {
                     vfrHomeFragment.setHomeFragmentListener(new VFRHomeFragment.OnHomeFragmentInteractionListener() {
                         public void onShowEnd() {
                             mLog.d(TAG, "onShowEnd()");
-                            mViewPager.setCurrentItem(PAGE_WELCOME);
+//                            mViewPager.setCurrentItem(PAGE_WELCOME);
+                            mViewPager.setCurrentItem(PAGE_DETECT);
                         }
                     });
                     fragment = vfrHomeFragment;
@@ -203,6 +220,13 @@ public class VFRMainActivity extends AppCompatActivity {
                     VFRAdminSettingFragment vfrAdminSettingFragment = VFRAdminSettingFragment.newInstance();
                     vfrAdminSettingFragment.setOnFragmentInteractionListener(vfrAdminSettingPageInteractionListener);
                     fragment = vfrAdminSettingFragment;
+                }
+                break;
+
+                case PAGE_LANGUAGE: {
+                    VFRLanguageFragment vfrLanguageFragment = VFRLanguageFragment.newInstance();
+//                    vfrLanguageFragment.setOnFragmentInteractionListener(vfrAdminSettingPageInteractionListener);
+                    fragment = vfrLanguageFragment;
                 }
                 break;
 
@@ -324,6 +348,11 @@ public class VFRMainActivity extends AppCompatActivity {
             @Override
             public void clickConfirm() {
 
+            }
+
+            @Override
+            public void clickLanguagePage() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_LANGUAGE);
             }
         };
 

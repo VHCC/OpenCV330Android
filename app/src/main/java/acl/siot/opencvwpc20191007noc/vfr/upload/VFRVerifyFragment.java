@@ -2,6 +2,7 @@ package acl.siot.opencvwpc20191007noc.vfr.upload;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
@@ -10,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,13 +37,17 @@ import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.frsApi.getFaceImage.FrsGetFaceImage;
+import acl.siot.opencvwpc20191007noc.frsApi.modifyPersonInfo.FrsModifyPersonInfo;
 import acl.siot.opencvwpc20191007noc.frsApi.verify.FrsVerify;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY_UN_RECOGNIZED;
@@ -49,6 +55,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment.vfrFaceCacheArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
+import static acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient.staticPersonID;
 import static acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient.staticPersonInfo;
 
 /**
@@ -74,6 +81,8 @@ public class VFRVerifyFragment extends Fragment {
 
     private ImageView img1;
     private ImageView imgOrigin;
+
+    private FrameLayout verifyBg;
 //    private ImageView img2;
 //    private ImageView img3;
 
@@ -128,7 +137,6 @@ public class VFRVerifyFragment extends Fragment {
         retryBtn = rootView.findViewById(R.id.retryBtn);
         verifyBtn = rootView.findViewById(R.id.verifyBtn);
 
-
         recognizedTime = rootView.findViewById(R.id.recognizedTime);
         personRole = rootView.findViewById(R.id.personRole);
         personName = rootView.findViewById(R.id.personName);
@@ -138,6 +146,8 @@ public class VFRVerifyFragment extends Fragment {
 
         img1 = rootView.findViewById(R.id.img1);
         imgOrigin = rootView.findViewById(R.id.imgOrigin);
+
+        verifyBg = rootView.findViewById(R.id.verifyBg);
 //        img2 = rootView.findViewById(R.id.img2);
 //        img3 = rootView.findViewById(R.id.img3);
 
@@ -208,6 +218,10 @@ public class VFRVerifyFragment extends Fragment {
 //                img3.setSelected(true);
 //            }
 //        });
+
+        if (!isThermometerServerConnected) {
+            personTemperature.setText("N/A");
+        }
     }
 
     public static int vfrFaceSelected = 0;
@@ -280,17 +294,19 @@ public class VFRVerifyFragment extends Fragment {
     }
 
     public void onEventMainThread(BusEvent event){
+//        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case APP_CODE_FRS_VERIFY_SUCCESS:
-                mLog.d(TAG, " * verify face Success!");
+                mLog.d(TAG, " $$$ verify face Success! $$$ ");
+                isDetectTemperature = false;
                 try {
                     int index = staticPersonsEmployeeNoArray.indexOf(staticPersonInfo.getString("employeeno"));
-                    mLog.i(TAG, "person index= " + index);
+                    mLog.i(TAG, " --- person index= " + index);
                     JSONObject targetPerson = (JSONObject) staticPersonsArray.get(index);
-                    mLog.i(TAG, "targetPerson= " + targetPerson);
+                    mLog.i(TAG, " --- targetPerson= " + targetPerson);
                     JSONObject person_info = (JSONObject) targetPerson.get("person_info");
                     String face_id = (String) ((JSONArray)targetPerson.getJSONArray("face_id_numbers")).get(0);
-                    mLog.i(TAG, "face_id= " + face_id);
+                    mLog.i(TAG, " --- face_id= " + face_id);
 
                     personName.setText(person_info.getString("fullname"));
                     personRole.setText("Employee");
@@ -325,22 +341,68 @@ public class VFRVerifyFragment extends Fragment {
                 imgOrigin.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.vfr_icon));
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
-                try {
-                    String response = event.getMessage();
-                    JSONObject jsonObj = new JSONObject(response);
-                    person_temp = (float) jsonObj.getDouble("Temperature");
+                if (!isDetectTemperature) {
+                    try {
+                        String response = event.getMessage();
+                        JSONObject jsonObj = new JSONObject(response);
+                        person_temp = (float) jsonObj.getDouble("Temperature");
 //                        mLog.d(TAG, "person_temp= " + person_temp);
-                    mLog.d(TAG, "person_temp= " + df.format(person_temp));
-                    personTemperature.setText(df.format(person_temp));
-                } catch (JSONException e) {
-                    e.printStackTrace();
+//                    mLog.d(TAG, "person_temp= " + df.format(person_temp));
+
+                        if (person_temp > VFRThermometerCache.getInstance().getAlertTemp()) {
+                            mLog.d(TAG, "WARN, person_temp= " + df.format(person_temp));
+                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
+                            } else {
+                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ng_bg));
+                            }
+
+                        } else {
+                            mLog.d(TAG, "SAFE, person_temp= " + df.format(person_temp));
+                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ok_bg));
+                            } else {
+                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ok_bg));
+                            }
+
+                        }
+
+                        personTemperature.setText(df.format(person_temp));
+
+//                        mLog.d(TAG, "staticPersonInfo= " + staticPersonInfo.toString());
+//                        mLog.d(TAG, "cardno= " + staticPersonInfo.getString("cardno"));
+                        staticPersonInfo.put("cardno", df.format(person_temp));
+//                        mLog.d(TAG, "staticPersonInfo= " + staticPersonInfo.toString());
+//                        mLog.d(TAG, "cardno= " + staticPersonInfo.getString("cardno"));
+
+                        JSONArray groupList = staticPersonInfo.getJSONArray("group_list");
+                        JSONArray department_list = staticPersonInfo.getJSONArray("department_list");
+
+//                        mLog.d(TAG, "groupList= " + groupList.toString());
+//                        mLog.d(TAG, "groupList length= " + groupList.length());
+//                        mLog.d(TAG, "department_list length= " + department_list.length());
+
+                        HashMap<String, Object> mMap = new FrsModifyPersonInfo(staticPersonID, staticPersonInfo);
+                        try {
+                            OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        isDetectTemperature = true;
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
+
                 break;
         }
     }
 
+    boolean isDetectTemperature = false;
+
     static double person_temp = 0.0f;
-    private DecimalFormat df = new DecimalFormat("0.00");
+    private DecimalFormat df = new DecimalFormat("0.0");
 
     // -------------------------------------------
     public interface OnFragmentInteractionListener {

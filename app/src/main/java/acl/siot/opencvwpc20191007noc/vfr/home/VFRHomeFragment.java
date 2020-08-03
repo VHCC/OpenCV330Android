@@ -15,15 +15,19 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import acl.siot.opencvwpc20191007noc.AppBus;
+import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.frsApi.login.FrsLogin;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
 import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
 import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_WEB_SOCKET_URL;
 
@@ -77,30 +81,7 @@ public class VFRHomeFragment extends Fragment {
         if (getArguments() != null) {
             mDelay = getArguments().getLong(ARG_HOME_DELAY, ARG_HOME_DELAY_2000_MS);
         }
-
-        FrsWebSocketClient c = null; // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
-        try {
-            c = new FrsWebSocketClient( new URI( "ws://" + FRS_WEB_SOCKET_URL + ":80/fcsrecognizedresult" ));
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        c.connect();
-
-        FrsWebSocketClient c_un = null; // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
-        try {
-            c_un = new FrsWebSocketClient( new URI( "ws://" + FRS_WEB_SOCKET_URL + ":80/fcsnonrecognizedresult" ));
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        c_un.connect();
-
-        HashMap<String, String> mMap = new FrsLogin("ichen", "123456");
-        try {
-            OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN);
-//            OKHttpAgent.getInstance().getFRSRequest();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
     }
 
     @Nullable
@@ -148,4 +129,5 @@ public class VFRHomeFragment extends Fragment {
             }
         }
     }
+
 }

@@ -1,5 +1,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/detectBg"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@drawable/vfr_detection_bg"
@@ -7,6 +8,7 @@
     android:layout_height="match_parent">
 
     <FrameLayout
+        android:id="@+id/detectView"
         android:layout_marginTop="0dp"
         android:layout_gravity="center"
         android:gravity="center"
@@ -34,6 +36,29 @@
 
     </FrameLayout>
 
+    <FrameLayout
+        android:visibility="gone"
+        android:layout_marginTop="0dp"
+        android:layout_marginRight="218dp"
+        android:layout_marginBottom="80dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_width="330dp"
+        android:layout_height="330dp">
+
+        <ImageView
+            android:id="@+id/img1"
+            android:background="@drawable/vfr_selector_upload_image_frame"
+            android:src="@mipmap/ic_launcher"
+            android:layout_marginLeft="0dp"
+            android:padding="1dp"
+            android:layout_margin="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        </ImageView>
+
+    </FrameLayout>
 
 
     <LinearLayout
