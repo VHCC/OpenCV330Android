@@ -24,22 +24,36 @@
         android:layout_width="400dp"
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="300dp"
+        android:layout_marginBottom="400dp"
         android:layout_marginLeft="155dp"
         android:gravity="left|center"
-        android:text="Visitor"
+        android:text="Verifying"
         android:textColor="#FFFFFF"
         android:textSize="50dp">
+    </TextView>
 
+    <TextView
+        android:id="@+id/personNameReal"
+        android:layout_width="400dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="110dp"
+        android:layout_marginLeft="155dp"
+        android:gravity="left|center"
+        android:lineSpacingExtra="1dp"
+        android:lineSpacingMultiplier="0.7"
+        android:text=""
+        android:textColor="#FFFFFF"
+        android:textSize="50dp">
     </TextView>
 
     <TextView
         android:gravity="center|bottom"
         android:textColor="#FFFFFF"
         android:id="@+id/personRole"
-        android:text="Employee"
-        android:layout_marginRight="130dp"
-        android:layout_marginBottom="170dp"
+        android:text=""
+        android:layout_marginRight="178dp"
+        android:layout_marginBottom="190dp"
         android:textSize="35dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -51,7 +65,7 @@
         android:textColor="#706666"
         android:id="@+id/recognizedTime"
         android:text="Timestamp"
-        android:layout_marginRight="-50dp"
+        android:layout_marginRight="0dp"
         android:layout_marginBottom="120dp"
         android:textSize="35dp"
         android:layout_width="match_parent"
@@ -93,10 +107,10 @@
 
         <ImageView
             android:id="@+id/imgOrigin"
-            android:src="@drawable/vfr_icon"
+            android:src="@drawable/vfr_no_register_face"
             android:layout_marginLeft="0dp"
-            android:padding="1dp"
-            android:layout_margin="20dp"
+            android:padding="0dp"
+            android:layout_margin="10dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -133,15 +147,43 @@
 
 
 
-    <LinearLayout
-        android:visibility="gone"
+    <FrameLayout
         android:gravity="bottom"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <Button
+            android:visibility="gone"
+            android:layout_gravity="bottom|center_horizontal|right"
+            android:background="@drawable/vfr_system_setting"
+            android:id="@+id/adminSettingBtn"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"/>
+
+        <ImageView
+            android:id="@+id/faceStatus"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@drawable/vfr_offline"
+            android:layout_marginRight="380dp"
+            android:layout_marginBottom="30dp"
+            android:layout_width="78dp"
+            android:layout_height="25dp"/>
+
+        <ImageView
+            android:id="@+id/thermoStatus"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@drawable/vfr_online"
+            android:layout_marginLeft="95dp"
+            android:layout_marginBottom="30dp"
+            android:layout_width="78dp"
+            android:layout_height="25dp"/>
+
         <!-- App Edition -->
         <TextView
+            android:visibility="gone"
             android:id="@+id/appVersion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -155,6 +197,7 @@
 
         <!-- CopyRight-->
         <TextView
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/common_edit_text_margin_bottom_top"
@@ -162,6 +205,6 @@
             android:text="Advantech 2020 WPC"
             android:textColor="#bbc4d1" />
 
-    </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>

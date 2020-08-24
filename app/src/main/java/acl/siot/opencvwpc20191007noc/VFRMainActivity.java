@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.SparseBooleanArray;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
@@ -163,6 +164,8 @@ public class VFRMainActivity extends AppCompatActivity {
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
 
+        private boolean isAppOpened = false;
+
         // logic fields
         private int lastPosition = PAGE_HOME;
 
@@ -180,8 +183,11 @@ public class VFRMainActivity extends AppCompatActivity {
                     vfrHomeFragment.setHomeFragmentListener(new VFRHomeFragment.OnHomeFragmentInteractionListener() {
                         public void onShowEnd() {
                             mLog.d(TAG, "onShowEnd()");
+                            if (!isAppOpened) {
+                                isAppOpened = true;
+                                mViewPager.setCurrentItem(PAGE_DETECT);
+                            }
 //                            mViewPager.setCurrentItem(PAGE_WELCOME);
-                            mViewPager.setCurrentItem(PAGE_DETECT);
                         }
                     });
                     fragment = vfrHomeFragment;
@@ -272,8 +278,10 @@ public class VFRMainActivity extends AppCompatActivity {
                     break;
                 case PAGE_DETECT:
 //                    ((DashboardMainFragment)fragments[PAGE_DASHBOARD]).userLogOutSucceed();
+                    break;
             }
             lastPosition = position;
+            mLog.d(TAG, "lastPosition: " + lastPosition);
         }
 
         @Override
@@ -355,7 +363,6 @@ public class VFRMainActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_LANGUAGE);
             }
         };
-
     }
 
     private long firstTime; // 监听两次返回
@@ -375,5 +382,4 @@ public class VFRMainActivity extends AppCompatActivity {
         }
         return false;
     }
-
 }

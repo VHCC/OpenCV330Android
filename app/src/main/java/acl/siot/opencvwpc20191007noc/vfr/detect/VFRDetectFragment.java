@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +23,9 @@ import android.widget.TextView;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -40,12 +44,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
+import acl.siot.opencvwpc20191007noc.frsApi.modifyPersonInfo.FrsModifyPersonInfo;
 import acl.siot.opencvwpc20191007noc.frsApi.verify.FrsVerify;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout;
@@ -55,6 +62,7 @@ import androidx.fragment.app.Fragment;
 
 import static acl.siot.opencvwpc20191007noc.App.isFRServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment.staticVerifySwitch;
 
 /**
@@ -92,6 +100,8 @@ public class VFRDetectFragment extends Fragment {
     private FrameLayout detectView;
 
     private ImageView img1;
+    private ImageView faceStatus;
+    private ImageView thermoStatus;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -164,6 +174,8 @@ public class VFRDetectFragment extends Fragment {
         detectView = rootView.findViewById(R.id.detectView);
 
         img1 = rootView.findViewById(R.id.img1);
+        faceStatus = rootView.findViewById(R.id.faceStatus);
+        thermoStatus = rootView.findViewById(R.id.thermoStatus);
     }
 
     private void initViewsFeature() {
@@ -202,16 +214,18 @@ public class VFRDetectFragment extends Fragment {
         if (isVisibleToUser) {
             mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
             mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
-            if (!isFRServerConnected) {
-                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_not_connect_bk));
-                detectView.setVisibility(View.INVISIBLE);
-//            } else if (!isThermometerServerConnected) {
-//                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_not_connect_bk));
-//                detectView.setVisibility(View.INVISIBLE);
-            } else {
+
+            faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+            thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+
+//            if (isFRServerConnected || isThermometerServerConnected) {
+            if (true) {
                 detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_detection_bg));
                 detectView.setVisibility(View.VISIBLE);
                 lazyLoad();
+            } else {
+                detectBg.setBackground(getContext().getResources().getDrawable(R.drawable.vfr_not_connect_bk));
+                detectView.setVisibility(View.INVISIBLE);
             }
         } else {
         }
@@ -245,6 +259,7 @@ public class VFRDetectFragment extends Fragment {
     public void onResume() {
         mLog.d(TAG, " * onResume");
         super.onResume();
+        lazyLoad();
     }
 
     @Override
@@ -263,6 +278,7 @@ public class VFRDetectFragment extends Fragment {
 
     @Override
     public void onStop() {
+        mLog.d(TAG, " * onStop");
         super.onStop();
     }
 
@@ -288,7 +304,8 @@ public class VFRDetectFragment extends Fragment {
     // ***********************************
     // 初始化窗口设置, 包括全屏、横屏、常亮
     private void initWindowSettings() {
-        getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        getActivity().getWindow().setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
@@ -318,7 +335,8 @@ public class VFRDetectFragment extends Fragment {
         }
         openCvCameraView.setMaxFrameSize(1366, 720);
         openCvCameraView.enableView();
-//        openCvCameraView.enableFpsMeter();
+        openCvCameraView.enableFpsMeter();
+//        openCvCameraView.setCameraDistance(0.8f);
     }
 
     Display display;
@@ -419,8 +437,6 @@ public class VFRDetectFragment extends Fragment {
                                 mLog.d(TAG, " ***** faceImageBitmap numberOfFaceDetected= " + numberOfFaceDetected);
                                 AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_TEST));
 //                                if (numberOfFaceDetected == 0) {
-
-
                                     cacheIndex = 0;
 
                                     staticVerifySwitch = true;
@@ -433,14 +449,14 @@ public class VFRDetectFragment extends Fragment {
 //                HashMap<String, String> mMap = new UpdateImage("5de8a9b11cce9e1a10b14391", encoded);
                                     FrsVerify mMap = new FrsVerify(encoded);
                                     writeToFile(encoded);
-                                    try {
-                                        OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+//                                    try {
+//                                        OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY);
+//                                    } catch (IOException e) {
+//                                        e.printStackTrace();
+//                                    }
 
                                     mLog.d(TAG, " * detect done ");
-                                    AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
+//                                    AppBus.getInstance().post(new BusEvent("face detect done", FACE_DETECT_DONE));
 //                                }
                             } else if (cacheIndex > 3) {
                                 cacheIndex = 0;
@@ -450,7 +466,7 @@ public class VFRDetectFragment extends Fragment {
 
                         Imgproc.rectangle(mRgba, faceRect.tl(), faceRect.br(), faceRectColor, 3);
                     } else {
-                        mLog.d(TAG, "NO OVER FACE_THRESHOLD" + FACE_THRESHOLD + ", * width= " + faceRect.width + ", height= " + faceRect.height);
+//                        mLog.d(TAG, "NO OVER FACE_THRESHOLD" + FACE_THRESHOLD + ", * width= " + faceRect.width + ", height= " + faceRect.height);
                         noDetectCount ++;
 //                        cacheIndex = 0;
                     }
@@ -478,6 +494,8 @@ public class VFRDetectFragment extends Fragment {
 
     public static ArrayList<Bitmap> vfrFaceCacheArray = new ArrayList<>();
 
+    public static float person_temp_static = 0.0f;
+
     public void onEventMainThread(BusEvent event){
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
@@ -499,6 +517,16 @@ public class VFRDetectFragment extends Fragment {
                 break;
             case FACE_DETECT_TEST:
 //                img1.setImageBitmap(vfrFaceCacheArray.get(0));
+                break;
+            case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
+                try {
+                    String response = event.getMessage();
+                    JSONObject jsonObj = new JSONObject(response);
+                    person_temp_static = (float) jsonObj.getDouble("Temperature");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 break;
         }
     }
@@ -564,7 +592,7 @@ public class VFRDetectFragment extends Fragment {
                     }
 
                     if (tick_count % 1 == 0 && (noDetectCount == 0)) {
-//                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
+                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
                         getBitmapFlag = true;
                     }
 
@@ -609,6 +637,4 @@ public class VFRDetectFragment extends Fragment {
             mLog.e(TAG, "File write failed: " + e.toString());
         }
     }
-
-
 }

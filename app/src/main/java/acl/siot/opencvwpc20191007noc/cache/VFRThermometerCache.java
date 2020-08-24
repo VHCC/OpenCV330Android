@@ -62,7 +62,7 @@ public class VFRThermometerCache {
 
     public float getAlertTemp() {
         Map<String, ?> map = sp.getAll();
-        return (((Float) map.get(SHARE_THERMO_INFO_ALERT_TEMP)) == null) ? 0.0f : ((Float) map.get(SHARE_THERMO_INFO_ALERT_TEMP));
+        return (((Float) map.get(SHARE_THERMO_INFO_ALERT_TEMP)) == null) ? 37.5f : ((Float) map.get(SHARE_THERMO_INFO_ALERT_TEMP));
     }
 
     public void setAlertTemp(float alertTemp) {

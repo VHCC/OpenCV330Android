@@ -56,6 +56,7 @@ public class VFRHomeFragment extends Fragment {
 
     public static JSONArray staticPersonsArray;
     public static ArrayList<String> staticPersonsEmployeeNoArray = new ArrayList<>();
+    public static Boolean isGetStaticPersonsEmployeeNoArray = false;
 
     public VFRHomeFragment() {
     }

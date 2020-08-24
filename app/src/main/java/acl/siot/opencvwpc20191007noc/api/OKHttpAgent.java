@@ -25,16 +25,18 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
+import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -267,10 +269,12 @@ public class OKHttpAgent {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                isThermometerServerConnected = false;
                 mLog.e(TAG, "e= " + e.getMessage());
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
             } catch (JSONException e) {
                 e.printStackTrace();
+                isThermometerServerConnected = false;
                 mLog.e(TAG, "e= " + e.getMessage());
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
             }
@@ -356,6 +360,7 @@ public class OKHttpAgent {
                 JSONObject personInfo = (JSONObject) person.get("person_info");
                 staticPersonsEmployeeNoArray.add(personInfo.getString("employeeno"));
             }
+            isGetStaticPersonsEmployeeNoArray = true;
             AppBus.getInstance().post(new BusEvent("login success", APP_CODE_FRS_LOGIN_SUCCESS));
 //            mLog.i(TAG, "staticPersonsEmployeeNoArray length= " + staticPersonsEmployeeNoArray.size());
             try {

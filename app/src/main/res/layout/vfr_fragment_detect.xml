@@ -12,7 +12,7 @@
         android:layout_marginTop="0dp"
         android:layout_gravity="center"
         android:gravity="center"
-        android:layout_width="960dp"
+        android:layout_width="710dp"
         android:layout_height="520dp">
 
         <org.opencv.android.JavaCameraView
@@ -101,6 +101,24 @@
             android:layout_width="50dp"
             android:layout_height="50dp"/>
 
+        <ImageView
+            android:id="@+id/faceStatus"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@drawable/vfr_offline"
+            android:layout_marginRight="380dp"
+            android:layout_marginBottom="30dp"
+            android:layout_width="78dp"
+            android:layout_height="25dp"/>
+
+        <ImageView
+            android:id="@+id/thermoStatus"
+            android:layout_gravity="bottom|center_horizontal"
+            android:src="@drawable/vfr_online"
+            android:layout_marginLeft="95dp"
+            android:layout_marginBottom="30dp"
+            android:layout_width="78dp"
+            android:layout_height="25dp"/>
+        
         <!-- App Edition -->
         <TextView
             android:id="@+id/appVersion"
