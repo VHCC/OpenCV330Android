@@ -2,6 +2,8 @@ package acl.siot.opencvwpc20191007noc.vfr.upload;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,9 +22,14 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import org.ejml.data.DenseMatrix64F;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opencv.core.Core;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,6 +50,11 @@ import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.frsApi.getFaceImage.FrsGetFaceImage;
 import acl.siot.opencvwpc20191007noc.frsApi.modifyPersonInfo.FrsModifyPersonInfo;
 import acl.siot.opencvwpc20191007noc.frsApi.verify.FrsVerify;
+import acl.siot.opencvwpc20191007noc.objectDetect.AnchorUtil;
+import acl.siot.opencvwpc20191007noc.objectDetect.Classifier;
+import acl.siot.opencvwpc20191007noc.objectDetect.ImageUtils;
+import acl.siot.opencvwpc20191007noc.objectDetect.ObjectDetectInfo;
+import acl.siot.opencvwpc20191007noc.objectDetect.TLiteObjectDetectionAPI;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -104,6 +116,17 @@ public class VFRVerifyFragment extends Fragment {
     public VFRVerifyFragment() {
     }
 
+
+
+    public static DenseMatrix64F[] anchors;
+
+    private Classifier detector;
+
+    private static final int TF_OD_API_INPUT_SIZE = 260;
+    private static final boolean TF_OD_API_IS_QUANTIZED = false;
+    private static final String TF_OD_API_MODEL_FILE = "face_mask_detection.tflite";
+    private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/face_mask_detection.txt";
+
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -124,6 +147,27 @@ public class VFRVerifyFragment extends Fragment {
         if (getArguments() != null) {
         }
         AppBus.getInstance().register(this);
+
+        anchors = AnchorUtil.getInstance().generateAnchors();
+
+        int cropSize = TF_OD_API_INPUT_SIZE;
+        try {
+            detector =
+                    TLiteObjectDetectionAPI.create(
+                            getContext().getAssets(),
+                            TF_OD_API_MODEL_FILE,
+                            TF_OD_API_LABELS_FILE,
+                            TF_OD_API_INPUT_SIZE,
+                            TF_OD_API_IS_QUANTIZED);
+            cropSize = TF_OD_API_INPUT_SIZE;
+        } catch (final IOException e) {
+            e.printStackTrace();
+            mLog.e(TAG, "Exception initializing classifier!");
+            Toast toast =
+                    Toast.makeText(
+                            getContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
 
@@ -262,6 +306,52 @@ public class VFRVerifyFragment extends Fragment {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint() && vfrFaceCacheArray.size() > 0) {
             img1.setImageBitmap(vfrFaceCacheArray.get(0));
+
+            Matrix frameToCropTransform;
+            Matrix cropToFrameTransform;
+
+            Bitmap croppedBitmap = Bitmap.createBitmap(260, 260, Bitmap.Config.ARGB_8888);
+
+            frameToCropTransform =
+                    ImageUtils.getTransformationMatrix(
+                            vfrFaceCacheArray.get(0).getWidth(), vfrFaceCacheArray.get(0).getHeight(),
+                            260, 260,
+                            0, false);
+
+//        frameToCropTransform =
+//                ImageUtils.getTransformationMatrix(
+//                        1080, 720,
+//                        260, 260,
+//                        0, false);
+
+            cropToFrameTransform = new Matrix();
+            frameToCropTransform.invert(cropToFrameTransform);
+
+            final Canvas canvas = new Canvas(croppedBitmap);
+            canvas.drawBitmap(vfrFaceCacheArray.get(0), frameToCropTransform, null);
+
+            ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
+            if (results != null) {
+                switch(results.getClasses()) {
+                    case 1: // NoMask
+//                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
+//                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_red, 3);
+//                        Imgproc.putText(mRgba, "No Mask " + String.format("(%.1f%%) ", results.getConfidence() * 100.0f) , new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(255,0,0), 2);
+                        Toast.makeText(getContext(), "No Mask", Toast.LENGTH_LONG).show();
+                        break;
+                    case 0: // Mask
+//                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width + offset, results.getY_min() * height + offset),
+//                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_green, 3);
+//                        Imgproc.putText(mRgba, "Mask " + String.format("(%.1f%%) ", results.getConfidence() * 100.0f), new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(0,255,0), 2);
+                        Toast.makeText(getContext(), "Mask On", Toast.LENGTH_LONG).show();
+                        break;
+                }
+                mLog.i(TAG, "mask result= " + results.toString());
+            }
+
+
+
+
 //            img2.setImageBitmap(vfrFaceCacheArray.get(1));
 //            img3.setImageBitmap(vfrFaceCacheArray.get(2));
 //            verifySwitch = true;
@@ -419,6 +509,12 @@ public class VFRVerifyFragment extends Fragment {
                 imgOrigin.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.vfr_no_register_face));
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
+                if (!isFRServerConnected) {
+                    personNameReal.setText("");
+                    personName.setText("Visitor");
+                    personRole.setText("");
+                }
+
 //                if (!isDetectTemperature) {
 //                    try {
 //                        String response = event.getMessage();
