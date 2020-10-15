@@ -36,7 +36,7 @@ import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStatic
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -175,7 +175,7 @@ public class OKHttpAgent {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-//            mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", request= " + json);
+            mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", request= " + json);
             RequestBody body = RequestBody.create(JSON, json);
 
             Request request = new Request.Builder()
@@ -188,7 +188,7 @@ public class OKHttpAgent {
             try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
-//                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
                     case 200: {
                         JSONObject jsonObj = new JSONObject(result);
@@ -204,12 +204,16 @@ public class OKHttpAgent {
             } catch (IOException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                if (mIRequestInterface != null) {
+                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
 //                mIRequestInterface.onRequestFail(e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                if (mIRequestInterface != null) {
+                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                }
             }
         }
 
@@ -260,12 +264,12 @@ public class OKHttpAgent {
                 JSONObject jsonObj = new JSONObject(result);
 //                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
-                    case 200: {
+                    case 200:
                         handleResult(jsonObj, getCode);
-                    } break;
-                    default: {
+                        break;
+                    default:
                         handleResult(jsonObj, getCode);
-                    } break;
+                        break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -280,17 +284,16 @@ public class OKHttpAgent {
             }
         }
 
-        private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
+        private void handleResult(JSONObject jsonObj, int getCode) throws JSONException {
 //            System.out.println(jsonObj.toString());
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
-                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
+                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), getCode);
             } else {
-                mLog.d(TAG, "GetThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
-
+                mLog.d(TAG, "GetThread@" + this.hashCode() + ", response= " + jsonObj.toString(4) + ", getCode= " + getCode);
                 try {
-                    mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
+                    mIRequestInterface.onRequestSuccess(jsonObj.toString(), getCode);
                     // TODO
                     // watch out the situations whose errorCode are not 0.
                 } catch (Exception e) {
@@ -370,8 +373,6 @@ public class OKHttpAgent {
             }
         }
     }
-
-
 
     public synchronized void postRequest(HashMap mData, int requestCode) throws IOException {
 //        mLog.d(TAG, "request post= " + mData.toString());

@@ -12,18 +12,24 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import java.io.IOException;
+import java.util.HashMap;
+
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 
 /**
  * Created by IChen.Chu on 2020/05/25
@@ -156,6 +162,14 @@ public class VFRAdminSettingFragment extends Fragment {
 
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
                 AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
+
+                HashMap<String, String> mMap = new GetTemp();
+                try {
+                    OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 onFragmentInteractionListener.clickConfirm();
             }
         });

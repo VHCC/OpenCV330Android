@@ -6,6 +6,8 @@ import org.opencv.BuildConfig;
 import org.opencv.R;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
+import org.opencv.utils.MLog;
+import org.opencv.utils.SystemPropertiesProxy;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,7 +31,9 @@ import android.view.SurfaceView;
  */
 public abstract class CameraBridgeViewBase extends SurfaceView implements SurfaceHolder.Callback {
 
-    private static final String TAG = "CameraBridge";
+    private static final MLog mLog = new MLog(false);
+    private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
+
     private static final int MAX_UNSPECIFIED = -1;
     private static final int STOPPED = 0;
     private static final int STARTED = 1;
@@ -68,7 +72,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         super(context, attrs);
 
         int count = attrs.getAttributeCount();
-        Log.d(TAG, "Attr count: " + Integer.valueOf(count));
+        mLog.d(TAG, "Attr count: " + Integer.valueOf(count));
 
         TypedArray styledAttrs = getContext().obtainStyledAttributes(attrs, R.styleable.CameraBridgeViewBase);
         if (styledAttrs.getBoolean(R.styleable.CameraBridgeViewBase_show_fps, false))
@@ -159,7 +163,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
                     result = mOldStyleListener.onCameraFrame(inputFrame.gray());
                     break;
                 default:
-                    Log.e(TAG, "Invalid frame format! Only RGBA and Gray Scale are supported!");
+                    mLog.e(TAG, "Invalid frame format! Only RGBA and Gray Scale are supported!");
             };
 
             return result;
@@ -191,7 +195,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     };
 
     public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
-        Log.d(TAG, "call surfaceChanged event");
+        mLog.d(TAG, "call surfaceChanged event");
         synchronized(mSyncObject) {
             if (!mSurfaceExist) {
                 mSurfaceExist = true;
@@ -297,7 +301,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
      * Called when mSyncObject lock is held
      */
     private void checkCurrentState() {
-        Log.d(TAG, "call checkCurrentState");
+        mLog.d(TAG, "call checkCurrentState");
         int targetState;
 
         if (mEnabled && mSurfaceExist && getVisibility() == VISIBLE) {
@@ -315,7 +319,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     }
 
     private void processEnterState(int state) {
-        Log.d(TAG, "call processEnterState: " + state);
+        mLog.d(TAG, "call processEnterState: " + state);
         switch(state) {
         case STARTED:
             onEnterStartedState();
@@ -333,7 +337,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     }
 
     private void processExitState(int state) {
-        Log.d(TAG, "call processExitState: " + state);
+        mLog.d(TAG, "call processExitState: " + state);
         switch(state) {
         case STARTED:
             onExitStartedState();
@@ -355,7 +359,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
     // NOTE: The order of bitmap constructor and camera connection is important for android 4.1.x
     // Bitmap must be constructed before surface
     private void onEnterStartedState() {
-        Log.d(TAG, "call onEnterStartedState");
+        mLog.d(TAG, "call onEnterStartedState");
         /* Connect camera */
         if (!connectCamera(getWidth(), getHeight())) {
             AlertDialog ad = new AlertDialog.Builder(getContext()).create();
@@ -399,9 +403,9 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             try {
                 Utils.matToBitmap(modified, mCacheBitmap);
             } catch(Exception e) {
-                Log.e(TAG, "Mat type: " + modified);
-                Log.e(TAG, "Bitmap type: " + mCacheBitmap.getWidth() + "*" + mCacheBitmap.getHeight());
-                Log.e(TAG, "Utils.matToBitmap() throws an exception: " + e.getMessage());
+                mLog.e(TAG, "Mat type: " + modified);
+                mLog.e(TAG, "Bitmap type: " + mCacheBitmap.getWidth() + "*" + mCacheBitmap.getHeight());
+                mLog.e(TAG, "Utils.matToBitmap() throws an exception: " + e.getMessage());
                 bmpValid = false;
             }
         }
@@ -411,7 +415,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             if (canvas != null) {
                 canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
                 if (BuildConfig.DEBUG)
-//                    Log.d(TAG, "mStretch value: " + mScale);
+//                    mLog.d(TAG, "mStretch value: " + mScale);
 
                 if (mScale != 0) {
                     canvas.drawBitmap(mCacheBitmap, new Rect(0,0,mCacheBitmap.getWidth(), mCacheBitmap.getHeight()),
@@ -478,14 +482,14 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
         int maxAllowedWidth = (mMaxWidth != MAX_UNSPECIFIED && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
         int maxAllowedHeight = (mMaxHeight != MAX_UNSPECIFIED && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
 
-        Log.d(TAG, "mMaxWidth : " + mMaxWidth + ", mMaxHeight= " + mMaxHeight);
-        Log.d(TAG, "surfaceWidth : " + surfaceWidth + ", surfaceHeight= " + surfaceHeight);
-        Log.d(TAG, "maxAllowedWidth : " + maxAllowedWidth + ", maxAllowedHeight= " + maxAllowedHeight);
+        mLog.d(TAG, "mMaxWidth : " + mMaxWidth + ", mMaxHeight= " + mMaxHeight);
+        mLog.d(TAG, "surfaceWidth : " + surfaceWidth + ", surfaceHeight= " + surfaceHeight);
+        mLog.d(TAG, "maxAllowedWidth : " + maxAllowedWidth + ", maxAllowedHeight= " + maxAllowedHeight);
 
         for (Object size : supportedSizes) {
             int width = accessor.getWidth(size);
             int height = accessor.getHeight(size);
-            Log.d(TAG, "supportedWidth : " + width + ", supportedHeight= " + height);
+            mLog.d(TAG, "supportedWidth : " + width + ", supportedHeight= " + height);
             if (width <= maxAllowedWidth && height <= maxAllowedHeight) {
                 if (width >= calcWidth && height >= calcHeight) {
                     calcWidth = (int) width;
@@ -494,10 +498,19 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             }
         }
 
-//        Log.d(TAG, "calcWidth : " + calcWidth + ", calcHeight= " + calcHeight);
+//        mLog.d(TAG, "calcWidth : " + calcWidth + ", calcHeight= " + calcHeight);
 
 //        return new Size(calcWidth, calcHeight);
 //        return new Size(1280, 720);
-        return new Size(1600, 1200);
+//        return new Size(1920, 1080);
+        switch (SystemPropertiesProxy.get("ro.product.model")) {
+            case "usc_130_160":
+                return new Size(1600, 1200);
+            case "UTC-115G":
+                return new Size(1920, 1080);
+            default:
+                return new Size(calcWidth, calcHeight);
+        }
+
     }
 }

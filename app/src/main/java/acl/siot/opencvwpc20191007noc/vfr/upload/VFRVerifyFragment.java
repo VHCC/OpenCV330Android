@@ -56,6 +56,7 @@ import acl.siot.opencvwpc20191007noc.objectDetect.ImageUtils;
 import acl.siot.opencvwpc20191007noc.objectDetect.ObjectDetectInfo;
 import acl.siot.opencvwpc20191007noc.objectDetect.TLiteObjectDetectionAPI;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -68,6 +69,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_VERIFY_UN_RECOGNIZED;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment.person_temp_static;
+import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment.thermo_is_human;
 import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment.vfrFaceCacheArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
@@ -163,10 +165,7 @@ public class VFRVerifyFragment extends Fragment {
         } catch (final IOException e) {
             e.printStackTrace();
             mLog.e(TAG, "Exception initializing classifier!");
-            Toast toast =
-                    Toast.makeText(
-                            getContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
-            toast.show();
+            MessageTools.showToast(getContext(), "Classifier could not be initialized");
         }
     }
 
@@ -305,6 +304,7 @@ public class VFRVerifyFragment extends Fragment {
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint() && vfrFaceCacheArray.size() > 0) {
+            isThermometerDetectDone = false;
             img1.setImageBitmap(vfrFaceCacheArray.get(0));
 
             Matrix frameToCropTransform;
@@ -337,13 +337,13 @@ public class VFRVerifyFragment extends Fragment {
 //                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
 //                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_red, 3);
 //                        Imgproc.putText(mRgba, "No Mask " + String.format("(%.1f%%) ", results.getConfidence() * 100.0f) , new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(255,0,0), 2);
-                        Toast.makeText(getContext(), "No Mask", Toast.LENGTH_LONG).show();
+//                        MessageTools.showToast(getContext(), "No Mask");
                         break;
                     case 0: // Mask
 //                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width + offset, results.getY_min() * height + offset),
 //                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_green, 3);
 //                        Imgproc.putText(mRgba, "Mask " + String.format("(%.1f%%) ", results.getConfidence() * 100.0f), new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(0,255,0), 2);
-                        Toast.makeText(getContext(), "Mask On", Toast.LENGTH_LONG).show();
+//                        MessageTools.showToast(getContext(), "Mask On");
                         break;
                 }
                 mLog.i(TAG, "mask result= " + results.toString());
@@ -365,29 +365,9 @@ public class VFRVerifyFragment extends Fragment {
             CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
             recognizedTime.setText(s);
 
-            if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
-                MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
-                mPlayer.start();
-                mLog.d(TAG, "WARN, person_temp_static= " + df.format(person_temp_static));
-                if(android.os.Build.VERSION.SDK_INT >= 21){
-                    verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
-                } else {
-                    verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ng_bg));
-                }
+            mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
+            mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
 
-            } else {
-                mLog.d(TAG, "SAFE, person_temp_static= " + df.format(person_temp_static));
-                if(android.os.Build.VERSION.SDK_INT >= 21){
-                    verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ok_bg));
-                } else {
-                    verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ok_bg));
-                }
-            }
-
-            personTemperature.setText(df.format(person_temp_static));
-            if (!isThermometerServerConnected) {
-                personTemperature.setText("N/A");
-            }
             if(android.os.Build.VERSION.SDK_INT >= 21){
                 faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                 thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
@@ -395,8 +375,6 @@ public class VFRVerifyFragment extends Fragment {
                 faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
                 thermoStatus.setImageDrawable(isThermometerServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
             }
-
-
         }
     }
 
@@ -430,6 +408,8 @@ public class VFRVerifyFragment extends Fragment {
         AppBus.getInstance().unregister(this);
         super.onDestroy();
     }
+
+    boolean isThermometerDetectDone = false;
 
     public void onEventMainThread(BusEvent event){
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
@@ -478,7 +458,6 @@ public class VFRVerifyFragment extends Fragment {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
                 try {
                     staticPersonInfo.put("cardno", df.format(person_temp_static));
 
@@ -509,66 +488,58 @@ public class VFRVerifyFragment extends Fragment {
                 imgOrigin.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.vfr_no_register_face));
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
+                mLog.d(TAG, " -- isThermometerDetectDone= " + isThermometerDetectDone);
                 if (!isFRServerConnected) {
                     personNameReal.setText("");
                     personName.setText("Visitor");
                     personRole.setText("");
                 }
+//                mLog.d(TAG, "person_temp_static= " + person_temp_static + ", thermo_is_human= " + thermo_is_human);
 
-//                if (!isDetectTemperature) {
-//                    try {
-//                        String response = event.getMessage();
-//                        JSONObject jsonObj = new JSONObject(response);
-//                        person_temp = (float) jsonObj.getDouble("Temperature");
-////                        mLog.d(TAG, "person_temp= " + person_temp);
-////                    mLog.d(TAG, "person_temp= " + df.format(person_temp));
-//
-//                        if (person_temp > VFRThermometerCache.getInstance().getAlertTemp()) {
-//                            mLog.d(TAG, "WARN, person_temp= " + df.format(person_temp));
-//                            if(android.os.Build.VERSION.SDK_INT >= 21){
-//                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
-//                            } else {
-//                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ng_bg));
-//                            }
-//
-//                        } else {
-//                            mLog.d(TAG, "SAFE, person_temp= " + df.format(person_temp));
-//                            if(android.os.Build.VERSION.SDK_INT >= 21){
-//                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ok_bg));
-//                            } else {
-//                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ok_bg));
-//                            }
-//
-//                        }
-//
-//                        personTemperature.setText(df.format(person_temp));
-//
-////                        mLog.d(TAG, "staticPersonInfo= " + staticPersonInfo.toString());
-////                        mLog.d(TAG, "cardno= " + staticPersonInfo.getString("cardno"));
-//                        staticPersonInfo.put("cardno", df.format(person_temp));
-////                        mLog.d(TAG, "staticPersonInfo= " + staticPersonInfo.toString());
-////                        mLog.d(TAG, "cardno= " + staticPersonInfo.getString("cardno"));
-//
-//                        JSONArray groupList = staticPersonInfo.getJSONArray("group_list");
-//                        JSONArray department_list = staticPersonInfo.getJSONArray("department_list");
-//
-////                        mLog.d(TAG, "groupList= " + groupList.toString());
-////                        mLog.d(TAG, "groupList length= " + groupList.length());
-////                        mLog.d(TAG, "department_list length= " + department_list.length());
-//
-//                        HashMap<String, Object> mMap = new FrsModifyPersonInfo(staticPersonID, staticPersonInfo);
-//                        try {
-//                            OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//
-//                        isDetectTemperature = true;
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                if (!isThermometerDetectDone) {
+                    if (thermo_is_human) {
+                        isThermometerDetectDone = true;
+                        if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
+                            MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
+                            mPlayer.start();
+                            mLog.d(TAG, "WARN, person_temp_static= " + df.format(person_temp_static));
+                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
+                            } else {
+                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ng_bg));
+                            }
 
+                        } else {
+                            mLog.d(TAG, "SAFE, person_temp_static= " + df.format(person_temp_static));
+                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                                verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ok_bg));
+                            } else {
+                                verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ok_bg));
+                            }
+                        }
+                        personTemperature.setText(df.format(person_temp_static));
+                    } else {
+                        MessageTools.showToast(getContext(), "Please Closer to Monitor");
+                        personTemperature.setText(df.format(person_temp_static));
+                    }
+
+                }
+
+
+                if (!isThermometerServerConnected) {
+                    personTemperature.setText("N/A");
+                }
+
+                mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
+                mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
+
+                if(android.os.Build.VERSION.SDK_INT >= 21){
+                    faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+                    thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+                } else {
+                    faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
+                    thermoStatus.setImageDrawable(isThermometerServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
+                }
                 break;
         }
     }

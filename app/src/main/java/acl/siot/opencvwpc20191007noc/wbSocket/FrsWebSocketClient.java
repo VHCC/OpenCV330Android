@@ -53,7 +53,7 @@ public class FrsWebSocketClient  extends WebSocketClient {
 
     @Override
     public void onOpen(ServerHandshake handshakedata) {
-        mLog.i(TAG, "opened connection" );
+        mLog.i(TAG, " + opened connection, " + handshakedata.getHttpStatusMessage() );
         isFRServerConnected = true;
     }
 
@@ -109,13 +109,13 @@ public class FrsWebSocketClient  extends WebSocketClient {
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        mLog.i(TAG, "Connection closed by " + ( remote ? "remote peer" : "us" ) + " Code: " + code + " Reason: " + reason  );
+        mLog.i(TAG, " + Connection closed by " + ( remote ? "remote peer" : "us" ) + ", Code: " + code + ", Reason: " + reason  );
         isFRServerConnected = false;
     }
 
     @Override
     public void onError(Exception ex) {
         ex.printStackTrace();
-        mLog.i(TAG, "error= " + ex);
+        mLog.i(TAG, " + error= " + ex);
     }
 }

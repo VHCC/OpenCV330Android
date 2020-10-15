@@ -19,6 +19,8 @@ import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutTransformer;
 import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
+import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPasswordFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminSettingFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRLanguageFragment;
@@ -36,7 +38,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class VFRMainActivity extends AppCompatActivity {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     private final int RC_PERMISSIONS = 9001;
@@ -103,7 +105,7 @@ public class VFRMainActivity extends AppCompatActivity {
                         grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 //                    startActivity(new Intent(this, DetectActivity.class));
                 } else {
-                    Toast.makeText(this, "權限不足", Toast.LENGTH_LONG).show();
+                    MessageTools.showToast(this, "權限不足");
                 }
         }
     }
@@ -185,7 +187,12 @@ public class VFRMainActivity extends AppCompatActivity {
                             mLog.d(TAG, "onShowEnd()");
                             if (!isAppOpened) {
                                 isAppOpened = true;
-                                mViewPager.setCurrentItem(PAGE_DETECT);
+                                switch (SystemPropertiesProxy.get("ro.product.model")) {
+                                    case "usc_130_160":
+                                    case "UTC-115G":
+                                        mViewPager.setCurrentItem(PAGE_DETECT);
+                                        break;
+                                }
                             }
 //                            mViewPager.setCurrentItem(PAGE_WELCOME);
                         }
@@ -376,7 +383,7 @@ public class VFRMainActivity extends AppCompatActivity {
                 return true;
             } else {
                 firstTime = System.currentTimeMillis();
-                Toast.makeText(this, "再點一次退出應用", Toast.LENGTH_SHORT).show();
+                MessageTools.showToast(this, "再點一次退出應用");
                 return false;
             }
         }

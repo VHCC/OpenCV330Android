@@ -21,7 +21,7 @@ import androidx.fragment.app.Fragment;
  */
 public class VFRWelcomeFragment extends Fragment {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants

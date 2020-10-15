@@ -55,6 +55,7 @@ public class HomeFragment extends Fragment {
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
+        mLog.d(TAG, " * onCreate");
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mDelay = getArguments().getLong(ARG_HOME_DELAY, ARG_HOME_DELAY_2000_MS);
@@ -64,12 +65,14 @@ public class HomeFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        mLog.d(TAG, " * onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_home, container, false);
         return rootView;
     }
 
     @Override
     public void onResume() {
+        mLog.d(TAG, " * onResume");
         super.onResume();
         mHandler.postDelayed(mFragmentRunnable, mDelay);
     }

@@ -19,6 +19,7 @@ import android.app.ActivityManager;
 import android.app.Application;
 import android.content.res.Configuration;
 import android.os.Build;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -50,6 +51,7 @@ import acl.siot.opencvwpc20191007noc.util.AppStateTracker;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
+import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
 import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
@@ -80,6 +82,8 @@ public class App extends Application {
         System.loadLibrary("opencv_java3");
     }
 
+    final int DEVICE_NOT_SUPPORT = 9066;
+
     // Http Mechanism
     private OnRequestListener mOnRequestListener = new OnRequestListener();
 
@@ -88,7 +92,11 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         mLog.i(TAG, "========== app start ==========");
+        // HTTP Mechanism
+        OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
 
+        // register event Bus
+        AppBus.getInstance().register(this);
 //        mLog.d(TAG, LocaleList.getDefault().toLanguageTags());
 
 //        LocaleUtils.setLocale(new Locale("zh", "TW"));
@@ -97,7 +105,6 @@ public class App extends Application {
         config.locale = new Locale("zh", "TW");
         getBaseContext().getResources()
                 .updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
-
 
         VFREdgeCache.getInstance().newInstance(this);
         VFRThermometerCache.getInstance().newInstance(this);
@@ -111,12 +118,6 @@ public class App extends Application {
 
         setupTheme();
         setupAppStateTracking();
-
-        // HTTP Mechanism
-        OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
-
-        // register event Bus
-        AppBus.getInstance().register(this);
     }
 
     @Override
@@ -203,6 +204,7 @@ public class App extends Application {
 
                     if (tick_count % 60 == 6) {
                         if (!isGetStaticPersonsEmployeeNoArray) {
+                            mLog.d(TAG, " *** try connect to FRS Server");
                             AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
                         }
 //                        HashMap<String, String> mMap = new GetFace("5de8a9b11cce9e1a10b14391");
@@ -215,11 +217,17 @@ public class App extends Application {
                     }
 
                     if (tick_count % 10 == 0) {
-                        // Check FRS Server
-
+                        mLog.d(TAG, getDeviceModel());
+                        // Check Device Model
+                        switch (getDeviceModel()) {
+                            case "usc_130_160":
+                            case "UTC-115G":
+                                break;
+                            default:
+                                AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+                                break;
+                        }
                     }
-
-
 
                     long end_time_tick = System.currentTimeMillis();
 
@@ -243,8 +251,14 @@ public class App extends Application {
 
     public void onEventMainThread(BusEvent event){
         switch (event.getEventType()) {
-
+            case DEVICE_NOT_SUPPORT:
+                Toast.makeText(getApplicationContext(),
+                        "this device is not supported.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    public static String getDeviceModel() {
+        return Build.MODEL;
     }
 
     public static String staticFRSSessionID;
@@ -334,6 +348,7 @@ public class App extends Application {
     FrsWebSocketClient c_un;
 
     private void connectFRSServer () {
+        mLog.d(TAG, " * connectFRSServer");
         if (c != null) {
             c.close();
         }
@@ -359,8 +374,8 @@ public class App extends Application {
         c_un.connect();
 
 //        HashMap<String, String> mMap = new FrsLogin("ichen", "123456");
-//        mLog.i(TAG, VFREdgeCache.getInstance().getUserAccount());
-//        mLog.i(TAG, VFREdgeCache.getInstance().getUserPwd());
+        mLog.i(TAG, VFREdgeCache.getInstance().getUserAccount());
+        mLog.i(TAG, VFREdgeCache.getInstance().getUserPwd());
         HashMap<String, String> mMap = new FrsLogin(VFREdgeCache.getInstance().getUserAccount(), VFREdgeCache.getInstance().getUserPwd());
         try {
             OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN);

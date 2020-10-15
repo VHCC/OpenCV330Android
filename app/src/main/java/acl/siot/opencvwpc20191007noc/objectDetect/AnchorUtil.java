@@ -13,7 +13,7 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
  */
 public class AnchorUtil {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     private static AnchorUtil mAnchorUtil;
