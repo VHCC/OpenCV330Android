@@ -6,6 +6,7 @@ import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 
@@ -24,8 +25,13 @@ import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.frsApi.login.FrsLogin;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.blankj.utilcode.util.AppUtils;
 
 import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
 import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
@@ -58,6 +64,9 @@ public class VFRHomeFragment extends Fragment {
     public static ArrayList<String> staticPersonsEmployeeNoArray = new ArrayList<>();
     public static Boolean isGetStaticPersonsEmployeeNoArray = false;
 
+    // View
+    TextView appVersion;
+
     public VFRHomeFragment() {
     }
 
@@ -89,7 +98,13 @@ public class VFRHomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.vfr_fragment_home, container, false);
+        appVersion = rootView.findViewById(R.id.appVersion);
+        initViewsFeature();
         return rootView;
+    }
+
+    private void initViewsFeature() {
+        appVersion.setText("v" + AppUtils.getAppVersionName());
     }
 
     @Override

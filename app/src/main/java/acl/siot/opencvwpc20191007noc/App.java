@@ -181,7 +181,7 @@ public class App extends Application {
     private Thread appThread;
     private Runnable appRunnable = new Runnable() {
 
-        private static final long task_minimum_tick_time_msec = 1000; // 1 second
+        private static final long task_minimum_tick_time_msec = 800; // 1 second
 
         @Override
         public void run() {
@@ -211,7 +211,7 @@ public class App extends Application {
 //                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
-                    if (tick_count % 2 == 0) {
+                    if (tick_count % 1 == 0) {
                         HashMap<String, String> mMap = new GetTemp();
                         OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                     }
