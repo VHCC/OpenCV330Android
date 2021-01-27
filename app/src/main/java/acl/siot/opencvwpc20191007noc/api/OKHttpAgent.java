@@ -28,15 +28,13 @@ import okhttp3.Response;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
-import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -46,6 +44,9 @@ public class OKHttpAgent {
 
     public static final MediaType JSON
             = MediaType.parse("application/json; charset=utf-8");
+
+    public static final MediaType URL_ENCODED
+            = MediaType.parse("application/x-www-form-urlencoded; charset=utf-8");
 
     /*  */
     private final OkHttpClient mClient = new OkHttpClient();
@@ -153,7 +154,6 @@ public class OKHttpAgent {
     }
 
     protected class PostFRSThread extends Thread {
-
         private HashMap mData;
 
         private int postCode;
@@ -218,14 +218,12 @@ public class OKHttpAgent {
         }
 
         private void handleFRSResult(JSONObject jsonObj, int postCode) throws JSONException {
-//            System.out.println(jsonObj.toString());
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
                 mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
             } else {
                 mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
-
                 try {
                     mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
                 } catch (Exception e) {
@@ -235,8 +233,37 @@ public class OKHttpAgent {
         }
     }
 
-    protected class GetThread extends Thread {
+    protected class PostAvaloThread extends Thread {
+        private boolean switchFlag;
 
+        public PostAvaloThread(boolean flag) {
+            switchFlag = flag;
+        }
+
+        @Override
+        public void run() {
+            final String mainURL = "http://192.168.4.1/websocket.json";
+            mLog.d(TAG, "PostThread@" + this.hashCode());
+            String bodyString = switchFlag ? "websocket,1" : "websocket,0";
+            RequestBody body = RequestBody.create(URL_ENCODED, bodyString);
+
+            Request request = new Request.Builder()
+                    .url(mainURL)
+                    .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+                    .post(body)
+                    .build();
+            try {
+                Response response = mClient.newCall(request).execute();
+                String result = response.body().string();
+                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+            } catch (IOException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+            }
+        }
+    }
+
+    protected class GetThread extends Thread {
         private HashMap mData;
 
         private int getCode;
@@ -303,7 +330,6 @@ public class OKHttpAgent {
         }
     }
 
-
     // Get info Thread
     protected class GetFRSThread extends Thread {
 
@@ -312,7 +338,6 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
-
 //            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
             final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
             mLog.d(TAG, "get FRS persons request= " + mainURL);
@@ -345,7 +370,6 @@ public class OKHttpAgent {
                 mLog.e(TAG, "JSONException= " + e.getMessage());
 //                RxBus.getInstance().send(Login.RXBUS_EVENT.DB_UPDATE_REQUEST_TIMEOUT);
             }
-
         }
 
         private void handleGetResult(JSONObject jsonObj) throws JSONException {
@@ -383,6 +407,11 @@ public class OKHttpAgent {
     public synchronized void postFRSRequest(HashMap mData, int requestCode) throws IOException {
         PostFRSThread postFRSThread = new PostFRSThread(mData, requestCode);
         postFRSThread.start();
+    }
+
+    public synchronized void postAvaloWebsocket(boolean flag) throws IOException {
+        PostAvaloThread avaloThread = new PostAvaloThread(flag);
+        avaloThread.start();
     }
 
     public synchronized void getFRSRequest() throws IOException {

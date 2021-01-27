@@ -1,5 +1,6 @@
 package acl.siot.opencvwpc20191007noc.vfr.adminSetting;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +26,8 @@ import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -61,6 +65,9 @@ public class VFRAdminSettingFragment extends Fragment {
     private EditText changePWDAgainEditTxt;
 
     private TextView kkkk;
+
+    private ImageView standard_mode;
+    private ImageView thermo_mode;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -124,6 +131,9 @@ public class VFRAdminSettingFragment extends Fragment {
 
         kkkk = rootView.findViewById(R.id.kkkk);
 
+        standard_mode = rootView.findViewById(R.id.standard_mode);
+        thermo_mode = rootView.findViewById(R.id.thermo_mode);
+
     }
 
 
@@ -186,6 +196,24 @@ public class VFRAdminSettingFragment extends Fragment {
                 onFragmentInteractionListener.clickLanguagePage();
             }
         });
+
+        standard_mode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                VFREdgeCache.getInstance().setImageStandardMode(true);
+                standard_mode.setBackgroundColor(VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
+                thermo_mode.setBackgroundColor(!VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
+            }
+        });
+
+        thermo_mode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                VFREdgeCache.getInstance().setImageStandardMode(false);
+                standard_mode.setBackgroundColor(VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
+                thermo_mode.setBackgroundColor(!VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
+            }
+        });
     }
 
     @Override
@@ -222,6 +250,9 @@ public class VFRAdminSettingFragment extends Fragment {
 
             thermalIpEditTxt.setText(VFRThermometerCache.getInstance().getIpAddress());
             alertTempEditTxt.setText(String.valueOf(VFRThermometerCache.getInstance().getAlertTemp()));
+
+            standard_mode.setBackgroundColor(VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
+            thermo_mode.setBackgroundColor(!VFREdgeCache.getInstance().isImageStandardMode() ? Color.parseColor("#19b3cc") : Color.parseColor("#00000000"));
         }
     }
 

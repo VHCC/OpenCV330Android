@@ -365,14 +365,14 @@ public class VFRVerifyFragment extends Fragment {
             CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
             recognizedTime.setText(s);
 
-            mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
+//            mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
             mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
 
             if(android.os.Build.VERSION.SDK_INT >= 21){
-                faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+//                faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                 thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
             } else {
-                faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
+//                faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
                 thermoStatus.setImageDrawable(isThermometerServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
             }
         }
@@ -489,11 +489,11 @@ public class VFRVerifyFragment extends Fragment {
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
                 mLog.d(TAG, " -- isThermometerDetectDone= " + isThermometerDetectDone);
-                if (!isFRServerConnected) {
-                    personNameReal.setText("");
-                    personName.setText("Visitor");
-                    personRole.setText("");
-                }
+//                if (!isFRServerConnected) {
+//                    personNameReal.setText("");
+//                    personName.setText("Visitor");
+//                    personRole.setText("");
+//                }
 //                mLog.d(TAG, "person_temp_static= " + person_temp_static + ", thermo_is_human= " + thermo_is_human);
 
                 if (!isThermometerDetectDone) {
@@ -501,7 +501,7 @@ public class VFRVerifyFragment extends Fragment {
                         isThermometerDetectDone = true;
                         if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
                             MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
-                            mPlayer.start();
+//                            mPlayer.start();
                             mLog.d(TAG, "WARN, person_temp_static= " + df.format(person_temp_static));
                             if(android.os.Build.VERSION.SDK_INT >= 21){
                                 verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
@@ -530,14 +530,14 @@ public class VFRVerifyFragment extends Fragment {
                     personTemperature.setText("N/A");
                 }
 
-                mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
+//                mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
                 mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
 
                 if(android.os.Build.VERSION.SDK_INT >= 21){
-                    faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
+//                    faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                     thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                 } else {
-                    faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
+//                    faceStatus.setImageDrawable(isFRServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
                     thermoStatus.setImageDrawable(isThermometerServerConnected ? getResources().getDrawable(R.drawable.vfr_online) : getResources().getDrawable(R.drawable.vfr_offline));
                 }
                 break;

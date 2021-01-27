@@ -31,6 +31,8 @@ public class VFREdgeCache {
     public static final String SHARE_EDGE_INFO_TABLET_ID = "share_edge_info_tablet_id";
     public static final String SHARE_EDGE_INFO_MATCH_SCORE = "share_edge_info_match_score";
 
+    public static final String SHARE_IMAGE_STANDARD_MODE = "share_image_standard_mode";
+
 
     private String ipAddress = "";
     private String port = "";
@@ -38,6 +40,7 @@ public class VFREdgeCache {
     private String userPwd = "";
     private String tabletID = "";
     private String matchScore = "0.85";
+    private Boolean isImageStandardMode = true;
 
 
     /* Instance */
@@ -123,5 +126,16 @@ public class VFREdgeCache {
         this.matchScore = matchScore;
         editor = sp.edit();
         editor.putString(SHARE_EDGE_INFO_MATCH_SCORE, matchScore).commit();
+    }
+
+    public Boolean isImageStandardMode() {
+        Map<String, ?> map = sp.getAll();
+        return ((Boolean) map.get(SHARE_IMAGE_STANDARD_MODE)) == null ? true : ((Boolean) map.get(SHARE_IMAGE_STANDARD_MODE));
+    }
+
+    public void setImageStandardMode(Boolean flag) {
+        this.isImageStandardMode = flag;
+        editor = sp.edit();
+        editor.putBoolean(SHARE_IMAGE_STANDARD_MODE, flag).commit();
     }
 }

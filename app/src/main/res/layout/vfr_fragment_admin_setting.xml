@@ -7,6 +7,7 @@
 
     <EditText
         android:id="@+id/ipAddressEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -24,6 +25,7 @@
 
     <EditText
         android:id="@+id/portEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -41,6 +43,7 @@
 
     <EditText
         android:id="@+id/userAccountEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -58,6 +61,7 @@
 
     <EditText
         android:id="@+id/userPWDEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -75,6 +79,7 @@
 
     <EditText
         android:id="@+id/tabletIDEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -109,6 +114,7 @@
 
     <EditText
         android:id="@+id/matchScoreEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="-222dp"
         android:layout_width="300dp"
         android:maxLines="1"
@@ -129,13 +135,13 @@
 
     <EditText
         android:id="@+id/thermalIpEditTxt"
-        android:layout_marginLeft="284dp"
+        android:layout_marginLeft="-55dp"
         android:layout_width="210dp"
         android:maxLines="1"
         android:inputType="text"
         android:ellipsize="end"
         android:gravity="left"
-        android:layout_marginBottom="195dp"
+        android:layout_marginBottom="194dp"
         android:paddingLeft="10dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
@@ -147,14 +153,14 @@
 
     <EditText
         android:id="@+id/alertTempEditTxt"
-        android:layout_marginLeft="558dp"
+        android:layout_marginLeft="220dp"
         android:layout_width="90dp"
         android:maxLines="1"
         android:inputType="text"
         android:ellipsize="end"
         android:gravity="left"
         android:text="37.5"
-        android:layout_marginBottom="196dp"
+        android:layout_marginBottom="195dp"
         android:paddingLeft="10dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
@@ -163,8 +169,27 @@
         android:hint="alert Temp"
         android:textSize="18dp"/>
 
+    <ImageView
+        android:id="@+id/standard_mode"
+        android:layout_gravity="center"
+        android:layout_marginBottom="88dp"
+        android:layout_marginRight="234dp"
+        android:background="#19b3cc"
+        android:layout_width="35dp"
+        android:layout_height="35dp"/>
+
+    <ImageView
+        android:id="@+id/thermo_mode"
+        android:layout_gravity="center"
+        android:layout_marginBottom="88dp"
+        android:layout_marginRight="-92dp"
+        android:background="#19b3cc"
+        android:layout_width="35dp"
+        android:layout_height="35dp"/>
+
     <EditText
         android:id="@+id/httpCMDEditTxt"
+        android:visibility="gone"
         android:layout_marginLeft="391dp"
         android:layout_width="423dp"
         android:maxLines="1"
@@ -182,13 +207,13 @@
 
     <EditText
         android:id="@+id/changePWDEditTxt"
-        android:layout_marginLeft="188dp"
+        android:layout_marginLeft="-153dp"
         android:layout_width="210dp"
         android:maxLines="1"
         android:inputType="text"
         android:ellipsize="end"
         android:gravity="left"
-        android:layout_marginBottom="-28dp"
+        android:layout_marginBottom="-31dp"
         android:paddingLeft="10dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"
@@ -199,13 +224,13 @@
 
     <EditText
         android:id="@+id/changePWDAgainEditTxt"
-        android:layout_marginLeft="513dp"
+        android:layout_marginLeft="174dp"
         android:layout_width="210dp"
         android:maxLines="1"
         android:inputType="text"
         android:ellipsize="end"
         android:gravity="left"
-        android:layout_marginBottom="-30dp"
+        android:layout_marginBottom="-33dp"
         android:paddingLeft="10dp"
         android:layout_gravity="center"
         android:layout_height="wrap_content"

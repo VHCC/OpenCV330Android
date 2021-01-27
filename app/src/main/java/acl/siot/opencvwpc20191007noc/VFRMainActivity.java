@@ -27,6 +27,7 @@ import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRLanguageFragment;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 import acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment;
 import acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment;
+import acl.siot.opencvwpc20191007noc.vfr.webView.VFRWebViewFragment;
 import acl.siot.opencvwpc20191007noc.vfr.welcome.VFRWelcomeFragment;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -141,6 +142,7 @@ public class VFRMainActivity extends AppCompatActivity {
         static final int PAGE_PWD = 4;
         static final int PAGE_SETTING = 5;
         static final int PAGE_LANGUAGE = 6;
+        static final int PAGE_WEBVIEW = 20;
         static final int PAGE_SUB_PAGE = 999;
 
         // Fields
@@ -152,6 +154,7 @@ public class VFRMainActivity extends AppCompatActivity {
                 PAGE_PWD,
                 PAGE_SETTING,
                 PAGE_LANGUAGE,
+                PAGE_WEBVIEW,
                 PAGE_SUB_PAGE
         };
         private final String[] PAGE_NAMES = new String[]{
@@ -162,6 +165,7 @@ public class VFRMainActivity extends AppCompatActivity {
                 "PAGE_PWD",
                 "PAGE_SETTING",
                 "PAGE_LANGUAGE",
+                "PAGE_WEBVIEW",
                 "PAGE_SUB_PAGE"
         };
         private final Fragment[] fragments = new Fragment[PAGE_GROUP.length];
@@ -190,7 +194,10 @@ public class VFRMainActivity extends AppCompatActivity {
                                 switch (SystemPropertiesProxy.get("ro.product.model")) {
                                     case "usc_130_160":
                                     case "UTC-115G":
+                                    case "HIT-507":
+                                    case "HIT-512":
                                         mViewPager.setCurrentItem(PAGE_DETECT);
+//                                        mViewPager.setCurrentItem(PAGE_WEBVIEW);
                                         break;
                                 }
                             }
@@ -240,6 +247,12 @@ public class VFRMainActivity extends AppCompatActivity {
                     VFRLanguageFragment vfrLanguageFragment = VFRLanguageFragment.newInstance();
 //                    vfrLanguageFragment.setOnFragmentInteractionListener(vfrAdminSettingPageInteractionListener);
                     fragment = vfrLanguageFragment;
+                }
+                break;
+
+                case PAGE_WEBVIEW: {
+                    VFRWebViewFragment vfrWebViewFragment = VFRWebViewFragment.newInstance();
+                    fragment = vfrWebViewFragment;
                 }
                 break;
 

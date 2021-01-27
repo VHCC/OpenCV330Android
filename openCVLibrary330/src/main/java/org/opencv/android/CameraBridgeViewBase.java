@@ -31,7 +31,7 @@ import android.view.SurfaceView;
  */
 public abstract class CameraBridgeViewBase extends SurfaceView implements SurfaceHolder.Callback {
 
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     private static final int MAX_UNSPECIFIED = -1;
@@ -498,6 +498,7 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
             }
         }
 
+        mLog.d(TAG, "calcWidth : " + calcWidth + ", calcHeight= " + calcHeight);
 //        mLog.d(TAG, "calcWidth : " + calcWidth + ", calcHeight= " + calcHeight);
 
 //        return new Size(calcWidth, calcHeight);
@@ -508,6 +509,9 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
                 return new Size(1600, 1200);
             case "UTC-115G":
                 return new Size(1920, 1080);
+            case "HIT-507":
+            case "HIT-512":
+                return new Size(640, 480);
             default:
                 return new Size(calcWidth, calcHeight);
         }

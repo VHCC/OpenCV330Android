@@ -222,6 +222,8 @@ public class App extends Application {
                         switch (getDeviceModel()) {
                             case "usc_130_160":
                             case "UTC-115G":
+                            case "HIT-507":
+                            case "HIT-512":
                                 break;
                             default:
                                 AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
@@ -329,14 +331,14 @@ public class App extends Application {
 
     }
 
-    public static boolean isFRServerConnected = false;
+    public static boolean isFRServerConnected = true;
     public static boolean isThermometerServerConnected = false;
 
     public void onEventBackgroundThread(BusEvent event){
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case FRS_SERVER_CONNECT_TRY:
-                connectFRSServer();
+//                connectFRSServer();
                 break;
             case APP_CODE_FRS_LOGIN_SUCCESS:
                 mLog.d(TAG, " *** APP_CODE_FRS_LOGIN_SUCCESS *** ");

@@ -8,34 +8,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.json.JSONArray;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import acl.siot.opencvwpc20191007noc.AppBus;
-import acl.siot.opencvwpc20191007noc.BusEvent;
-import acl.siot.opencvwpc20191007noc.R;
-import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
-import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
-import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
-import acl.siot.opencvwpc20191007noc.frsApi.login.FrsLogin;
-import acl.siot.opencvwpc20191007noc.util.MLog;
-import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+
+import acl.siot.opencvwpc20191007noc.AppBus;
+import acl.siot.opencvwpc20191007noc.BusEvent;
+import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.util.MLog;
+
 import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
-import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_SERVER_URL;
-import static acl.siot.opencvwpc20191007noc.api.URLConstants.FRS_WEB_SOCKET_URL;
 
 /**
  * Created by IChen.Chu on 2020/05/13
