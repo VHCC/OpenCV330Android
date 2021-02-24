@@ -57,6 +57,7 @@ import acl.siot.opencvwpc20191007noc.objectDetect.ObjectDetectInfo;
 import acl.siot.opencvwpc20191007noc.objectDetect.TLiteObjectDetectionAPI;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -82,7 +83,7 @@ import static acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient.staticPe
  */
 public class VFRVerifyFragment extends Fragment {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants
@@ -117,7 +118,6 @@ public class VFRVerifyFragment extends Fragment {
     // Constructor
     public VFRVerifyFragment() {
     }
-
 
 
     public static DenseMatrix64F[] anchors;
@@ -194,7 +194,6 @@ public class VFRVerifyFragment extends Fragment {
         personTemperature = rootView.findViewById(R.id.personTemperature);
 
 
-
         img1 = rootView.findViewById(R.id.img1);
         imgOrigin = rootView.findViewById(R.id.imgOrigin);
 
@@ -223,7 +222,7 @@ public class VFRVerifyFragment extends Fragment {
 
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 vfrFaceCacheArray.get(vfrFaceSelected).compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-                byte[] byteArray = byteArrayOutputStream .toByteArray();
+                byte[] byteArray = byteArrayOutputStream.toByteArray();
 
                 String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
 //                HashMap<String, String> mMap = new UpdateImage("5de8a9b11cce9e1a10b14391", encoded);
@@ -332,7 +331,7 @@ public class VFRVerifyFragment extends Fragment {
 
             ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
             if (results != null) {
-                switch(results.getClasses()) {
+                switch (results.getClasses()) {
                     case 1: // NoMask
 //                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
 //                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_red, 3);
@@ -350,25 +349,23 @@ public class VFRVerifyFragment extends Fragment {
             }
 
 
-
-
 //            img2.setImageBitmap(vfrFaceCacheArray.get(1));
 //            img3.setImageBitmap(vfrFaceCacheArray.get(2));
 //            verifySwitch = true;
 //            verifyBtn.performClick();
-            imgOrigin.setPadding(0,0,0,0);
+            imgOrigin.setPadding(0, 0, 0, 0);
             FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
             lp.setMargins(10, 10, 10, 10);
             imgOrigin.setLayoutParams(lp);
             imgOrigin.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.vfr_no_register_face));
             Date d = new Date();
-            CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
+            CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss", d.getTime());
             recognizedTime.setText(s);
 
 //            mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
             mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
 
-            if(android.os.Build.VERSION.SDK_INT >= 21){
+            if (android.os.Build.VERSION.SDK_INT >= 21) {
 //                faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                 thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
             } else {
@@ -411,7 +408,7 @@ public class VFRVerifyFragment extends Fragment {
 
     boolean isThermometerDetectDone = false;
 
-    public void onEventMainThread(BusEvent event){
+    public void onEventMainThread(BusEvent event) {
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case APP_CODE_FRS_VERIFY_SUCCESS:
@@ -423,7 +420,7 @@ public class VFRVerifyFragment extends Fragment {
                     JSONObject targetPerson = (JSONObject) staticPersonsArray.get(index);
                     mLog.i(TAG, " --- targetPerson= " + targetPerson);
                     JSONObject person_info = (JSONObject) targetPerson.get("person_info");
-                    String face_id = (String) ((JSONArray)targetPerson.getJSONArray("face_id_numbers")).get(0);
+                    String face_id = (String) ((JSONArray) targetPerson.getJSONArray("face_id_numbers")).get(0);
                     mLog.i(TAG, " --- face_id= " + face_id);
                     mLog.i(TAG, " --- face_id.length(= " + person_info.getString("fullname").length());
 
@@ -431,7 +428,7 @@ public class VFRVerifyFragment extends Fragment {
                     personName.setText("Name");
                     personRole.setText("Employee");
 
-                    HashMap<String, String> mMap = new FrsGetFaceImage( face_id);
+                    HashMap<String, String> mMap = new FrsGetFaceImage(face_id);
                     try {
                         OKHttpAgent.getInstance().postFRSRequest(mMap, OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL);
                     } catch (IOException e) {
@@ -450,7 +447,7 @@ public class VFRVerifyFragment extends Fragment {
 
                     byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
                     Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
-                    imgOrigin.setPadding(1,1,1,1);
+                    imgOrigin.setPadding(1, 1, 1, 1);
                     FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
                     lp.setMargins(20, 20, 20, 20);
                     imgOrigin.setLayoutParams(lp);
@@ -481,7 +478,7 @@ public class VFRVerifyFragment extends Fragment {
                 personNameReal.setText("");
                 personName.setText("Visitor");
                 personRole.setText("");
-                imgOrigin.setPadding(0,0,0,0);
+                imgOrigin.setPadding(0, 0, 0, 0);
                 FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
                 lp.setMargins(10, 10, 10, 10);
                 imgOrigin.setLayoutParams(lp);
@@ -503,7 +500,7 @@ public class VFRVerifyFragment extends Fragment {
                             MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
 //                            mPlayer.start();
                             mLog.d(TAG, "WARN, person_temp_static= " + df.format(person_temp_static));
-                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                            if (android.os.Build.VERSION.SDK_INT >= 21) {
                                 verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
                             } else {
                                 verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ng_bg));
@@ -511,7 +508,7 @@ public class VFRVerifyFragment extends Fragment {
 
                         } else {
                             mLog.d(TAG, "SAFE, person_temp_static= " + df.format(person_temp_static));
-                            if(android.os.Build.VERSION.SDK_INT >= 21){
+                            if (android.os.Build.VERSION.SDK_INT >= 21) {
                                 verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ok_bg));
                             } else {
                                 verifyBg.setBackground(getResources().getDrawable(R.drawable.vfr_finished_ok_bg));
@@ -533,7 +530,7 @@ public class VFRVerifyFragment extends Fragment {
 //                mLog.d(TAG, " ### isFRServerConnected= " + isFRServerConnected);
                 mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
 
-                if(android.os.Build.VERSION.SDK_INT >= 21){
+                if (android.os.Build.VERSION.SDK_INT >= 21) {
 //                    faceStatus.setImageDrawable(isFRServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                     thermoStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.vfr_online) : getContext().getDrawable(R.drawable.vfr_offline));
                 } else {

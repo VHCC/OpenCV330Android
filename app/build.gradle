@@ -6,8 +6,8 @@ android {
         applicationId "acl.siot.opencvwpc20191007noc"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 4
-        versionName "1.0.210119"
+        versionCode 5
+        versionName "1.0.210127"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -53,6 +53,8 @@ dependencies {
     implementation 'com.googlecode.efficient-java-matrix-library:ejml:0.25'
     implementation 'com.just.agentweb:agentweb:4.1.4'
     implementation 'com.github.delight-im:Android-AdvancedWebView:v3.2.1'
+
+    implementation 'com.licheedev:android-serialport:2.1.2'
 
 
 }
