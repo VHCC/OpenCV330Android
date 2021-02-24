@@ -44,15 +44,20 @@ import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.frsApi.login.FrsLogin;
+import acl.siot.opencvwpc20191007noc.rfid.SerialPortProxy;
 import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import acl.siot.opencvwpc20191007noc.theme.AppTheme;
 import acl.siot.opencvwpc20191007noc.theme.AppThemeManager;
 import acl.siot.opencvwpc20191007noc.util.AppStateTracker;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
 import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
@@ -74,7 +79,7 @@ import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStatic
  */
 public class App extends Application {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // 手动装载openCV库文件，以保证手机无需安装OpenCV Manager
@@ -118,6 +123,25 @@ public class App extends Application {
 
         setupTheme();
         setupAppStateTracking();
+
+        SerialPortProxy.getInstance().initSerialPort("/dev/ttyUSB2");
+        SerialPortProxy.getInstance().startPollingIdForZhongShanPIT();
+        SerialPortProxy.getInstance().setCallback(new RFIDCallback());
+    }
+
+    private class RFIDCallback implements SerialPortProxy.Callback {
+
+        @Override
+        public void onResponse(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
+            mLog.d(TAG, "onResponse:> " + result.toString());
+            MessageTools.showToast(getApplicationContext(), result.toString());
+//            mLog.d(TAG, resultType.toString());
+        }
+
+        @Override
+        public void onFailure(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
+//            mLog.d(TAG, "onFailure");
+        }
     }
 
     @Override
@@ -211,10 +235,10 @@ public class App extends Application {
 //                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
-                    if (tick_count % 1 == 0) {
-                        HashMap<String, String> mMap = new GetTemp();
-                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
-                    }
+//                    if (tick_count % 1 == 0) {
+//                        HashMap<String, String> mMap = new GetTemp();
+//                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+//                    }
 
                     if (tick_count % 10 == 0) {
                         mLog.d(TAG, getDeviceModel());
@@ -244,8 +268,8 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-                } catch (IOException e) {
-                    e.printStackTrace();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
                 }
             }
         }

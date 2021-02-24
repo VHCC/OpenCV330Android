@@ -3,21 +3,13 @@ package acl.siot.opencvwpc20191007noc;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.SparseBooleanArray;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
-import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
-import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
-import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
+import acl.siot.opencvwpc20191007noc.dbHelper.DBAdapter;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
-import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutTransformer;
-import acl.siot.opencvwpc20191007noc.page.tranform.ScaleInOutTransformer;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
@@ -35,11 +27,15 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+
 import pub.devrel.easypermissions.EasyPermissions;
+
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO_SUCCESS;
 
 public class VFRMainActivity extends AppCompatActivity {
 
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     private final int RC_PERMISSIONS = 9001;
@@ -48,6 +44,8 @@ public class VFRMainActivity extends AppCompatActivity {
      * The {@link ViewPager} will host the section contents.
      */
     private ViewPager mViewPager;
+
+    private DBAdapter mDBAdapter;
 
     /**
      * The {@link androidx.viewpager.widget.PagerAdapter} that will provide
@@ -68,6 +66,8 @@ public class VFRMainActivity extends AppCompatActivity {
 
         checkPermission();
 
+        AppBus.getInstance().register(this);
+
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -81,7 +81,9 @@ public class VFRMainActivity extends AppCompatActivity {
         mViewPager.setPageTransformer(true, new FadeInOutBetterTransformer());
         mViewPager.setOffscreenPageLimit(5);
 
-
+        mDBAdapter = DBAdapter.getInstance();
+//        mDBAdapter.setDataVersion(String.valueOf(DB_VERSION));
+        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
 //        LocaleUtils.updateConfig(this);
     }
 
@@ -89,7 +91,6 @@ public class VFRMainActivity extends AppCompatActivity {
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         mLog.d(TAG, "* onConfigurationChanged()");
         super.onConfigurationChanged(newConfig);
-
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
@@ -401,5 +402,20 @@ public class VFRMainActivity extends AppCompatActivity {
             }
         }
         return false;
+    }
+
+    public void onEventBackgroundThread(BusEvent event){
+//        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
+        switch (event.getEventType()) {
+            case DB_CODE_INSERT_DETECT_INFO:
+                mDBAdapter.addData();
+                mLog.d(TAG, " *** DB_CODE_INSERT_DETECT_INFO *** ");
+                break;
+            case DB_CODE_INSERT_DETECT_INFO_SUCCESS:
+                mLog.d(TAG, " *** DB_CODE_INSERT_DETECT_INFO_SUCCESS *** ");
+                mDBAdapter.checkDBAllTables();
+                mDBAdapter.uploadData();
+                break;
+        }
     }
 }

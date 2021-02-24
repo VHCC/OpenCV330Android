@@ -21,6 +21,8 @@ public class OKHttpConstants {
         public static final int APP_CODE_UPDATE_IMAGE_SUCCESS = 10061;
 
         public static final int APP_CODE_GET_FACE = 1007;
+
+        public static final int AVALO_TEST = 89761;
     }
 
     public static class FrsRequestCode {
@@ -39,6 +41,9 @@ public class OKHttpConstants {
 
         public static final int APP_CODE_FRS_MODIFY_PERSON_INFO = 10004;
         public static final int APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS = 100041;
+
+        public static final int DB_CODE_INSERT_DETECT_INFO = 50001;
+        public static final int DB_CODE_INSERT_DETECT_INFO_SUCCESS = 500011;
     }
 
 }
