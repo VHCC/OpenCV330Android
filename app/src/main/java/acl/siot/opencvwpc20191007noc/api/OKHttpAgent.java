@@ -332,7 +332,6 @@ public class OKHttpAgent {
 
     // Get info Thread
     protected class GetFRSThread extends Thread {
-
         public GetFRSThread() {
         }
 
@@ -419,7 +418,7 @@ public class OKHttpAgent {
         getFRSThread.start();
     }
 
-    public synchronized void getTempRequest(HashMap mData, int requestCode) throws IOException {
+    public synchronized void getRequest(HashMap mData, int requestCode) throws IOException {
         GetThread getThread = new GetThread(mData, requestCode);
         getThread.start();
     }

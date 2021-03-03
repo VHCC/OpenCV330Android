@@ -30,6 +30,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
+import static acl.siot.opencvwpc20191007noc.App.TRAIL_IS_EXPIRE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO_SUCCESS;
 
@@ -81,9 +82,9 @@ public class VFRMainActivity extends AppCompatActivity {
         mViewPager.setPageTransformer(true, new FadeInOutBetterTransformer());
         mViewPager.setOffscreenPageLimit(5);
 
-        mDBAdapter = DBAdapter.getInstance();
+//        mDBAdapter = DBAdapter.getInstance();
 //        mDBAdapter.setDataVersion(String.valueOf(DB_VERSION));
-        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
+//        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
 //        LocaleUtils.updateConfig(this);
     }
 
@@ -192,15 +193,20 @@ public class VFRMainActivity extends AppCompatActivity {
                             mLog.d(TAG, "onShowEnd()");
                             if (!isAppOpened) {
                                 isAppOpened = true;
-                                switch (SystemPropertiesProxy.get("ro.product.model")) {
-                                    case "usc_130_160":
-                                    case "UTC-115G":
-                                    case "HIT-507":
-                                    case "HIT-512":
-                                        mViewPager.setCurrentItem(PAGE_DETECT);
-//                                        mViewPager.setCurrentItem(PAGE_WEBVIEW);
-                                        break;
+//                                switch (SystemPropertiesProxy.get("ro.product.model")) {
+//                                    case "usc_130_160":
+//                                    case "UTC-115G":
+//                                    case "HIT-507":
+//                                    case "HIT-512":
+//
+////                                        mViewPager.setCurrentItem(PAGE_WEBVIEW);
+//                                        break;
+//                                }
+                                if (!TRAIL_IS_EXPIRE) {
+                                    mViewPager.setCurrentItem(PAGE_DETECT);
                                 }
+
+
                             }
 //                            mViewPager.setCurrentItem(PAGE_WELCOME);
                         }

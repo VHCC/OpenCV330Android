@@ -31,6 +31,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -40,6 +41,7 @@ import javax.net.ssl.X509TrustManager;
 
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.api.OKHttpConstants;
+import acl.siot.opencvwpc20191007noc.api.getServerTime.GetServerTime;
 import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
@@ -53,7 +55,6 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
-import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
 import acl.siot.opencvwpc20191007noc.wbSocket.FrsWebSocketClient;
 
 import androidx.annotation.NonNull;
@@ -71,6 +72,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.GET_ICHEN_SERVER_TIME;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
 
 
@@ -91,6 +93,8 @@ public class App extends Application {
 
     // Http Mechanism
     private OnRequestListener mOnRequestListener = new OnRequestListener();
+
+    public static boolean TRAIL_IS_EXPIRE = false;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -127,6 +131,13 @@ public class App extends Application {
         SerialPortProxy.getInstance().initSerialPort("/dev/ttyUSB2");
         SerialPortProxy.getInstance().startPollingIdForZhongShanPIT();
         SerialPortProxy.getInstance().setCallback(new RFIDCallback());
+
+        Date d = new Date("2021/04/01");
+        mLog.d(TAG, "2021/04/01 d:> " + d.getTime()/1000);
+        TRAIL_IS_EXPIRE = System.currentTimeMillis()/1000 > d.getTime()/1000;
+        mLog.d(TAG, "System.currentTimeMillis():> " + System.currentTimeMillis());
+        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
+        if (TRAIL_IS_EXPIRE) AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
     }
 
     private class RFIDCallback implements SerialPortProxy.Callback {
@@ -235,25 +246,30 @@ public class App extends Application {
 //                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
-//                    if (tick_count % 1 == 0) {
-//                        HashMap<String, String> mMap = new GetTemp();
-//                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    if (tick_count % 1 == 0) {
+                        HashMap<String, String> mMap = new GetTemp();
+                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    }
+
+//                    if (tick_count % 2000 == 0) {
+//                        HashMap<String, String> mMap = new GetServerTime();
+//                        OKHttpAgent.getInstance().getRequest(mMap, GET_ICHEN_SERVER_TIME);
 //                    }
 
-                    if (tick_count % 10 == 0) {
-                        mLog.d(TAG, getDeviceModel());
-                        // Check Device Model
-                        switch (getDeviceModel()) {
-                            case "usc_130_160":
-                            case "UTC-115G":
-                            case "HIT-507":
-                            case "HIT-512":
-                                break;
-                            default:
-                                AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
-                                break;
-                        }
-                    }
+//                    if (tick_count % 10 == 0) {
+//                        mLog.d(TAG, getDeviceModel());
+//                        // Check Device Model
+//                        switch (getDeviceModel()) {
+//                            case "usc_130_160":
+//                            case "UTC-115G":
+//                            case "HIT-507":
+//                            case "HIT-512":
+//                                break;
+//                            default:
+//                                AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+//                                break;
+//                        }
+//                    }
 
                     long end_time_tick = System.currentTimeMillis();
 
@@ -268,8 +284,8 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -332,6 +348,22 @@ public class App extends Application {
                     break;
                 case APP_CODE_FRS_MODIFY_PERSON_INFO:
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS));
+                    break;
+                case GET_ICHEN_SERVER_TIME:
+                    try {
+                        JSONObject getServerTimeResponse = new JSONObject(response);
+                        long timestamp = getServerTimeResponse.getLong("serverTime");
+//                        mLog.d(TAG, "timestamp:> " + timestamp);
+                        Date d = new Date("2021/04/01");
+//                        mLog.d(TAG, "2021/02/01 d:> " + d.getTime()/1000);
+                        TRAIL_IS_EXPIRE = timestamp > d.getTime()/1000;
+                        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
+                        if (TRAIL_IS_EXPIRE) AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+//                        CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd", timestamp*1000);
+//                        mLog.d(TAG, "server Date:> " + s);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                     break;
             }
         }

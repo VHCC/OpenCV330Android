@@ -7,12 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.blankj.utilcode.util.AppUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -26,7 +23,6 @@ import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.thc11001huApi.getTemp.GetTemp;
 import acl.siot.opencvwpc20191007noc.util.MLog;
-import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -175,7 +171,7 @@ public class VFRAdminSettingFragment extends Fragment {
 
                 HashMap<String, String> mMap = new GetTemp();
                 try {
-                    OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

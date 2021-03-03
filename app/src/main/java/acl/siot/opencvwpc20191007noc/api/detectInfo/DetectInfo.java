@@ -26,7 +26,7 @@ public class DetectInfo extends HashMap<String, Object> {
         super.put(API_KEY_MASK_STATUS, maskStatus);
         super.put(API_KEY_DETECT_TIMESTAMP, timestamp);
 
-        super.put(APP_KEY_HTTPS_URL, URLConstants.SERVER_URL + "/avalo/uploadData");
+        super.put(APP_KEY_HTTPS_URL, URLConstants.ICHEN_SERVER_URL + "api/v1/avalo/uploadData");
 
     }
 }
