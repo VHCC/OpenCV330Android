@@ -516,7 +516,7 @@ public class VFRVerifyFragment extends Fragment {
                         }
                         personTemperature.setText(df.format(person_temp_static));
                     } else {
-                        MessageTools.showToast(getContext(), "Please Closer to Monitor");
+//                        MessageTools.showToast(getContext(), "Please Closer to Monitor");
                         personTemperature.setText(df.format(person_temp_static));
                     }
 

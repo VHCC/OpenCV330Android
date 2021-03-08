@@ -23,7 +23,6 @@ public class OKHttpConstants {
         public static final int APP_CODE_GET_FACE = 1007;
 
         public static final int AVALO_TEST = 89761;
-        public static final int GET_ICHEN_SERVER_TIME = 2001;
     }
 
     public static class FrsRequestCode {

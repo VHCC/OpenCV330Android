@@ -16,6 +16,7 @@ import acl.siot.opencvwpc20191007noc.util.SystemPropertiesProxy;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPasswordFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminSettingFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRLanguageFragment;
+import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 import acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment;
 import acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment;
@@ -223,8 +224,10 @@ public class VFRMainActivity extends AppCompatActivity {
                 break;
 
                 case PAGE_DETECT: {
-                    VFRDetectFragment vfrDetectFragment = VFRDetectFragment.newInstance();
-                    vfrDetectFragment.setOnFragmentInteractionListener(vfrDetectPageInteractionListener);
+//                    VFRDetectFragment vfrDetectFragment = VFRDetectFragment.newInstance();
+//                    vfrDetectFragment.setOnFragmentInteractionListener(vfrDetectPageInteractionListener);
+                    VFRDetect20210303Fragment vfrDetectFragment = VFRDetect20210303Fragment.newInstance();
+                    vfrDetectFragment.setOnFragmentInteractionListener(vfrDetect20210303PageInteractionListener);
                     fragment = vfrDetectFragment;
                 }
                 break;
@@ -329,6 +332,27 @@ public class VFRMainActivity extends AppCompatActivity {
 
         private VFRDetectFragment.OnFragmentInteractionListener vfrDetectPageInteractionListener
                 = new VFRDetectFragment.OnFragmentInteractionListener() {
+            @Override
+            public void onClickCancelDetect() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);
+//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
+//                MessageTools.showToast(mContext, "Logout Succeed!");
+            }
+
+            @Override
+            public void onClickAdminSetting() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_PWD);
+            }
+
+            @Override
+            public void onDetectThreeFaces() {
+                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_VERIFY);
+            }
+        };
+
+        // 20210303
+        private VFRDetect20210303Fragment.OnFragmentInteractionListener vfrDetect20210303PageInteractionListener
+                = new VFRDetect20210303Fragment.OnFragmentInteractionListener() {
             @Override
             public void onClickCancelDetect() {
                 mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_WELCOME);

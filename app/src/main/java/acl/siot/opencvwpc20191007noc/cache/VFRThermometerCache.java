@@ -51,7 +51,8 @@ public class VFRThermometerCache {
 
     public String getIpAddress() {
         Map<String, ?> map = sp.getAll();
-        return ((String) map.get(SHARE_THERMO_INFO_IP_ADDRESS));
+//        return ((String) map.get(SHARE_THERMO_INFO_IP_ADDRESS));
+        return  (((String) map.get(SHARE_THERMO_INFO_IP_ADDRESS)) == null) ? "192.168.4.1" : ((String) map.get(SHARE_THERMO_INFO_IP_ADDRESS));
     }
 
     public void setIpAddress(String ipAddress) {

@@ -72,7 +72,6 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.GET_ICHEN_SERVER_TIME;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
 
 
@@ -251,11 +250,6 @@ public class App extends Application {
                         OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                     }
 
-//                    if (tick_count % 2000 == 0) {
-//                        HashMap<String, String> mMap = new GetServerTime();
-//                        OKHttpAgent.getInstance().getRequest(mMap, GET_ICHEN_SERVER_TIME);
-//                    }
-
 //                    if (tick_count % 10 == 0) {
 //                        mLog.d(TAG, getDeviceModel());
 //                        // Check Device Model
@@ -348,22 +342,6 @@ public class App extends Application {
                     break;
                 case APP_CODE_FRS_MODIFY_PERSON_INFO:
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS));
-                    break;
-                case GET_ICHEN_SERVER_TIME:
-                    try {
-                        JSONObject getServerTimeResponse = new JSONObject(response);
-                        long timestamp = getServerTimeResponse.getLong("serverTime");
-//                        mLog.d(TAG, "timestamp:> " + timestamp);
-                        Date d = new Date("2021/04/01");
-//                        mLog.d(TAG, "2021/02/01 d:> " + d.getTime()/1000);
-                        TRAIL_IS_EXPIRE = timestamp > d.getTime()/1000;
-                        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
-                        if (TRAIL_IS_EXPIRE) AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
-//                        CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd", timestamp*1000);
-//                        mLog.d(TAG, "server Date:> " + s);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
                     break;
             }
         }

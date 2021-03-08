@@ -6,8 +6,8 @@ android {
         applicationId "acl.siot.opencvwpc20191007noc"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 5
-        versionName "1.0.210224"
+        versionCode 6
+        versionName "1.1.210305"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
