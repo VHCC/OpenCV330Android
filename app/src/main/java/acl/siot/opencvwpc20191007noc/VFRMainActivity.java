@@ -205,8 +205,8 @@ public class VFRMainActivity extends AppCompatActivity {
 //                                        break;
 //                                }
                                 if (!TRAIL_IS_EXPIRE) {
-//                                    mViewPager.setCurrentItem(PAGE_DETECT);
-                                    mViewPager.setCurrentItem(PAGE_WELCOME);
+                                    mViewPager.setCurrentItem(PAGE_DETECT);
+//                                    mViewPager.setCurrentItem(PAGE_WELCOME);
                                 }
 
 

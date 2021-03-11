@@ -69,6 +69,7 @@ import acl.siot.opencvwpc20191007noc.objectDetect.ImageUtils;
 import acl.siot.opencvwpc20191007noc.objectDetect.ObjectDetectInfo;
 import acl.siot.opencvwpc20191007noc.objectDetect.TLiteObjectDetectionAPI;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout;
 import acl.siot.opencvwpc20191007noc.wbSocket.AvaloWebSocketClient;
 
@@ -270,11 +271,12 @@ public class VFRDetect20210303Fragment extends Fragment {
         adminHomeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onFragmentInteractionListener.onClickConfirmBackToHome();
+                MessageTools.showToast(getContext(), "Home Btn Click");
+//                onFragmentInteractionListener.onClickConfirmBackToHome();
             }
         });
 
-        reCheckBtn.setOnClickListener(new View.OnClickListener() {
+        confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 tick_count = 0;
@@ -303,12 +305,14 @@ public class VFRDetect20210303Fragment extends Fragment {
             }
         });
 
-        confirmBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                backToWelcomePage();
-            }
-        });
+        reCheckBtn.setVisibility(View.INVISIBLE);
+
+//        confirmBtn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                backToWelcomePage();
+//            }
+//        });
 
     }
 
@@ -485,14 +489,14 @@ public class VFRDetect20210303Fragment extends Fragment {
                     AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
                     isCaptureFaceDone = true;
                     msg_big.setText("FAIL");
-                    reCheckBtn.setVisibility(View.VISIBLE);
+//                    reCheckBtn.setVisibility(View.VISIBLE);
                     stopTickThread();
                 } else if (maskResults == 0 && !isCaptureFaceDone) {
                     maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_on));
                     AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
                     isCaptureFaceDone = true;
                     msg_big.setText(person_temp_static < VFRThermometerCache.getInstance().getAlertTemp() ? "PASS" : "FAIL");
-                    reCheckBtn.setVisibility(View.VISIBLE);
+//                    reCheckBtn.setVisibility(View.VISIBLE);
                     stopTickThread();
                 }
 
