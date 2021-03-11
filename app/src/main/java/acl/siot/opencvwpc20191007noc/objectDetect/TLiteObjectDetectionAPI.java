@@ -24,7 +24,8 @@ import java.util.Vector;
 
 import acl.siot.opencvwpc20191007noc.util.MLog;
 
-import static acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment.anchors;
+import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment.anchors;
+
 
 /**
  * Created by IChen.Chu on 2020/5/6

@@ -227,8 +227,9 @@ public class App extends Application {
                     long start_time_tick = System.currentTimeMillis();
                     // real-time task
 
-                    if (tick_count % 60 == 5) {
+                    if (tick_count % 30 == 5) {
 //                        mLog.d(TAG, " * heartBeat * ");
+                        AppBus.getInstance().post(new BusEvent("VFR heart beats", VFR_HEART_BEATS));
                     }
 
                     if (tick_count % 60 == 6) {
@@ -423,4 +424,5 @@ public class App extends Application {
 
     // handler event
     public static final int FRS_SERVER_CONNECT_TRY = 5001;
+    public static final int VFR_HEART_BEATS = 6001;
 }

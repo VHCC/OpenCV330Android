@@ -1,8 +1,6 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/detectBg"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
     android:background="@drawable/bg_frame_20210304"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -224,7 +222,7 @@
             android:id="@+id/time_left"
             android:gravity="top|right"
             android:textColor="#ffffff"
-            android:text="2021-02-08"
+            android:text="YYYY-MM-DD"
             android:layout_marginRight="273dp"
             android:layout_marginTop="30dp"
             android:textSize="20dp"
@@ -236,7 +234,7 @@
             android:id="@+id/time_right"
             android:gravity="top|right"
             android:textColor="#ffffff"
-            android:text="20:18"
+            android:text="--:--"
             android:layout_marginRight="196dp"
             android:layout_marginTop="30dp"
             android:textSize="20dp"
@@ -275,10 +273,10 @@
             android:text="Re-check"
             android:textSize="30dp"
             android:textColor="@color/white"
-            android:layout_marginRight="165dp"
-            android:layout_marginTop="92dp"
-            android:layout_width="200dp"
-            android:layout_height="168dp"/>
+            android:layout_marginRight="141dp"
+            android:layout_marginTop="80dp"
+            android:layout_width="233dp"
+            android:layout_height="196dp"/>
 
         <Button
             android:id="@+id/confirmBtn"

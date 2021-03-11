@@ -112,8 +112,10 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Button adminSettingBtn;
     private Button adminHomeBtn;
     private Button confirmBtn;
+    private Button reCheckBtn;
 
     private boolean isCaptureFaceDone = false;
+    private boolean startToDetectGate = false;
 
     private OverLayLinearLayout circleOverlay;
     private OverLayLinearLayout circleOverlay_green;
@@ -191,25 +193,6 @@ public class VFRDetect20210303Fragment extends Fragment {
 
 
         anchors = AnchorUtil.getInstance().generateAnchors();
-
-        int cropSize = TF_OD_API_INPUT_SIZE;
-        try {
-            detector =
-                    TLiteObjectDetectionAPI.create(
-                            getContext().getAssets(),
-                            TF_OD_API_MODEL_FILE,
-                            TF_OD_API_LABELS_FILE,
-                            TF_OD_API_INPUT_SIZE,
-                            TF_OD_API_IS_QUANTIZED);
-            cropSize = TF_OD_API_INPUT_SIZE;
-        } catch (final IOException e) {
-            e.printStackTrace();
-            mLog.e(TAG, "Exception initializing classifier!");
-            Toast toast =
-                    Toast.makeText(
-                            getContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
-            toast.show();
-        }
     }
 
 
@@ -237,6 +220,7 @@ public class VFRDetect20210303Fragment extends Fragment {
         adminSettingBtn = rootView.findViewById(R.id.adminSettingBtn);
         adminHomeBtn = rootView.findViewById(R.id.adminHomeBtn);
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
+        reCheckBtn = rootView.findViewById(R.id.reCheckBtn);
 
         // OverLay
         circleOverlay = rootView.findViewById(R.id.circleOverlay);
@@ -286,15 +270,27 @@ public class VFRDetect20210303Fragment extends Fragment {
         adminHomeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                onFragmentInteractionListener.onClickConfirmBackToHome();
             }
         });
 
-        confirmBtn.setOnClickListener(new View.OnClickListener() {
+        reCheckBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                tick_count = 0;
                 isCaptureFaceDone = false;
+                startToDetectGate = false;
 
+                threadObject.setRunning(true);
+
+                if (detectPageThread != null && detectPageThread.isAlive()) {
+                    detectPageThread.interrupt();
+                }
+
+                detectPageThread = new Thread(detectPageRunnable);
+                detectPageThread.start();
+
+                reCheckBtn.setVisibility(View.INVISIBLE);
                 detectView.setVisibility(View.VISIBLE);
                 faceCapture.setVisibility(View.INVISIBLE);
                 confirmBtn.setEnabled(false);
@@ -306,7 +302,14 @@ public class VFRDetect20210303Fragment extends Fragment {
                 msg_small.setText("Temperature detection distance 20 cm");
             }
         });
-        tempUnit.setVisibility(View.INVISIBLE);
+
+        confirmBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                backToWelcomePage();
+            }
+        });
+
     }
 
     @Override
@@ -349,6 +352,33 @@ public class VFRDetect20210303Fragment extends Fragment {
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint()) {
+            tick_count = 0;
+            isCaptureFaceDone = false;
+            startToDetectGate = false;
+
+            faceCapture.setVisibility(View.INVISIBLE);
+            tempUnit.setVisibility(View.INVISIBLE);
+            reCheckBtn.setVisibility(View.INVISIBLE);
+
+            int cropSize = TF_OD_API_INPUT_SIZE;
+            try {
+                detector =
+                        TLiteObjectDetectionAPI.create(
+                                getContext().getAssets(),
+                                TF_OD_API_MODEL_FILE,
+                                TF_OD_API_LABELS_FILE,
+                                TF_OD_API_INPUT_SIZE,
+                                TF_OD_API_IS_QUANTIZED);
+                cropSize = TF_OD_API_INPUT_SIZE;
+            } catch (final IOException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "Exception initializing classifier!");
+                Toast toast =
+                        Toast.makeText(
+                                getContext(), "Classifier could not be initialized", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
             initClassifier();
 
             threadObject.setRunning(true);
@@ -424,6 +454,17 @@ public class VFRDetect20210303Fragment extends Fragment {
                 return;
             }
 
+            mLog.d(TAG, "startToDetectGate:> " + startToDetectGate);
+            if (!startToDetectGate) {
+                tempDetected.setText("");
+                maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+                thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
+                tempUnit.setVisibility(View.INVISIBLE);
+                return;
+            }
+
+            if (isCaptureFaceDone) return;
+
             thermo_view.setImageBitmap((Bitmap) msg.obj);
             NumberFormat formatter = new DecimalFormat("#00.0");
             if (!isCaptureFaceDone) tempDetected.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
@@ -444,11 +485,15 @@ public class VFRDetect20210303Fragment extends Fragment {
                     AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
                     isCaptureFaceDone = true;
                     msg_big.setText("FAIL");
+                    reCheckBtn.setVisibility(View.VISIBLE);
+                    stopTickThread();
                 } else if (maskResults == 0 && !isCaptureFaceDone) {
                     maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_on));
                     AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
                     isCaptureFaceDone = true;
                     msg_big.setText(person_temp_static < VFRThermometerCache.getInstance().getAlertTemp() ? "PASS" : "FAIL");
+                    reCheckBtn.setVisibility(View.VISIBLE);
+                    stopTickThread();
                 }
 
             }
@@ -475,11 +520,7 @@ public class VFRDetect20210303Fragment extends Fragment {
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
         }
-
-        if (detectPageThread != null && detectPageThread.isAlive()) {
-            detectPageThread.interrupt();
-            threadObject.setRunning(false);
-        }
+        stopTickThread();
     }
 
     @Override
@@ -496,7 +537,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     // -------------------------------------------
     public interface OnFragmentInteractionListener {
-        void onClickCancelDetect();
+        void onClickConfirmBackToHome();
 
         void onClickAdminSetting();
 
@@ -829,9 +870,9 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                     if(!staticDetectMaskSwitch) return;
                     mLog.d(TAG, "try mask detect...");
+//                    mLog.d(TAG, "maskProcessBitmap:> " + maskProcessBitmap);
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
-                    if (results != null && results.getConfidence() > 0.85) {
-
+                    if (results != null && results.getConfidence() > 0.90) {
                         maskResults = results.getClasses();
                         detectResult = results;
                         addCacheFlag = true;
@@ -851,7 +892,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                         }
                         mLog.i(TAG, "mask result= " + results.toString() + ", confidence:> " + results.getConfidence());
                     } else {
-//                        mLog.w(TAG, "maskResults is NULL!!!!!");
+                        mLog.w(TAG, "maskResults is NULL!!!!!");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -865,6 +906,10 @@ public class VFRDetect20210303Fragment extends Fragment {
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
         }
+        stopTickThread();
+    }
+
+    private void stopTickThread() {
         if (detectPageThread != null && detectPageThread.isAlive()) {
             detectPageThread.interrupt();
             threadObject.setRunning(false);
@@ -873,7 +918,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     private void backToWelcomePage() {
         stopCameraFunction();
-        onFragmentInteractionListener.onClickCancelDetect();
+        onFragmentInteractionListener.onClickConfirmBackToHome();
     }
 
     private void goToAdminSettingPage() {
@@ -897,19 +942,20 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     private boolean getBitmapFlag = false;
 
+    long tick_count = 0;
+
     // Thread
     private Thread detectPageThread;
     private Runnable detectPageRunnable = new Runnable() {
         // 1 second
         private static final long task_minimum_tick_time_msec = 300;
 
-        long tick_count = 0;
-
         int period = 5;
 
         @Override
         public void run() {
             while (threadObject.isRunning()) {
+                mLog.d(TAG, "tick_count:> " + tick_count);
                 try {
                     long start_time_tick = System.currentTimeMillis();
 
@@ -922,6 +968,13 @@ public class VFRDetect20210303Fragment extends Fragment {
                     if (tick_count % 1 == 0 && (noDetectCount == 0)) {
 //                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
                         getBitmapFlag = true;
+                    }
+
+                    if (tick_count % 10 == 9) {
+                        if (!isCaptureFaceDone) {
+                            mLog.d(TAG, "detectPageRunnable, startToDetectGate:> " + startToDetectGate);
+                            startToDetectGate = true;
+                        }
                     }
 
                     if (tick_count % 3 == 0) {

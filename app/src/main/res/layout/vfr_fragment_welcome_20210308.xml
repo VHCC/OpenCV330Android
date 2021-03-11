@@ -1,0 +1,193 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:background="@drawable/bg_empty_20210304"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/frameRFID"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/rfidBtn"
+            android:gravity="center"
+            android:src="@drawable/ic_rfid_btn"
+            android:layout_marginBottom="36dp"
+            android:layout_gravity="center"
+            android:layout_width="400dp"
+            android:layout_height="400dp">
+        </ImageView>
+
+        <TextView
+            android:gravity="center"
+            android:textColor="#ffffff"
+            android:text="RFID"
+            android:textSize="46dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="50dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+
+        <TextView
+            android:gravity="center"
+            android:textColor="#ffffff"
+            android:text="RFID"
+            android:layout_marginTop="250dp"
+            android:textSize="46dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+    </FrameLayout>
+
+
+
+    <FrameLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:layout_gravity="top|center_horizontal|right"
+            android:background="@drawable/ic_gear_20210303"
+            android:id="@+id/adminSettingBtn"
+            android:layout_marginRight="40dp"
+            android:layout_marginTop="20dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"/>
+
+        <ImageView
+            android:layout_gravity="top|center_horizontal|right"
+            android:background="@drawable/ic_disconnect_20210303"
+            android:id="@+id/thermoConnectStatus"
+            android:layout_marginRight="115dp"
+            android:layout_marginTop="20dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"/>
+
+        <Button
+            android:layout_gravity="top|center_horizontal|left"
+            android:background="@drawable/ic_home_20210303"
+            android:visibility="gone"
+            android:id="@+id/adminHomeBtn"
+            android:layout_marginLeft="45dp"
+            android:layout_marginTop="100dp"
+            android:layout_width="66dp"
+            android:layout_height="66dp"/>
+
+        <TextView
+            android:id="@+id/time_left"
+            android:gravity="top|right"
+            android:textColor="#ffffff"
+            android:text="YYYY-MM-DD"
+            android:layout_marginRight="273dp"
+            android:layout_marginTop="30dp"
+            android:textSize="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+
+        <TextView
+            android:id="@+id/time_right"
+            android:gravity="top|right"
+            android:textColor="#ffffff"
+            android:text="--:--"
+            android:layout_marginRight="196dp"
+            android:layout_marginTop="30dp"
+            android:textSize="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/frameHere"
+        android:visibility="gone"
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/hereBtn"
+            android:layout_gravity="center"
+            android:layout_marginTop="200dp"
+            android:layout_marginRight="400dp"
+            android:src="@drawable/ic_here"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <!--   msg     -->
+        <TextView
+            android:id="@+id/msg_big_here"
+            android:gravity="center"
+            android:textColor="#ffffff"
+            android:layout_marginLeft="70dp"
+            android:text="Please wave the card to login"
+            android:layout_marginTop="440dp"
+            android:textSize="42dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/frameWelcome"
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--   msg     -->
+        <TextView
+            android:id="@+id/msg_big"
+            android:gravity="center"
+            android:textColor="#ffffff"
+            android:text="Please choose a way to login"
+            android:layout_marginTop="440dp"
+            android:textSize="48dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextView>
+
+    </FrameLayout>
+
+
+
+    <LinearLayout
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- App Edition -->
+        <TextView
+            android:id="@+id/appVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginLeft="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="@dimen/common_edit_text_margin_left_right_double"
+            android:layout_marginRight="@dimen/common_edit_text_margin_left_right_double"
+            android:gravity="center_horizontal|center_vertical"
+            android:textColor="#bbc4d1" />
+
+        <!-- CopyRight-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/common_edit_text_margin_bottom_top"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="Advantech 2021 VFR"
+            android:textColor="#bbc4d1" />
+    </LinearLayout>
+
+</FrameLayout>
