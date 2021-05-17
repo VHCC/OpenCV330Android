@@ -26,6 +26,7 @@
         android:required="true" />
 
     <application
+        tools:replace="android:icon"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_wpc_20200819_foreground"
         android:label="@string/app_name"

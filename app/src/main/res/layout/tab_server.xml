@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#00000000"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:fillViewport="false"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1000dp"
+            android:orientation="vertical">
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:orientation="horizontal"
+                android:layout_weight="1"
+                android:weightSum="2">
+
+                <!--    LEFT            -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="500dp"
+
+                    android:layout_margin="10dp"
+                    android:layout_weight="1"
+
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_round_rect_setting_block">
+
+                    <!-- HEADER   -->
+                    <TextView
+                        android:background="#292929"
+                        android:gravity="center"
+                        android:text="Server Setting"
+                        android:textSize="20sp"
+                        android:textColor="#FFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </TextView>
+
+                    <!-- DATA 1   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Hostname"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/server_host_name"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Hostname"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Port"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/server_port"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Port"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="SSL"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <CheckBox
+                            android:id="@+id/server_isssl"
+                            android:buttonTint="#229CBB"
+                            android:paddingLeft="15dp"
+                            android:layout_marginRight="20dp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </CheckBox>
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </LinearLayout>
+
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text=""
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <Button
+                            android:id="@+id/btn_connect"
+                            android:buttonTint="#229CBB"
+                            android:text="Connect"
+                            android:textColor="#FFFFFF"
+                            android:background="@drawable/ic_btn_connect"
+                            android:paddingLeft="15dp"
+                            android:layout_marginRight="20dp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </Button>
+                    </LinearLayout>
+                </LinearLayout>
+                <!--    END    -->
+
+                <!--    RIGHT    -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="500dp"
+
+                    android:layout_margin="10dp"
+                    android:layout_weight="1"
+
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_round_rect_setting_block">
+
+                    <!-- HEADER   -->
+                    <TextView
+                        android:background="#292929"
+                        android:gravity="center"
+                        android:text="3rd Event Post"
+                        android:textSize="20sp"
+                        android:textColor="#FFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </TextView>
+
+                    <!-- DATA 1   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Hostname"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/trd_hostname"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Hostname"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Port"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/trd_port"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Port"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="SSL"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <CheckBox
+                            android:id="@+id/trd_is_ssl"
+                            android:buttonTint="#229CBB"
+                            android:paddingLeft="15dp"
+                            android:layout_marginRight="20dp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </CheckBox>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Account"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/trd_account"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Account"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Password"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/trd_password"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Password"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+                </LinearLayout>
+                <!--    END    -->
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+    </ScrollView>
+
+</LinearLayout>

@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#00000000"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:fillViewport="false"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1000dp"
+            android:orientation="vertical">
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:orientation="horizontal"
+                android:layout_weight="1"
+                android:weightSum="2">
+
+                <!--    LEFT            -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="500dp"
+
+                    android:layout_margin="10dp"
+                    android:layout_weight="1"
+
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_round_rect_setting_block">
+
+                    <!-- HEADER   -->
+                    <TextView
+                        android:background="#292929"
+                        android:gravity="center"
+                        android:text="Thermal Sensor Setting"
+                        android:textSize="20sp"
+                        android:textColor="#FFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </TextView>
+
+                    <!-- DATA 1   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Avalo Device Host"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:singleLine="true"
+                            android:id="@+id/avalo_host"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:hint="Avalo Device Host"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+
+                        <TextView
+                            android:text="Alert Temp"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <LinearLayout
+                            android:layout_marginRight="20dp"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:weightSum="5"
+                            android:orientation="horizontal"
+                            android:layout_height="match_parent">
+
+                            <TextView
+                                android:id="@+id/avaloAlertTempMinus"
+                                android:text="-"
+                                android:background="#00000000"
+                                android:textColor="#FFFFFF"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                            <TextView
+                                android:id="@+id/avaloAlertTemp"
+                                android:text="37.8"
+                                android:layout_gravity="center"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:enabled="false"
+                                android:textColor="#FFFFFF"
+                                android:layout_weight="3"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                            <TextView
+                                android:id="@+id/avaloAlertTempAdd"
+                                android:text="+"
+                                android:background="#00000000"
+                                android:textColor="#FFFFFF"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+
+                        <TextView
+                            android:text="Temp Compensation"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <LinearLayout
+                            android:layout_marginRight="20dp"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:weightSum="5"
+                            android:orientation="horizontal"
+                            android:layout_height="match_parent">
+
+                            <TextView
+                                android:id="@+id/avaloComTempMinus"
+                                android:text="-"
+                                android:background="#00000000"
+                                android:textColor="#FFFFFF"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                            <TextView
+                                android:id="@+id/avaloComTemp"
+                                android:text="37.8"
+                                android:layout_gravity="center"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:enabled="false"
+                                android:textColor="#FFFFFF"
+                                android:layout_weight="3"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                            <TextView
+                                android:id="@+id/avaloComTempAdd"
+                                android:text="+"
+                                android:background="#00000000"
+                                android:textColor="#FFFFFF"
+                                android:gravity="center"
+                                android:textSize="16sp"
+                                android:layout_weight="1"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+                            </TextView>
+
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="3"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Temp Unit"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="1"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <Spinner
+                            android:id="@+id/temp_unit_spinner"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:layout_width="0dp"
+                            android:layout_weight="2"
+                            android:textColor="#FFFFFF"
+                            android:layout_marginRight="20dp"
+                            android:layout_height="match_parent"
+                            android:spinnerMode="dropdown"
+                            android:dropDownVerticalOffset="40dp"
+                            android:paddingLeft="15dp"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+                <!--    END    -->
+
+                <!--    RIGHT    -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="500dp"
+
+                    android:layout_margin="10dp"
+                    android:layout_weight="1"
+
+                    android:orientation="vertical"
+                    android:background="@drawable/bg_round_rect_setting_block">
+
+                    <!-- HEADER   -->
+                    <TextView
+                        android:background="#292929"
+                        android:gravity="center"
+                        android:text="Check-in Setting"
+                        android:textSize="20sp"
+                        android:textColor="#FFFFFF"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                    </TextView>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="5"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Temperature"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <FrameLayout
+                            android:layout_weight="3"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                            <Switch
+                                android:trackTint="@color/selector_vms_switch"
+                                android:thumbTint="@color/selector_vms_switch_thumb"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent">
+                            </Switch>
+                        </FrameLayout>
+
+                    </LinearLayout>
+
+                    <!-- DATA    -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="5"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Mask Detection"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <FrameLayout
+                            android:layout_weight="3"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                            <Switch
+                                android:trackTint="@color/selector_vms_switch"
+                                android:thumbTint="@color/selector_vms_switch_thumb"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent">
+                            </Switch>
+                        </FrameLayout>
+
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="5"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Visitor Template"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:id="@+id/visitorTemplate"
+                            android:singleLine="true"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:enabled="false"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#000000"
+                            android:layout_marginRight="20dp"
+                            android:layout_weight="3"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+
+                    <!-- DATA   -->
+                    <LinearLayout
+                        android:paddingTop="15dp"
+                        android:weightSum="5"
+                        android:orientation="horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp">
+                        <TextView
+                            android:text="Non-visitor Template"
+                            android:gravity="left|center_vertical"
+                            android:paddingLeft="50dp"
+                            android:textColor="#929292"
+                            android:textSize="16sp"
+                            android:layout_weight="2"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </TextView>
+
+                        <EditText
+                            android:id="@+id/nonVisitorTemplate"
+                            android:singleLine="true"
+                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:enabled="false"
+                            android:paddingLeft="15dp"
+                            android:textSize="16sp"
+                            android:textColor="#000000"
+                            android:layout_marginRight="20dp"
+                            android:layout_weight="3"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        </EditText>
+                    </LinearLayout>
+                </LinearLayout>
+                <!--    END    -->
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+    </ScrollView>
+
+</LinearLayout>

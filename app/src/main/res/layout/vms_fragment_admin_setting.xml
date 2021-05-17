@@ -1,0 +1,123 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_admin_password">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="bottom">
+
+        <Button
+            android:id="@+id/adminSettingBtn"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="top|center_horizontal|right"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="40dp"
+            android:background="@drawable/ic_gear_20210303" />
+
+        <ImageView
+            android:id="@+id/thermoConnectStatus"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="top|center_horizontal|right"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="115dp"
+            android:background="@drawable/ic_disconnect_20210303" />
+
+        <Button
+            android:id="@+id/adminHomeBtn"
+            android:layout_width="66dp"
+            android:layout_height="66dp"
+            android:layout_gravity="top|center_horizontal|left"
+            android:layout_marginLeft="45dp"
+            android:layout_marginTop="100dp"
+            android:background="@drawable/ic_home_20210303" />
+
+        <TextView
+            android:id="@+id/time_left"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="273dp"
+            android:gravity="top|right"
+            android:text="YYYY-MM-DD"
+            android:textColor="#feb005"
+            android:textSize="20dp"></TextView>
+
+        <TextView
+            android:id="@+id/time_right"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="196dp"
+            android:gravity="top|right"
+            android:text="--:--"
+            android:textColor="#1D1F20"
+            android:textSize="20dp"></TextView>
+
+    </FrameLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <devlight.io.library.ntb.NavigationTabBar
+            android:layout_marginTop="110dp"
+            android:layout_marginLeft="120dp"
+            android:layout_marginRight="280dp"
+
+            android:id="@+id/ntb_vertical"
+            android:layout_width="match_parent"
+
+            android:layout_height="40dp"
+
+            app:ntb_active_color="@color/white"
+            app:ntb_badge_size="0sp"
+            app:ntb_badge_title_color="@color/white"
+            app:ntb_badged="false"
+            app:ntb_bg_color="#3D3D3D"
+            app:ntb_icon_size_fraction="0"
+
+            app:ntb_inactive_color="#000000"
+            app:ntb_title_mode="all"
+            app:ntb_title_size="22sp"
+            app:ntb_titled="true" />
+
+        <androidx.viewpager.widget.ViewPager
+            android:layout_marginTop="25dp"
+            android:layout_marginLeft="60dp"
+            android:layout_marginRight="60dp"
+            android:layout_marginBottom="100dp"
+            android:id="@+id/vp_vertical_ntb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+    </LinearLayout>
+
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="bottom"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/applyBtn"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:text="Apply"
+            android:textColor="#FFFFFF"
+            android:layout_gravity="bottom|center_horizontal|right"
+            android:layout_marginRight="60dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/ic_btn_confirm" />
+
+    </FrameLayout>
+</FrameLayout>
+

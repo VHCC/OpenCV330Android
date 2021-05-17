@@ -44,6 +44,34 @@ public class OKHttpConstants {
 
         public static final int DB_CODE_INSERT_DETECT_INFO = 50001;
         public static final int DB_CODE_INSERT_DETECT_INFO_SUCCESS = 500011;
+
+        // VMS
+        public static final int APP_CODE_VMS_SERVER_UPLOAD = 20000;
+        public static final int APP_CODE_VMS_SERVER_UPLOAD_SUCCESS = 200001;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT = 20001;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS = 200011;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL = 200019;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_HB = 20002;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_HB_SUCCESS = 200021;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_SYNC = 20003;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_SYNC_SUCCESS = 200031;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL = 200039;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS = 20004;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS = 200041;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL = 200049;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_REMOVE = 20005;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_REMOVE_SUCCESS = 200051;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE = 20006;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS = 200021;
+
+        public static final int APP_CODE_VMS_KIOSK_RFID_DETECT_DONE = 30001;
+
     }
 
 }

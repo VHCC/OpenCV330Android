@@ -71,7 +71,7 @@ public class VFRAdminPasswordFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreateView");
-        View rootView = inflater.inflate(R.layout.vfr_fragment_admin_password, container, false);
+        View rootView = inflater.inflate(R.layout.vfr_fragment_admin_password_20210429, container, false);
 
         initViewIDs(rootView);
         initViewsFeature();
@@ -84,8 +84,8 @@ public class VFRAdminPasswordFragment extends Fragment {
         confirmBtn = rootView.findViewById(R.id.confirmBtn);
         backBtn = rootView.findViewById(R.id.backBtn);
 
-
         pwdEditTxt = rootView.findViewById(R.id.pwdEditTxt);
+        pwdEditTxt.setText("");
 
     }
 

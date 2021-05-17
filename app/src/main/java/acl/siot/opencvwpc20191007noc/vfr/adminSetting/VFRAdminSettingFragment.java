@@ -33,7 +33,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 
 /**
  * Created by IChen.Chu on 2020/05/25
- * A fragment to show admin setting password page.
+ * A fragment to show admin setting page.
  */
 public class VFRAdminSettingFragment extends Fragment {
 

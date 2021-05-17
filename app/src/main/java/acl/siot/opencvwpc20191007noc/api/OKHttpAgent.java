@@ -12,13 +12,23 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
 
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
+import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
+import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -49,12 +59,25 @@ public class OKHttpAgent {
             = MediaType.parse("application/x-www-form-urlencoded; charset=utf-8");
 
     /*  */
-    private final OkHttpClient mClient = new OkHttpClient();
+//    private final OkHttpClient mClient = new OkHttpClient();
+    private final OkHttpClient mClient;
     private IRequestInterface mIRequestInterface;
 
     private OKHttpAgent() {
-        OkHttpClient.Builder client = new OkHttpClient.Builder();
-        client.connectTimeout(5000, TimeUnit.MILLISECONDS);
+        OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
+        SSLContext ssLContext = null;
+        try {
+            ssLContext = SSLContext.getInstance("TLS");
+            ssLContext.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+        mBuilder.sslSocketFactory(ssLContext.getSocketFactory());
+        mBuilder.hostnameVerifier(new NullHostNameVerifier());
+        mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
+        mClient = mBuilder.build();
     }
 
     public static OKHttpAgent getInstance() {
@@ -91,6 +114,7 @@ public class OKHttpAgent {
             mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
             RequestBody body = RequestBody.create(JSON, json);
 
+            try {
             Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -98,7 +122,6 @@ public class OKHttpAgent {
                     .header("Content-Type", "application/json")
                     .post(body)
                     .build();
-            try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
                 JSONObject jsonObj = new JSONObject(result);
@@ -114,11 +137,11 @@ public class OKHttpAgent {
             } catch (IOException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             } catch (JSONException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
-                mIRequestInterface.onRequestFail(e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             }
         }
 
@@ -140,7 +163,7 @@ public class OKHttpAgent {
                                 mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
                                 break;
                             default:
-                                mIRequestInterface.onRequestFail(jsonObj.getString("message"));
+                                mIRequestInterface.onRequestFail(jsonObj.getString("message"), postCode);
                                 break;
                         }
                     }
@@ -177,7 +200,7 @@ public class OKHttpAgent {
             }
             mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", request= " + json);
             RequestBody body = RequestBody.create(JSON, json);
-
+            try {
             Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -185,7 +208,6 @@ public class OKHttpAgent {
                     .header("Content-Type", "application/json")
                     .post(body)
                     .build();
-            try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
                 mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
@@ -242,20 +264,20 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
-            final String mainURL = "http://192.168.4.1/websocket.json";
-            mLog.d(TAG, "PostThread@" + this.hashCode());
+//            final String mainURL = "http://192.168.4.1/websocket.json";
+            final String mainURL = "http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host() + "/websocket.json";
+            mLog.d(TAG, "PostAvaloThread@" + this.hashCode());
             String bodyString = switchFlag ? "websocket,1" : "websocket,0";
             RequestBody body = RequestBody.create(URL_ENCODED, bodyString);
-
+            try {
             Request request = new Request.Builder()
                     .url(mainURL)
                     .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
                     .post(body)
                     .build();
-            try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
-                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+                mLog.d(TAG, "PostAvaloThread@" + this.hashCode() + ", response.code()= " + response.code());
             } catch (IOException e) {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
@@ -277,7 +299,7 @@ public class OKHttpAgent {
         public void run() {
             final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
             mLog.d(TAG, "get request= " + mainURL);
-
+            try {
             Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -285,7 +307,6 @@ public class OKHttpAgent {
 //                    .header("Content-Type", "application/json")
                     .get()
                     .build();
-            try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
                 JSONObject jsonObj = new JSONObject(result);
@@ -340,6 +361,7 @@ public class OKHttpAgent {
 //            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
             final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
             mLog.d(TAG, "get FRS persons request= " + mainURL);
+            try {
             Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -347,7 +369,6 @@ public class OKHttpAgent {
 //                    .header("Content-Type", "application/json")
                     .get()
                     .build();
-            try {
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
                 JSONObject jsonObj = new JSONObject(result);
@@ -467,4 +488,5 @@ public class OKHttpAgent {
             Log.e("Exception", "File write failed: " + e.toString());
         }
     }
+
 }

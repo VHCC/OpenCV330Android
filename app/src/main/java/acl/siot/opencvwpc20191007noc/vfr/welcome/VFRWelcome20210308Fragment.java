@@ -158,7 +158,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
         hereBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onFragmentInteractionListener.clickToDetectPage();
+//                onFragmentInteractionListener.clickToDetectPage();
             }
         });
     }

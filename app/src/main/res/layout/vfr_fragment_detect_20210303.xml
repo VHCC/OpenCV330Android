@@ -224,7 +224,7 @@
             android:textColor="#ffffff"
             android:text="YYYY-MM-DD"
             android:layout_marginRight="273dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="20dp"
             android:textSize="20dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -236,7 +236,7 @@
             android:textColor="#ffffff"
             android:text="--:--"
             android:layout_marginRight="196dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="20dp"
             android:textSize="20dp"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -265,9 +265,21 @@
             android:layout_height="match_parent">
         </TextView>
 
+        <ImageView
+            android:id="@+id/scan_png"
+            android:layout_gravity="center|right"
+            android:src="@drawable/png_scan"
+            android:text="Re-check"
+            android:textSize="30dp"
+            android:textColor="@color/white"
+            android:layout_marginRight="251dp"
+            android:layout_marginTop="80dp"
+            android:layout_width="100dp"
+            android:layout_height="196dp"/>
+
         <Button
             android:id="@+id/reCheckBtn"
-            android:visibility="gone"
+            android:visibility="invisible"
             android:layout_gravity="center|right"
             android:background="@drawable/selector_re_check_bg"
             android:text="Re-check"
@@ -282,8 +294,8 @@
             android:id="@+id/confirmBtn"
             android:layout_gravity="center|right"
             android:background="@drawable/selector_confirm_bg"
-            android:text="Confirm"
-            android:enabled="false"
+            android:text="Finish"
+            android:enabled="true"
             android:textSize="30dp"
             android:textColor="@color/white"
             android:layout_marginRight="142dp"

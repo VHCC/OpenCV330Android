@@ -14,4 +14,21 @@
         <item name="android:windowFullscreen">true</item>
     </style>
 
+    <style name="vmsSpinnerItemStyle">
+        <item name="android:paddingLeft">5dp</item>
+        <item name="android:paddingBottom">3dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="vmsSpinnerStyleDropdownItem" parent="android:style/Widget.ListView.DropDown">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:gravity">left|center_vertical</item>
+        <item name="android:height">50dp</item>
+        <item name="android:paddingLeft">15dp</item>
+        <item name="android:dividerHeight">1dp</item>
+        <item name="android:dividerPadding">5dp</item>
+        <item name="android:background">#5B5B5B</item>
+    </style>
 </resources>
