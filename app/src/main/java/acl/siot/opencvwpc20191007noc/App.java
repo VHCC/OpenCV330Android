@@ -235,10 +235,10 @@ public class App extends Application {
 //                        OKHttpAgent.getInstance().postRequest(mMap, OKHttpConstants.RequestCode.APP_CODE_GET_FACE);
                     }
 
-//                    if (tick_count % 1 == 0) {
-//                        HashMap<String, String> mMap = new GetTemp();
-//                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
-//                    }
+                    if (tick_count % 1 == 0) {
+                        HashMap<String, String> mMap = new GetTemp();
+                        OKHttpAgent.getInstance().getTempRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                    }
 
                     if (tick_count % 10 == 0) {
                         mLog.d(TAG, getDeviceModel());
@@ -268,8 +268,8 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -242,7 +243,7 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
-            final String mainURL = "http://192.168.4.1/websocket.json";
+            final String mainURL = "http://" + VFRThermometerCache.getInstance().getIpAddress() + "/websocket.json";
             mLog.d(TAG, "PostThread@" + this.hashCode());
             String bodyString = switchFlag ? "websocket,1" : "websocket,0";
             RequestBody body = RequestBody.create(URL_ENCODED, bodyString);

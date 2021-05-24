@@ -11,6 +11,7 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.media.FaceDetector;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -392,6 +393,7 @@ public class VFRDetectFragment extends Fragment {
             connectFRSServer();
 //            openCvCameraView.setVisibility(standardMode ? View.VISIBLE : View.GONE);
             thermo_view.setVisibility(!VFREdgeCache.getInstance().isImageStandardMode() ? View.VISIBLE : View.GONE);
+            mPlayer = MediaPlayer.create(getActivity().getBaseContext(), R.raw.alarm_20210524);
         }
     }
 
@@ -404,7 +406,7 @@ public class VFRDetectFragment extends Fragment {
         }
         c = null; // more about drafts here: http://github.com/TooTallNate/Java-WebSocket/wiki/Drafts
         try {
-            c = new AvaloWebSocketClient( new URI("ws://192.168.4.1:9999"));
+            c = new AvaloWebSocketClient( new URI("ws://" + VFRThermometerCache.getInstance().getIpAddress() + ":9999"));
             c.setListener(new AvaloWebSocketClient.avaloListener() {
                 @Override
                 public void onMessage(byte[] bytesResult) {
@@ -430,6 +432,8 @@ public class VFRDetectFragment extends Fragment {
 
     private boolean isTempAbnormal = false;
 
+    MediaPlayer mPlayer;
+
     private BleHandler mHandler = new BleHandler(getContext());
     class BleHandler extends Handler {
 
@@ -445,172 +449,180 @@ public class VFRDetectFragment extends Fragment {
             if (weakReference == null) return;
 
             thermo_view.setImageBitmap((Bitmap) msg.obj);
-            NumberFormat formatter = new DecimalFormat("#00.0");
-            tempStatus.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
-            tempStatusBg.setBackgroundColor(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-            Date d = new Date();
-            CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
-            recognizedTime.setText(s);
-            if (!thermo_is_human) {
-                detectStatus.setText("Detecting");
-                detectStatus.setTextColor(Color.parseColor("#ffffff"));
-                tempStatusBg.setBackgroundColor(Color.parseColor("#00000000"));
-                maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
-                maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
-            } else {
-//                if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() || maskResults == 1) {
-                if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
-                    isTempAbnormal = true;
-                } else {
-                    isTempAbnormal = false;
-                }
-
-                if (isTempAbnormal || maskResults == 1) {
-                    detectStatus.setText("Abnormal");
-                    detectStatus.setTextColor(Color.parseColor("#ff4d4d"));
+            if (!addCache_DelayFlag) {
+                NumberFormat formatter = new DecimalFormat("#00.0");
+                mLog.d(TAG, "person_temp_static:> " + person_temp_static);
+                tempStatus.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
+                tempStatusBg.setBackgroundColor(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                Date d = new Date();
+                CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
+                recognizedTime.setText(s);
+                if (!thermo_is_human) {
+                    detectStatus.setText("Detecting");
+                    detectStatus.setTextColor(Color.parseColor("#ffffff"));
+                    tempStatusBg.setBackgroundColor(Color.parseColor("#00000000"));
                     maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
                     maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
-                    if (addCacheFlag && !addCache_DelayFlag) {
-                        addCacheFlag = false;
-                        AbnormalItem abnormalItem = new AbnormalItem();
-                        abnormalItem.viewCache = VFREdgeCache.getInstance().isImageStandardMode() ? maskProcessBitmap : (Bitmap) msg.obj;
-                        mLog.d(TAG, " *** temperature:> " + person_temp_static);
-                        mLog.d(TAG, " *** maskResults:> " + maskResults);
+                } else {
+//                if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() || maskResults == 1) {
+                    if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
+                        isTempAbnormal = true;
+                    } else {
+                        isTempAbnormal = false;
+                    }
+
+                    if (isTempAbnormal || maskResults == 1) {
+                        detectStatus.setText("Abnormal");
+                        detectStatus.setTextColor(Color.parseColor("#ff4d4d"));
+                        maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
+                        maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
+//                        if (addCacheFlag && !addCache_DelayFlag) {
+                        if (addCacheFlag) {
+                            addCacheFlag = false;
+                            AbnormalItem abnormalItem = new AbnormalItem();
+                            abnormalItem.viewCache = VFREdgeCache.getInstance().isImageStandardMode() ? maskProcessBitmap : (Bitmap) msg.obj;
+                            mLog.d(TAG, " *** temperature:> " + person_temp_static);
+                            mLog.d(TAG, " *** maskResults:> " + maskResults);
 //                        abnormalItem.temperature = String.valueOf(formatter.format(person_temp_static));
-                        abnormalItem.temperature = person_temp_static;
-                        abnormalItem.timestamp = String.valueOf(s);
+                            abnormalItem.temperature = person_temp_static;
+                            abnormalItem.timestamp = String.valueOf(s);
 //                        abnormalItem.timestamp = String.valueOf(detectResult.getConfidence());
-                        abnormalItem.maskType = maskResults;
-                        mLog.d(TAG, " *** face Confidence:> " + detectResult.getConfidence());
-                        if (detectResult.getConfidence() > 0.94) {
-                            if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                                if (maskProcessBitmap != null) {
+                            abnormalItem.maskType = maskResults;
+                            mLog.d(TAG, " *** face Confidence:> " + detectResult.getConfidence());
+                            if (detectResult.getConfidence() > 0.94) {
+                                if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                                    if (maskProcessBitmap != null) {
+                                        abnormalList.add(abnormalItem);
+                                        addCache_DelayFlag = true;
+                                    }
+                                } else {
                                     abnormalList.add(abnormalItem);
                                     addCache_DelayFlag = true;
                                 }
-                            } else {
-                                abnormalList.add(abnormalItem);
-                                addCache_DelayFlag = true;
+                                if(!mPlayer.isPlaying()) {
+                                    mPlayer.start();
+                                }
                             }
                         }
                     }
-                }
 
-                if (!isTempAbnormal && maskResults == 0) {
-                    detectStatus.setText("Pass");
-                    detectStatus.setTextColor(Color.parseColor("#2db100"));
-                    maskStatus.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
-                    maskStatus.setVisibility(View.VISIBLE);
+                    if (!isTempAbnormal && maskResults == 0) {
+                        detectStatus.setText("Pass");
+                        detectStatus.setTextColor(Color.parseColor("#2db100"));
+                        maskStatus.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
+                        maskStatus.setVisibility(View.VISIBLE);
+                    }
                 }
-            }
-            if (abnormalList.size() == 1) {
-                abnormal_1.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size() - 1);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
-                }
+                if (abnormalList.size() == 1) {
+                    abnormal_1.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size() - 1);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 
 //                abnormal_1_tempStatus.setText(abnormalItemTemp_1.temperature);
-                abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
-                abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
-            }
-
-            if (abnormalList.size() == 2) {
-                abnormal_1.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size() - 1);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
+                    abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
+                    abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
                 }
+
+                if (abnormalList.size() == 2) {
+                    abnormal_1.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size() - 1);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 //                abnormal_1_tempStatus.setText(abnormalItemTemp_1.temperature);
-                abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
-                abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
+                    abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
+                    abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
 
-                abnormal_2.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_2 = abnormalList.get(abnormalList.size()-2);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_2_viewCache.setImageBitmap(abnormalItemTemp_2.viewCache);
-                    abnormal_2_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_2_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_2_viewCache_thermo.setImageBitmap(abnormalItemTemp_2.viewCache);
-                    abnormal_2_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_2_viewCache_thermo.setVisibility(View.VISIBLE);
-                }
+                    abnormal_2.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_2 = abnormalList.get(abnormalList.size()-2);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_2_viewCache.setImageBitmap(abnormalItemTemp_2.viewCache);
+                        abnormal_2_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_2_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_2_viewCache_thermo.setImageBitmap(abnormalItemTemp_2.viewCache);
+                        abnormal_2_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_2_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 //                abnormal_2_tempStatus.setText(abnormalItemTemp_2.temperature);
-                abnormal_2_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_2.temperature)));
-                abnormal_2_maskStatus.setImageBitmap(abnormalItemTemp_2.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_2_tempStatusBg.setBackgroundColor(abnormalItemTemp_2.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_2_recognizedTime.setText(abnormalItemTemp_2.timestamp);
-            }
-
-            if (abnormalList.size() >= 3) {
-                abnormal_1.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size()-1);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
-                    abnormal_1_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
+                    abnormal_2_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_2.temperature)));
+                    abnormal_2_maskStatus.setImageBitmap(abnormalItemTemp_2.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_2_tempStatusBg.setBackgroundColor(abnormalItemTemp_2.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_2_recognizedTime.setText(abnormalItemTemp_2.timestamp);
                 }
+
+                if (abnormalList.size() >= 3) {
+                    abnormal_1.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_1 = abnormalList.get(abnormalList.size()-1);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_1_viewCache.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_1_viewCache_thermo.setImageBitmap(abnormalItemTemp_1.viewCache);
+                        abnormal_1_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_1_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 //                abnormal_1_tempStatus.setText(abnormalItemTemp_1.temperature);
-                abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
-                abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
+                    abnormal_1_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_1.temperature)));
+                    abnormal_1_maskStatus.setImageBitmap(abnormalItemTemp_1.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_1_tempStatusBg.setBackgroundColor(abnormalItemTemp_1.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_1_recognizedTime.setText(abnormalItemTemp_1.timestamp);
 
-                abnormal_2.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_2 = abnormalList.get(abnormalList.size()-2);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_2_viewCache.setImageBitmap(abnormalItemTemp_2.viewCache);
-                    abnormal_2_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_2_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_2_viewCache_thermo.setImageBitmap(abnormalItemTemp_2.viewCache);
-                    abnormal_2_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_2_viewCache_thermo.setVisibility(View.VISIBLE);
-                }
+                    abnormal_2.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_2 = abnormalList.get(abnormalList.size()-2);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_2_viewCache.setImageBitmap(abnormalItemTemp_2.viewCache);
+                        abnormal_2_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_2_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_2_viewCache_thermo.setImageBitmap(abnormalItemTemp_2.viewCache);
+                        abnormal_2_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_2_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 //                abnormal_2_tempStatus.setText(abnormalItemTemp_2.temperature);
-                abnormal_2_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_2.temperature)));
-                abnormal_2_maskStatus.setImageBitmap(abnormalItemTemp_2.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_2_tempStatusBg.setBackgroundColor(abnormalItemTemp_2.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_2_recognizedTime.setText(abnormalItemTemp_2.timestamp);
+                    abnormal_2_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_2.temperature)));
+                    abnormal_2_maskStatus.setImageBitmap(abnormalItemTemp_2.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_2_tempStatusBg.setBackgroundColor(abnormalItemTemp_2.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_2_recognizedTime.setText(abnormalItemTemp_2.timestamp);
 
-                abnormal_3.setVisibility(View.VISIBLE);
-                AbnormalItem abnormalItemTemp_3 = abnormalList.get(abnormalList.size()-3);
-                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                    abnormal_3_viewCache.setImageBitmap(abnormalItemTemp_3.viewCache);
-                    abnormal_3_viewCache.setVisibility(View.VISIBLE);
-                    abnormal_3_viewCache_thermo.setVisibility(View.INVISIBLE);
-                } else {
-                    abnormal_3_viewCache_thermo.setImageBitmap(abnormalItemTemp_3.viewCache);
-                    abnormal_3_viewCache.setVisibility(View.INVISIBLE);
-                    abnormal_3_viewCache_thermo.setVisibility(View.VISIBLE);
-                }
+                    abnormal_3.setVisibility(View.VISIBLE);
+                    AbnormalItem abnormalItemTemp_3 = abnormalList.get(abnormalList.size()-3);
+                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                        abnormal_3_viewCache.setImageBitmap(abnormalItemTemp_3.viewCache);
+                        abnormal_3_viewCache.setVisibility(View.VISIBLE);
+                        abnormal_3_viewCache_thermo.setVisibility(View.INVISIBLE);
+                    } else {
+                        abnormal_3_viewCache_thermo.setImageBitmap(abnormalItemTemp_3.viewCache);
+                        abnormal_3_viewCache.setVisibility(View.INVISIBLE);
+                        abnormal_3_viewCache_thermo.setVisibility(View.VISIBLE);
+                    }
 //                abnormal_3_tempStatus.setText(abnormalItemTemp_3.temperature);
-                abnormal_3_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_3.temperature)));
-                abnormal_3_maskStatus.setImageBitmap(abnormalItemTemp_3.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
-                abnormal_3_tempStatusBg.setBackgroundColor(abnormalItemTemp_3.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
-                abnormal_3_recognizedTime.setText(abnormalItemTemp_3.timestamp);
+                    abnormal_3_tempStatus.setText(String.valueOf(formatter.format(abnormalItemTemp_3.temperature)));
+                    abnormal_3_maskStatus.setImageBitmap(abnormalItemTemp_3.maskType == 0 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng));
+                    abnormal_3_tempStatusBg.setBackgroundColor(abnormalItemTemp_3.temperature > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+                    abnormal_3_recognizedTime.setText(abnormalItemTemp_3.timestamp);
+                }
             }
+
 
         }
     }
@@ -925,7 +937,7 @@ public class VFRDetectFragment extends Fragment {
     public static Boolean thermo_is_human = false;
 
     public void onEventMainThread(BusEvent event) {
-//        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
+        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case OVER_LAY_GREEN:
                 circleOverlay.setVisibility(View.GONE);
@@ -934,7 +946,9 @@ public class VFRDetectFragment extends Fragment {
                 break;
             case OVER_LAY_BLUE:
                 maskResults = 2;
-                maskStatus.setVisibility(View.GONE);
+                if (!addCache_DelayFlag) {
+                    maskStatus.setVisibility(View.GONE);
+                }
                 circleOverlay.setVisibility(View.VISIBLE);
                 circleOverlay_green.setVisibility(View.GONE);
                 promptTv.setText("Please Come Closer to Camera");

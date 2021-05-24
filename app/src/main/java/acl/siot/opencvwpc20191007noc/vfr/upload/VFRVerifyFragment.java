@@ -497,8 +497,10 @@ public class VFRVerifyFragment extends Fragment {
                     if (thermo_is_human) {
                         isThermometerDetectDone = true;
                         if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
-                            MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
-//                            mPlayer.start();
+//                            MediaPlayer mPlayer = MediaPlayer.create(getContext(), R.raw.alarm20200819);
+//                            if(!mPlayer.isPlaying()) {
+//                                mPlayer.start();
+//                            }
                             mLog.d(TAG, "WARN, person_temp_static= " + df.format(person_temp_static));
                             if (android.os.Build.VERSION.SDK_INT >= 21) {
                                 verifyBg.setBackground(getContext().getDrawable(R.drawable.vfr_finished_ng_bg));
@@ -519,7 +521,6 @@ public class VFRVerifyFragment extends Fragment {
                         MessageTools.showToast(getContext(), "Please Closer to Monitor");
                         personTemperature.setText(df.format(person_temp_static));
                     }
-
                 }
 
 

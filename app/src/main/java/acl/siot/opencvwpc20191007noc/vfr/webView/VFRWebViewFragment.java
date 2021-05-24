@@ -26,6 +26,7 @@ import com.just.agentweb.IAgentWebSettings;
 import com.just.agentweb.WebListenerManager;
 
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.cache.VFRThermometerCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import im.delight.android.webview.AdvancedWebView;
 
@@ -83,7 +84,7 @@ public class VFRWebViewFragment extends Fragment implements AdvancedWebView.List
         mWebView.setListener(getActivity(), this);
         mWebView.setMixedContentAllowed(false);
         mWebView.getSettings().setDomStorageEnabled(true);
-        mWebView.loadUrl("http://192.168.4.1/temperature.html#english");
+        mWebView.loadUrl("http://" + VFRThermometerCache.getInstance().getIpAddress() + "/temperature.html#english");
 
 //        mAgentWeb = AgentWeb.with(this)
 //                .setAgentWebParent((LinearLayout) linearLayout, new LinearLayout.LayoutParams(-1, -1))
