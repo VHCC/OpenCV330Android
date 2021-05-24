@@ -220,6 +220,7 @@ public class SerialPortProxy {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
+            mLog.d(TAG, "handleMessage, msg.what:> " + msg.what);
             switch (msg.what) {
                 case MSG_OPEN_SERIAL_PORT: {
                     if (mSerialPortController != null) {
@@ -513,18 +514,21 @@ public class SerialPortProxy {
             switch (msg.what) {
                 case MSG_GET_NTAG_UID: {
                     if (callback != null) {
+                        mLog.d("ResponseHandler", " msg.obj:> " +  msg.obj);
                         callback.onResponse(Result.NTAG_UID, msg.obj);
                     }
                 } break;
 
                 case ERR_GET_NTAG_UID: {
                     if (callback != null) {
+                        mLog.d("ResponseHandler", " msg.obj:> " +  msg.obj);
                         callback.onFailure(Result.NTAG_UID, "");
                     }
                 } break;
 
                 case MSG_GET_ZHONG_SHAN_TAG_UID: {
                     if (callback != null) {
+                        mLog.d("ResponseHandler", " msg.obj:> " +  msg.obj);
                         callback.onResponse(Result.ZHONG_SHAN_TAG_UID, msg.obj);
                     }
                 } break;

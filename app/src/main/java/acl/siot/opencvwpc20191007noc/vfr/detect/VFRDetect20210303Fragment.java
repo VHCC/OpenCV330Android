@@ -93,7 +93,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class VFRDetect20210303Fragment extends Fragment {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants

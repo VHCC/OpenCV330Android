@@ -181,7 +181,7 @@ public class App extends Application {
     private class RFIDCallback implements SerialPortProxy.Callback {
         @Override
         public void onResponse(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
-            mLog.d(TAG, "onResponse:> " + result.toString());
+            mLog.d(TAG, "onResponse:> " + result.toString() + ", resultType:> " + resultType);
             detectSerialNumber = result.toString();
             MessageTools.showToast(getApplicationContext(), result.toString());
             AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
@@ -190,7 +190,7 @@ public class App extends Application {
 
         @Override
         public void onFailure(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
-            mLog.e(TAG, "RFID, onFailure");
+            mLog.e(TAG, "RFID, onFailure:> " +  result.toString());
         }
     }
 
