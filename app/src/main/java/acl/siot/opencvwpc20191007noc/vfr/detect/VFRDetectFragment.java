@@ -451,67 +451,75 @@ public class VFRDetectFragment extends Fragment {
             thermo_view.setImageBitmap((Bitmap) msg.obj);
             if (!addCache_DelayFlag) {
                 NumberFormat formatter = new DecimalFormat("#00.0");
-                mLog.d(TAG, "person_temp_static:> " + person_temp_static);
-                tempStatus.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
-                tempStatusBg.setBackgroundColor(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
+//                mLog.d(TAG, "person_temp_static:> " + person_temp_static);
+//                tempStatus.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
+//                tempStatusBg.setBackgroundColor(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
                 Date d = new Date();
                 CharSequence s = android.text.format.DateFormat.format("yyyy/MM/dd hh:mm:ss",d.getTime());
                 recognizedTime.setText(s);
                 if (!thermo_is_human) {
                     detectStatus.setText("Detecting");
                     detectStatus.setTextColor(Color.parseColor("#ffffff"));
+                    tempStatus.setText("");
                     tempStatusBg.setBackgroundColor(Color.parseColor("#00000000"));
                     maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
                     maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
                 } else {
-//                if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() || maskResults == 1) {
-                    if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
-                        isTempAbnormal = true;
-                    } else {
-                        isTempAbnormal = false;
-                    }
+                    mLog.d(TAG, "person_temp_static:> " + person_temp_static);
+                    if (person_temp_static > 32.0f) {
+                        tempStatus.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
+                        tempStatusBg.setBackgroundColor(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? Color.parseColor("#ff4d4d") : Color.parseColor("#0b7e5d"));
 
-                    if (isTempAbnormal || maskResults == 1) {
-                        detectStatus.setText("Abnormal");
-                        detectStatus.setTextColor(Color.parseColor("#ff4d4d"));
-                        maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
-                        maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
+//                if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() || maskResults == 1) {
+                        if (person_temp_static > VFRThermometerCache.getInstance().getAlertTemp()) {
+                            isTempAbnormal = true;
+                        } else {
+                            isTempAbnormal = false;
+                        }
+
+                        if (isTempAbnormal || maskResults == 1) {
+                            detectStatus.setText("Abnormal");
+                            detectStatus.setTextColor(Color.parseColor("#ff4d4d"));
+                            maskStatus.setImageBitmap(maskResults == 1 ? BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ng) : BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
+                            maskStatus.setVisibility(maskResults == 2 ? View.GONE : View.VISIBLE);
 //                        if (addCacheFlag && !addCache_DelayFlag) {
-                        if (addCacheFlag) {
-                            addCacheFlag = false;
-                            AbnormalItem abnormalItem = new AbnormalItem();
-                            abnormalItem.viewCache = VFREdgeCache.getInstance().isImageStandardMode() ? maskProcessBitmap : (Bitmap) msg.obj;
-                            mLog.d(TAG, " *** temperature:> " + person_temp_static);
-                            mLog.d(TAG, " *** maskResults:> " + maskResults);
+                            if (addCacheFlag) {
+                                addCacheFlag = false;
+                                AbnormalItem abnormalItem = new AbnormalItem();
+                                abnormalItem.viewCache = VFREdgeCache.getInstance().isImageStandardMode() ? maskProcessBitmap : (Bitmap) msg.obj;
+                                mLog.d(TAG, " *** temperature:> " + person_temp_static);
+                                mLog.d(TAG, " *** maskResults:> " + maskResults);
 //                        abnormalItem.temperature = String.valueOf(formatter.format(person_temp_static));
-                            abnormalItem.temperature = person_temp_static;
-                            abnormalItem.timestamp = String.valueOf(s);
+                                abnormalItem.temperature = person_temp_static;
+                                abnormalItem.timestamp = String.valueOf(s);
 //                        abnormalItem.timestamp = String.valueOf(detectResult.getConfidence());
-                            abnormalItem.maskType = maskResults;
-                            mLog.d(TAG, " *** face Confidence:> " + detectResult.getConfidence());
-                            if (detectResult.getConfidence() > 0.94) {
-                                if (VFREdgeCache.getInstance().isImageStandardMode()) {
-                                    if (maskProcessBitmap != null) {
+                                abnormalItem.maskType = maskResults;
+                                mLog.d(TAG, " *** face Confidence:> " + detectResult.getConfidence());
+                                if (detectResult.getConfidence() > 0.94) {
+                                    if (VFREdgeCache.getInstance().isImageStandardMode()) {
+                                        if (maskProcessBitmap != null) {
+                                            abnormalList.add(abnormalItem);
+                                            addCache_DelayFlag = true;
+                                        }
+                                    } else {
                                         abnormalList.add(abnormalItem);
                                         addCache_DelayFlag = true;
                                     }
-                                } else {
-                                    abnormalList.add(abnormalItem);
-                                    addCache_DelayFlag = true;
-                                }
-                                if(!mPlayer.isPlaying()) {
-                                    mPlayer.start();
+                                    if(!mPlayer.isPlaying()) {
+                                        mPlayer.start();
+                                    }
                                 }
                             }
                         }
+
+                        if (!isTempAbnormal && maskResults == 0) {
+                            detectStatus.setText("Pass");
+                            detectStatus.setTextColor(Color.parseColor("#2db100"));
+                            maskStatus.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
+                            maskStatus.setVisibility(View.VISIBLE);
+                        }
                     }
 
-                    if (!isTempAbnormal && maskResults == 0) {
-                        detectStatus.setText("Pass");
-                        detectStatus.setTextColor(Color.parseColor("#2db100"));
-                        maskStatus.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.vfr_mask_ok));
-                        maskStatus.setVisibility(View.VISIBLE);
-                    }
                 }
                 if (abnormalList.size() == 1) {
                     abnormal_1.setVisibility(View.VISIBLE);
@@ -1103,7 +1111,7 @@ public class VFRDetectFragment extends Fragment {
                     }
 
                     if (addCache_DelayFlag) {
-                        if (tick_count % 20 == 0) {
+                        if (tick_count % 10 == 0) {
                             addCache_DelayFlag = false;
                         }
                     }
