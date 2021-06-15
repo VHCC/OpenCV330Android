@@ -1,11 +1,25 @@
 package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
+
+import com.potterhsu.usblistener.UsbListener;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -91,7 +105,26 @@ public class VFRMainActivity extends AppCompatActivity {
 //        mDBAdapter.setDataVersion(String.valueOf(DB_VERSION));
 //        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
 //        LocaleUtils.updateConfig(this);
+        startUSBService();
     }
+
+    private void startUSBService() {
+        mLog.i(TAG, "startUSBService...");
+        Intent startIntent = new Intent();
+        startIntent.setClass(this, USBDetectService.class);
+        startIntent.setAction("com.wisepaas.storesenseagent.action.START_USB_SERVICE");
+        startService(startIntent);
+    }
+
+    private void stopUSBService() {
+        mLog.i(TAG, "stopUSBService...");
+        Intent startIntent = new Intent();
+        startIntent.setClass(this, USBDetectService.class);
+        startIntent.setAction("com.wisepaas.storesenseagent.action.STOP_USB_SERVICE");
+        startService(startIntent);
+    }
+
+    String usbStateChangeAction = "android.hardware.usb.action.USB_STATE";
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
@@ -532,4 +565,12 @@ public class VFRMainActivity extends AppCompatActivity {
                 break;
         }
     }
+
+
+    @Override
+    protected void onDestroy() {
+        stopUSBService();
+        super.onDestroy();
+    }
+
 }

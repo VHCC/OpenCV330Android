@@ -72,6 +72,10 @@ public class OKHttpConstants {
 
         public static final int APP_CODE_VMS_KIOSK_RFID_DETECT_DONE = 30001;
 
+        public static final int APP_CODE_LOG_UPLOAD = 40001;
+        public static final int APP_CODE_LOG_UPLOAD_SUCCESS = 400011;
+
+
     }
 
 }

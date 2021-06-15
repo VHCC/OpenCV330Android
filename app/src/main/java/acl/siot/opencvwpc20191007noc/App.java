@@ -17,13 +17,20 @@ package acl.siot.opencvwpc20191007noc;
 
 import android.app.ActivityManager;
 import android.app.Application;
+import android.content.Context;
 import android.content.res.Configuration;
+import android.hardware.input.InputManager;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
 import android.icu.text.SimpleDateFormat;
 import android.icu.util.TimeZone;
 import android.os.Build;
 import android.provider.Settings;
+import android.view.InputDevice;
 import android.widget.Toast;
 
+import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.DeviceUtils;
 
 import androidx.annotation.NonNull;
@@ -44,8 +51,10 @@ import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -172,13 +181,14 @@ public class App extends Application {
         SerialPortProxy.getInstance().startPollingIdForZhongShanPIT();
         SerialPortProxy.getInstance().setCallback(new RFIDCallback());
 
-        Date d = new Date("2055/04/01");
-        mLog.d(TAG, "2021/04/01 d:> " + d.getTime() / 1000);
-        TRAIL_IS_EXPIRE = System.currentTimeMillis() / 1000 > d.getTime() / 1000;
-        mLog.d(TAG, "System.currentTimeMillis():> " + System.currentTimeMillis());
-        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
-        if (TRAIL_IS_EXPIRE)
-            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+//        Date d = new Date("2055/04/01");
+//        mLog.d(TAG, "2021/04/01 d:> " + d.getTime() / 1000);
+//        TRAIL_IS_EXPIRE = System.currentTimeMillis() / 1000 > d.getTime() / 1000;
+//        mLog.d(TAG, "System.currentTimeMillis():> " + System.currentTimeMillis());
+//        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
+//        if (TRAIL_IS_EXPIRE)
+//            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+
     }
 
     public static String detectSerialNumber = "00000000";
@@ -256,6 +266,29 @@ public class App extends Application {
         }
     }
 
+    private void checkUsbDeviceStatus() {
+        boolean isBarCodeReaderConnectedCheck = false;
+        InputManager inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
+        mLog.d(TAG, inputManager.getInputDeviceIds().length + " inputManager device(s) founded");
+        for (int i = 0; i < inputManager.getInputDeviceIds().length; i++) {
+            InputDevice inputDevice = inputManager.getInputDevice(inputManager.getInputDeviceIds()[i]);
+            if (inputDevice.getVendorId() == 7851 && inputDevice.getProductId() == 7427) {
+                mLog.d(TAG, " === BarCode Reader is Connected === ");
+//                mLog.d(TAG,"inputDevice:> " + inputDevice);
+                mLog.d(TAG,"getVendorId:> " + inputDevice.getVendorId());
+                mLog.d(TAG,"getProductId:> " + inputDevice.getProductId());
+                isBarCodeReaderConnectedCheck = true;
+                isBarCodeReaderConnected = true;
+            }
+        }
+        if (!isBarCodeReaderConnectedCheck) {
+            mLog.d(TAG, " $$$ BarCode Reader is DisConnected $$$ ");
+            isBarCodeReaderConnected = false;
+        }
+    }
+
+    public static boolean isBarCodeReaderConnected = false;
+
     // Thread
     private Thread appThread;
     private Runnable appRunnable = new Runnable() {
@@ -303,6 +336,10 @@ public class App extends Application {
 
                     if (tick_count % 5 == 0) {
                         AppBus.getInstance().post(new BusEvent("time tick", TIME_TICK));
+                    }
+
+                    if (tick_count % 10 == 0) {
+                        checkUsbDeviceStatus();
                     }
 
 //                    if (tick_count % 10 == 0) {

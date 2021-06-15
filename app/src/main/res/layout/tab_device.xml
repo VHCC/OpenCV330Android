@@ -221,6 +221,7 @@
                             </TextView>
 
                             <CheckBox
+                                android:id="@+id/cardReaderCheckBox"
                                 android:enabled="false"
                                 android:buttonTint="#229CBB"
                                 android:paddingLeft="15dp"
@@ -250,6 +251,7 @@
                             </TextView>
 
                             <CheckBox
+                                android:id="@+id/barcodeReaderCheckBox"
                                 android:enabled="false"
                                 android:buttonTint="#229CBB"
                                 android:paddingLeft="15dp"

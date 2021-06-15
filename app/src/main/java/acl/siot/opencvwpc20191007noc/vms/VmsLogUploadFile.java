@@ -1,0 +1,34 @@
+package acl.siot.opencvwpc20191007noc.vms;
+
+import android.util.Log;
+
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+
+import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
+
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_URL;
+
+
+public class VmsLogUploadFile extends HashMap<Object, Object> {
+
+    public static final String API_KEY_UPLOAD_LOG_FILE = "uploadFile";
+
+    public VmsLogUploadFile(File logFile) {
+
+        super.put(API_KEY_UPLOAD_LOG_FILE, logFile);
+
+        String httpPrefix = VMSEdgeCache.getInstance().getVms_host_is_ssl() ? "https://" : "http://";
+        String vmsPort = VMSEdgeCache.getInstance().getVms_host_port() == "" ? VMSEdgeCache.getInstance().getVms_host_is_ssl() ? ":443" : ":80" : ":"+VMSEdgeCache.getInstance().getVms_host_port();
+        super.put(APP_KEY_HTTPS_URL, httpPrefix + VMSEdgeCache.getInstance().getVmsHost() + vmsPort + "/api/v2/vmsKioskDevice/uploadDeviceLogFile");
+//        super.put(APP_KEY_HTTPS_URL, "https://vms.ichenprocin.dsmynas.com" + "/api/v2/vmsKioskDevice/uploadDeviceLogFile");
+//        super.put(APP_KEY_HTTPS_URL, "http://192.168.1.105:7080" + "/api/v2/vmsKioskDevice/uploadDeviceLogFile");
+    }
+
+
+}

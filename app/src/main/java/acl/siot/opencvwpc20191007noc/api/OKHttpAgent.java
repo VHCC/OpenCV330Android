@@ -29,7 +29,9 @@ import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
+import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -44,7 +46,7 @@ import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStatic
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -123,6 +125,87 @@ public class OKHttpAgent {
                     .post(body)
                     .build();
                 Response response = mClient.newCall(request).execute();
+                String result = response.body().string();
+                JSONObject jsonObj = new JSONObject(result);
+//                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+                switch(response.code()) {
+                    case 200: {
+                        handleResult(jsonObj, postCode);
+                    } break;
+                    default: {
+                        handleResult(jsonObj, postCode);
+                    } break;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+            }
+        }
+
+        private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
+//            System.out.println(jsonObj.toString());
+            writeToFile(jsonObj.toString());
+//            if (AppSetting.isEngineering()) {
+            if (false) {
+                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
+            } else {
+                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
+
+                try {
+                    if (jsonObj.toString().contains("code")) {
+                        int errorCode = jsonObj.getInt("code");
+                        mLog.w(TAG, "errorCode= " + errorCode);
+                        switch (errorCode) {
+                            case 0:
+                                mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
+                                break;
+                            default:
+                                mIRequestInterface.onRequestFail(jsonObj.getString("message"), postCode);
+                                break;
+                        }
+                    }
+                    // TODO
+                    // watch out the situations whose errorCode are not 0.
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    protected class PostUploadFileThread extends Thread {
+
+        private HashMap mData;
+
+        private int postCode;
+
+        public PostUploadFileThread(HashMap data, int requestCode) {
+            mData = data;
+            postCode = requestCode;
+        }
+
+        @Override
+        public void run() {
+            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+            mLog.d(TAG, "PostUploadFileThread, mainURL:> " +mainURL);
+            mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+            File file = (File) mData.get(VmsLogUploadFile.API_KEY_UPLOAD_LOG_FILE);
+
+            try {
+                RequestBody formBody = new MultipartBody.Builder()
+                        .setType(MultipartBody.FORM)
+                        .addFormDataPart("uploadFile", file.getName(),
+                                RequestBody.create(MediaType.parse("text/plain"), file))
+                        .addFormDataPart("deviceUUID", VMSEdgeCache.getInstance().getVmsKioskUuid())
+                        .build();
+                Request request = new Request.Builder().url(mainURL).post(formBody).build();
+                Response response = mClient.newCall(request).execute();
+
                 String result = response.body().string();
                 JSONObject jsonObj = new JSONObject(result);
 //                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
@@ -422,6 +505,12 @@ public class OKHttpAgent {
 //        mLog.d(TAG, "request post= " + mData.toString());
         PostThread postThread = new PostThread(mData, requestCode);
         postThread.start();
+    }
+
+    public synchronized void postUploadFileRequest(HashMap mData, int requestCode) throws IOException {
+//        mLog.d(TAG, "request post= " + mData.toString());
+        PostUploadFileThread postUploadFileThread = new PostUploadFileThread(mData, requestCode);
+        postUploadFileThread.start();
     }
 
     public synchronized void postFRSRequest(HashMap mData, int requestCode) throws IOException {

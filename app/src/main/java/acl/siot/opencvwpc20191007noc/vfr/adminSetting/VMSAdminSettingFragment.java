@@ -46,6 +46,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import devlight.io.library.ntb.NavigationTabBar;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
+import static acl.siot.opencvwpc20191007noc.App.isBarCodeReaderConnected;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
@@ -166,6 +167,9 @@ public class VMSAdminSettingFragment extends Fragment {
 
     RadioButton optionOptical;
     RadioButton optionThermal;
+
+    CheckBox cardReaderCheckBox;
+    CheckBox barcodeReaderCheckBox;
 
     // TAB DETECT
     EditText avalo_host;
@@ -347,6 +351,10 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceModeSpinner.setAdapter(adapter);
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
 
+                        cardReaderCheckBox = view.findViewById(R.id.cardReaderCheckBox);
+                        barcodeReaderCheckBox = view.findViewById(R.id.barcodeReaderCheckBox);
+                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
+
                         break;
                     case TAB_DETECT:
                         view = LayoutInflater.from(getContext()).inflate(R.layout.tab_detect, null, false);
@@ -428,6 +436,7 @@ public class VMSAdminSettingFragment extends Fragment {
 //                mLog.d(TAG, "onPageScrolled, position:> " + position);
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onPageSelected(int position) {
                 mLog.d(TAG, "onPageSelected, position:> " + position);
@@ -449,6 +458,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
+
+                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
                         break;
                     case TAB_DETECT:
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
@@ -665,6 +676,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
+
+                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
                         break;
                     case TAB_DETECT:
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
