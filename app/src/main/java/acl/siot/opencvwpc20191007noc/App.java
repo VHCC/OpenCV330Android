@@ -24,11 +24,14 @@ import android.os.Build;
 import android.provider.Settings;
 import android.widget.Toast;
 
+import com.blankj.utilcode.util.DeviceUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -123,8 +126,8 @@ public class App extends Application {
 
     public static boolean TRAIL_IS_EXPIRE = false;
     SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-    String toRFC3339(Date d)
-    {
+
+    String toRFC3339(Date d) {
         return rfc3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
     }
 
@@ -132,8 +135,10 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
         mLog.i(TAG, "========== app start ==========");
-        LogWriter.storeLogToFile("========== app start ==========");
+//        LogWriter.storeLogToFile("========== app start ==========");
+        LogWriter.storeLogToFile(",APP-START," + new Date().getTime() / 1000);
 
         // HTTP Mechanism
         OKHttpAgent.getInstance().setRequestListener(mOnRequestListener);
@@ -190,7 +195,7 @@ public class App extends Application {
 
         @Override
         public void onFailure(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
-            mLog.e(TAG, "RFID, onFailure:> " +  result.toString());
+            mLog.e(TAG, "RFID, onFailure:> " + result.toString());
         }
     }
 
@@ -287,8 +292,8 @@ public class App extends Application {
                     }
 
                     if (tick_count % 1 == 0) {
-                        HashMap<String, String> mMap = new GetTemp();
-                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+//                        HashMap<String, String> mMap = new GetTemp();
+//                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                     }
 
                     if (tick_count % 20 == 10) {
@@ -328,8 +333,8 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-                } catch (IOException e) {
-                    e.printStackTrace();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
                 }
             }
         }
@@ -416,6 +421,13 @@ public class App extends Application {
                         JSONObject kioskDevice = kioskDeviceInfoResp.getJSONObject("kioskDeviceInfo");
                         JSONObject visitorTemplate = kioskDeviceInfoResp.getJSONObject("visitorTemplate");
                         JSONObject nonVisitorTemplate = kioskDeviceInfoResp.getJSONObject("nonVisitorTemplate");
+                        JSONArray vmsRealNamePersons = kioskDeviceInfoResp.getJSONArray("realNamePersons");
+                        mLog.d(TAG, "vmsRealNamePersons len:> " + vmsRealNamePersons.length());
+
+                        for (int index = 0; index < vmsRealNamePersons.length(); index++) {
+                            JSONObject vmsPersonItem = (JSONObject) vmsRealNamePersons.get(index);
+                            mLog.d(TAG, vmsPersonItem.toString());
+                        }
                         // sync to device
                         VMSEdgeCache.getInstance().setVmsKioskUuid(kioskDevice.getString("uuid"));
                         VMSEdgeCache.getInstance().setVmsKioskDeviceName(kioskDevice.getString("deviceName"));
@@ -443,6 +455,8 @@ public class App extends Application {
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_account(kioskDevice.getString("tEPAccount"));
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(kioskDevice.getString("tEPPassword"));
 
+
+                        LogWriter.storeLogToFile(",SYNC-SERVER-SUCCESS," + new Date().getTime() / 1000);
 
 
                     } catch (JSONException e) {
@@ -545,7 +559,7 @@ public class App extends Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            break;
+                break;
         }
     }
 

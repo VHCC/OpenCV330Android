@@ -1,9 +1,11 @@
 package acl.siot.opencvwpc20191007noc.vms;
 
 
+import java.util.Date;
 import java.util.HashMap;
 
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
+import acl.siot.opencvwpc20191007noc.util.LogWriter;
 
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_URL;
 
@@ -16,7 +18,7 @@ public class VmsKioskSync extends HashMap<Object, Object> {
     final String API_KEY_ANDROIDID = "androidID";
 
     public VmsKioskSync(String androidID) {
-
+        LogWriter.storeLogToFile(",SYNC-SERVER-REQUEST," + new Date().getTime()/1000);
         super.put(API_KEY_ANDROIDID, androidID );
 
         String httpPrefix = VMSEdgeCache.getInstance().getVms_host_is_ssl() ? "https://" : "http://";
