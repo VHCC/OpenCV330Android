@@ -252,7 +252,7 @@
 
                             <CheckBox
                                 android:id="@+id/barcodeReaderCheckBox"
-                                android:enabled="false"
+                                android:enabled="true"
                                 android:buttonTint="#229CBB"
                                 android:paddingLeft="15dp"
                                 android:layout_marginRight="20dp"

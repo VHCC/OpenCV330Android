@@ -1,25 +1,12 @@
 package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
-import android.hardware.usb.UsbAccessory;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
-
-import com.potterhsu.usblistener.UsbListener;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -133,7 +120,7 @@ public class VFRMainActivity extends AppCompatActivity {
         // Checks the orientation of the screen
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
             Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
         }
     }
@@ -177,10 +164,10 @@ public class VFRMainActivity extends AppCompatActivity {
         // Constants
         static final int PAGE_HOME = 0;
         static final int PAGE_WELCOME = 1;
-//        static final int PAGE_VERIFY = 2;
+        //        static final int PAGE_VERIFY = 2;
 //        static final int PAGE_DETECT = 3;
         static final int PAGE_DETECT = 3;
-//        static final int PAGE_PWD = 4;
+        //        static final int PAGE_PWD = 4;
         static final int PAGE_PWD = 2;
         static final int PAGE_SETTING = 4;
         static final int PAGE_LANGUAGE = 6;
@@ -225,7 +212,7 @@ public class VFRMainActivity extends AppCompatActivity {
         @Override
         public Fragment getItem(int position) {
             Fragment fragment = null;
-            switch(position) {
+            switch (position) {
                 case PAGE_HOME: {
                     VFRHomeFragment vfrHomeFragment = VFRHomeFragment.newInstance(2000);
                     vfrHomeFragment.setHomeFragmentListener(new VFRHomeFragment.OnHomeFragmentInteractionListener() {
@@ -241,13 +228,13 @@ public class VFRMainActivity extends AppCompatActivity {
 ////                                        mViewPager.setCurrentItem(PAGE_WEBVIEW);
 //                                        break;
 //                                }
-                                if (!TRAIL_IS_EXPIRE) {
-//                                    if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 1) {
-//                                        mViewPager.setCurrentItem(PAGE_WELCOME);
-//                                    } else {
+//                                if (!TRAIL_IS_EXPIRE) {
+                                    if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 1) {
+                                        mViewPager.setCurrentItem(PAGE_WELCOME);
+                                    } else {
                                         mViewPager.setCurrentItem(PAGE_DETECT);
-//                                    }
-                                }
+                                    }
+//                                }
                             }
 //                            mViewPager.setCurrentItem(PAGE_WELCOME);
                         }
@@ -540,7 +527,7 @@ public class VFRMainActivity extends AppCompatActivity {
         return false;
     }
 
-    public void onEventBackgroundThread(BusEvent event){
+    public void onEventBackgroundThread(BusEvent event) {
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
             case DB_CODE_INSERT_DETECT_INFO:

@@ -43,6 +43,16 @@ public class VMSEdgeCache {
 
 
     // VMS CANT EDIT PROPERTIES
+    private Boolean vms_kiosk_device_input_bar_code_scanner = false;
+    public static final String SHARE_VMS_EDGE_INPUT_BAR_CODE_SCANNER =
+            "share_vms_edge_input_bar_code_scanner";
+
+    private Boolean vms_kiosk_device_input_card_reader = false;
+    public static final String SHARE_VMS_EDGE_INPUT_CARD_READER =
+            "share_vms_edge_input_card_reader";
+
+
+
     private String vms_kiosk_device_name = "Avalo Kiosk";
     public static final String SHARE_VMS_EDGE_INFO_KIOSK_NAME =
             "share_vms_edge_info_kiosk_name";
@@ -392,6 +402,28 @@ public class VMSEdgeCache {
         this.vms_kiosk_third_event_party_password = vms_kiosk_third_event_party_password;
         editor = sp.edit();
         editor.putString(SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_PASSWORD, vms_kiosk_third_event_party_password).commit();
+    }
+
+    public Boolean getVms_kiosk_device_input_bar_code_scanner() {
+        Map<String, ?> map = sp.getAll();
+        return ((Boolean) map.get(SHARE_VMS_EDGE_INPUT_BAR_CODE_SCANNER) == null ? false : (Boolean) map.get(SHARE_VMS_EDGE_INPUT_BAR_CODE_SCANNER));
+    }
+
+    public void setVms_kiosk_device_input_bar_code_scanner(Boolean vms_kiosk_device_input_bar_code_scanner) {
+        this.vms_kiosk_device_input_bar_code_scanner = vms_kiosk_device_input_bar_code_scanner;
+        editor = sp.edit();
+        editor.putBoolean(SHARE_VMS_EDGE_INPUT_BAR_CODE_SCANNER, vms_kiosk_device_input_bar_code_scanner).commit();
+    }
+
+    public Boolean getVms_kiosk_device_input_card_reader() {
+        Map<String, ?> map = sp.getAll();
+        return ((Boolean) map.get(SHARE_VMS_EDGE_INPUT_CARD_READER) == null ? false : (Boolean) map.get(SHARE_VMS_EDGE_INPUT_CARD_READER));
+    }
+
+    public void setVms_kiosk_device_input_card_reader(Boolean vms_kiosk_device_input_card_reader) {
+        this.vms_kiosk_device_input_card_reader = vms_kiosk_device_input_card_reader;
+        editor = sp.edit();
+        editor.putBoolean(SHARE_VMS_EDGE_INPUT_CARD_READER, vms_kiosk_device_input_card_reader).commit();
     }
 
     public String showInfoAll() {

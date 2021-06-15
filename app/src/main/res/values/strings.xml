@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Advantech VFR</string>
+    <string name="app_name">Advantech VMS</string>
     <string name="face_detect_text">FD</string>
 </resources>

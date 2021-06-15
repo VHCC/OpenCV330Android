@@ -1,5 +1,6 @@
 package acl.siot.opencvwpc20191007noc.vfr.home;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -162,6 +163,12 @@ public class VFRHomeFragment extends Fragment {
                         .setContentText("Sync VMS Data!");
                 syncDialog.show();
                 syncDialog.setCancelable(true);
+                syncDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        mHandler.postDelayed(mFragmentRunnable, 500L);
+                    }
+                });
                 String android_id = Settings.Secure.getString(getContext().getContentResolver(),
                         Settings.Secure.ANDROID_ID);
 

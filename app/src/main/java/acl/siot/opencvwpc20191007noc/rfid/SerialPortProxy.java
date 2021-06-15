@@ -165,7 +165,7 @@ public class SerialPortProxy {
 
         File fileSerialPort = new File(serialPortPath);
         if (fileSerialPort.exists() && !fileSerialPort.isFile() && !fileSerialPort.isDirectory() &&
-                fileSerialPort.canRead() && fileSerialPort.canWrite() && !fileSerialPort.canExecute()) {
+                fileSerialPort.canRead() && fileSerialPort.canWrite()) {
             // A serial port (COM) means the target path exist, not a file or directory, and readable / writable / non-executable.
             return true;
         }

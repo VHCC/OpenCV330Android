@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -46,7 +47,7 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 import devlight.io.library.ntb.NavigationTabBar;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
-import static acl.siot.opencvwpc20191007noc.App.isBarCodeReaderConnected;
+import static acl.siot.opencvwpc20191007noc.App.isBarCodeReaderCanEdit;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
@@ -169,6 +170,7 @@ public class VMSAdminSettingFragment extends Fragment {
     RadioButton optionThermal;
 
     CheckBox cardReaderCheckBox;
+    Boolean isBarcodeReaderCheckedTemp;
     CheckBox barcodeReaderCheckBox;
 
     // TAB DETECT
@@ -220,11 +222,15 @@ public class VMSAdminSettingFragment extends Fragment {
                                 break;
                         }
                         VMSEdgeCache.getInstance().setVms_kiosk_mode(mode);
+
+                        VMSEdgeCache.getInstance().setVms_kiosk_device_input_bar_code_scanner(isBarcodeReaderCheckedTemp);
                         break;
                     case TAB_DETECT:
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_device_host(avalo_host.getText().toString());
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_alert_temp(Float.valueOf(avaloAlertTemp.getText().toString()));
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_temp_compensation(Float.valueOf(avaloComTemp.getText().toString()));
+
+
                         break;
                     case TAB_OTHER:
                         break;
@@ -352,8 +358,22 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
 
                         cardReaderCheckBox = view.findViewById(R.id.cardReaderCheckBox);
+
+                        isBarcodeReaderCheckedTemp = VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner();
                         barcodeReaderCheckBox = view.findViewById(R.id.barcodeReaderCheckBox);
-                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
+                        barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
+                        if (isBarCodeReaderCanEdit) {
+                            barcodeReaderCheckBox.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner());
+                        } else {
+                            barcodeReaderCheckBox.setChecked(false);
+                        }
+                        barcodeReaderCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                                mLog.d(TAG, "isChecked:> " + b);
+                                isBarcodeReaderCheckedTemp = b;
+                            }
+                        });
 
                         break;
                     case TAB_DETECT:
@@ -459,7 +479,12 @@ public class VMSAdminSettingFragment extends Fragment {
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
 
-                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
+                        barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
+                        if (isBarCodeReaderCanEdit) {
+                            barcodeReaderCheckBox.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner());
+                        } else {
+                            barcodeReaderCheckBox.setChecked(false);
+                        }
                         break;
                     case TAB_DETECT:
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
@@ -635,6 +660,11 @@ public class VMSAdminSettingFragment extends Fragment {
                     connectVmsBtn_server.setBackground(getResources().getDrawable(R.drawable.ic_btn_connect));
                 }
 
+                barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
+                if (!isBarCodeReaderCanEdit) {
+                    barcodeReaderCheckBox.setChecked(false);
+                }
+
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS:
                 saDialog_avatar.getButton(BUTTON_CONFIRM).setEnabled(true);
@@ -677,7 +707,12 @@ public class VMSAdminSettingFragment extends Fragment {
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
 
-                        barcodeReaderCheckBox.setChecked(isBarCodeReaderConnected);
+                        barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
+                        if (isBarCodeReaderCanEdit) {
+                            barcodeReaderCheckBox.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner());
+                        } else {
+                            barcodeReaderCheckBox.setChecked(false);
+                        }
                         break;
                     case TAB_DETECT:
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());

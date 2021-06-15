@@ -20,18 +20,11 @@ import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.hardware.input.InputManager;
-import android.hardware.usb.UsbAccessory;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 import android.icu.text.SimpleDateFormat;
-import android.icu.util.TimeZone;
 import android.os.Build;
 import android.provider.Settings;
 import android.view.InputDevice;
 import android.widget.Toast;
-
-import com.blankj.utilcode.util.AppUtils;
-import com.blankj.utilcode.util.DeviceUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -49,12 +42,8 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -188,8 +177,10 @@ public class App extends Application {
 //        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
 //        if (TRAIL_IS_EXPIRE)
 //            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
-
     }
+
+    public static Boolean isRFIDFunctionOn = false;
+    public static Boolean isBarCodeFunctionOn = false;
 
     public static String detectSerialNumber = "00000000";
 
@@ -197,9 +188,11 @@ public class App extends Application {
         @Override
         public void onResponse(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
             mLog.d(TAG, "onResponse:> " + result.toString() + ", resultType:> " + resultType);
-            detectSerialNumber = result.toString();
-            MessageTools.showToast(getApplicationContext(), result.toString());
-            AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
+            if (isRFIDFunctionOn) {
+                detectSerialNumber = result.toString();
+                MessageTools.showToast(getApplicationContext(), result.toString());
+                AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
+            }
 //            mLog.d(TAG, resultType.toString());
         }
 
@@ -275,19 +268,19 @@ public class App extends Application {
             if (inputDevice.getVendorId() == 7851 && inputDevice.getProductId() == 7427) {
                 mLog.d(TAG, " === BarCode Reader is Connected === ");
 //                mLog.d(TAG,"inputDevice:> " + inputDevice);
-                mLog.d(TAG,"getVendorId:> " + inputDevice.getVendorId());
-                mLog.d(TAG,"getProductId:> " + inputDevice.getProductId());
+                mLog.d(TAG,"getVendorId:> " + inputDevice.getVendorId() + ", getProductId:> " + inputDevice.getProductId());
                 isBarCodeReaderConnectedCheck = true;
-                isBarCodeReaderConnected = true;
+                isBarCodeReaderCanEdit = true;
             }
         }
         if (!isBarCodeReaderConnectedCheck) {
             mLog.d(TAG, " $$$ BarCode Reader is DisConnected $$$ ");
-            isBarCodeReaderConnected = false;
+            VMSEdgeCache.getInstance().setVms_kiosk_device_input_bar_code_scanner(false);
+            isBarCodeReaderCanEdit = false;
         }
     }
 
-    public static boolean isBarCodeReaderConnected = false;
+    public static boolean isBarCodeReaderCanEdit = false;
 
     // Thread
     private Thread appThread;
@@ -325,8 +318,8 @@ public class App extends Application {
                     }
 
                     if (tick_count % 1 == 0) {
-//                        HashMap<String, String> mMap = new GetTemp();
-//                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                        HashMap<String, String> mMap = new GetTemp();
+                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                     }
 
                     if (tick_count % 20 == 10) {
@@ -370,8 +363,8 @@ public class App extends Application {
 //                } catch (IOException e) {
 //                    e.printStackTrace();
 //                    mLog.d(TAG, "appRunnable interrupted");
-//                } catch (IOException e) {
-//                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
