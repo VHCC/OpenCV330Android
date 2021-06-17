@@ -1,6 +1,9 @@
 package acl.siot.opencvwpc20191007noc.vms;
 
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashMap;
@@ -16,6 +19,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_UR
 public class VmsUpload extends HashMap<Object, Object> {
 
     final String API_KEY_DEVICEUUID = "deviceUuid";
+    final String API_KEY_MAPPINGPERSONUUID = "mappingPersonUUID";
     final String API_KEY_UPLOADDEVICENAME = "uploadDeviceName";
     final String API_KEY_AVALO_DEVICE_GROUP = "avalo_device_group";
     final String API_KEY_AVALO_MODE = "avalo_mode";
@@ -40,43 +44,27 @@ public class VmsUpload extends HashMap<Object, Object> {
     public VmsUpload(String encoded,
                      boolean isMask,
                      String tempDetect,
-                     String serialNumber,
-                     String mappingName,
+                     JSONObject uploadPersonData,
                      String interfaceMethod,
-                     Boolean isVisitor) {
+                     Boolean isVisitor,
+                     String dataUploadMode,
+                     String exception,
+                     String status) throws JSONException {
 
         NumberFormat formatter = new DecimalFormat("#00.0");
         super.put(API_KEY_DEVICEUUID, VMSEdgeCache.getInstance().getVmsKioskUuid());
         super.put(API_KEY_UPLOADDEVICENAME, VMSEdgeCache.getInstance().getVmsKioskDeviceName());
         super.put(API_KEY_AVALO_DEVICE_GROUP, "");
-
-        String mode = "";
-        switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
-            case 0:
-                mode = "Normal";
-                break;
-            case 1:
-                mode = "Advanced";
-                break;
-        }
-        String exception = "";
-        if (!isMask) exception = "No-Wear-Mask".toLowerCase();
-        if (Float.valueOf(tempDetect) >= VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) exception = "High-Fever".toLowerCase();
-        String status = "Filling-out".toLowerCase();
-//        String status = "Check-in".toLowerCase();
-        if (!exception.equals("")) status = "Exception".toLowerCase();
-
-        super.put(API_KEY_AVALO_MODE,  mode.toLowerCase());
-        super.put(API_KEY_AVALO_INTERFACE, interfaceMethod);
+        super.put(API_KEY_AVALO_MODE,  dataUploadMode.toLowerCase());
+        super.put(API_KEY_AVALO_INTERFACE, interfaceMethod.toLowerCase());
         super.put(API_KEY_AVALO_SNAPSHOT, "data:image/jpeg;base64," + encoded);
         super.put(API_KEY_AVALO_STATUS, status);
         super.put(API_KEY_AVALO_EXCEPTION, exception);
-//        super.put(API_KEY_AVALO_SERIAL, "331555");
-        super.put(API_KEY_AVALO_SERIAL, serialNumber);
-//        super.put(API_KEY_AVALO_NAME, "Allison");
-        super.put(API_KEY_AVALO_NAME, mappingName);
+        super.put(API_KEY_MAPPINGPERSONUUID, uploadPersonData.getString("vmsPersonUUID"));
+        super.put(API_KEY_AVALO_SERIAL, uploadPersonData.getString("vmsPersonSerial"));
+        super.put(API_KEY_AVALO_NAME, uploadPersonData.getString("vmsPersonName"));
         super.put(API_KEY_AVALO_VISITOR, isVisitor);
-        super.put(API_KEY_AVALO_EMAIL, "");
+        super.put(API_KEY_AVALO_EMAIL, uploadPersonData.getString("vmsPersonEmail"));
         super.put(API_KEY_AVALO_DEPARTMENT, "");
         super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(tempDetect));
         super.put(API_KEY_AVALO_ENABLE_TEMPERATURE, VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp());

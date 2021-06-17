@@ -81,6 +81,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS;
@@ -118,9 +119,6 @@ public class App extends Application {
 
     // Http Mechanism
     private OnRequestListener mOnRequestListener = new OnRequestListener();
-
-    // vms connect Status
-    public static boolean isVmsConnected = false;
 
     public static boolean TRAIL_IS_EXPIRE = false;
     SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -179,21 +177,35 @@ public class App extends Application {
 //            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
     }
 
-    public static Boolean isRFIDFunctionOn = false;
-    public static Boolean isBarCodeFunctionOn = false;
+    // vms backend connect Status
+    public static boolean isVmsConnected = false;
 
-    public static String detectSerialNumber = "00000000";
+    // Card Reader FEATURE
+    public static boolean isRFIDFunctionOn = false;
+
+    // Barcode FEATURE
+    public static boolean isBarCodeFunctionOn = false;
+    public static boolean isBarCodeReaderCanEdit = false;
+
+    public static boolean isFRServerConnected = true; //Deprecated 2021/01/15
+    public static boolean isThermometerServerConnected = false;
+
+//    public static String detectSerialNumber = "00000000";
 
     private class RFIDCallback implements SerialPortProxy.Callback {
         @Override
         public void onResponse(@NonNull SerialPortProxy.Result resultType, @Nullable Object result) {
             mLog.d(TAG, "onResponse:> " + result.toString() + ", resultType:> " + resultType);
             if (isRFIDFunctionOn) {
-                detectSerialNumber = result.toString();
+//                detectSerialNumber = result.toString();
+//                mLog.d(TAG, "detectSerialNumber:> " + detectSerialNumber);
                 MessageTools.showToast(getApplicationContext(), result.toString());
-                AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
+                if (App.vmsPersonSyncMapSerial.containsKey(result.toString().trim())) {
+                    uploadPersonData = App.vmsPersonSyncMapSerial.get(result.toString().trim());
+                    mLog.d(TAG, "rfid Person:> " + uploadPersonData);
+                }
+                AppBus.getInstance().post(new BusEvent(result.toString(), APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
             }
-//            mLog.d(TAG, resultType.toString());
         }
 
         @Override
@@ -280,7 +292,6 @@ public class App extends Application {
         }
     }
 
-    public static boolean isBarCodeReaderCanEdit = false;
 
     // Thread
     private Thread appThread;
@@ -376,10 +387,11 @@ public class App extends Application {
 
     public static String staticFRSSessionID;
 
-    static double person_temp = 0.0f;
     private DecimalFormat df = new DecimalFormat("0.00");
 
-
+    public static HashMap<String, JSONObject> vmsPersonSyncMapUUID = new HashMap<>();
+    public static HashMap<String, JSONObject> vmsPersonSyncMapSerial = new HashMap<>();
+    public static JSONObject uploadPersonData;
     /**
      * Http Mechanism Receiver
      */
@@ -407,14 +419,6 @@ public class App extends Application {
                     break;
                 case APP_CODE_THC_1101_HU_GET_TEMP:
                     isThermometerServerConnected = true;
-//                    try {
-//                        JSONObject jsonObj = new JSONObject(response);
-//                        person_temp = (float) jsonObj.getDouble("Temperature");
-////                        mLog.d(TAG, "person_temp= " + person_temp);
-//                        mLog.d(TAG, "person_temp= " + df.format(person_temp));
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-//                    }
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
                     break;
                 case APP_CODE_FRS_MODIFY_PERSON_INFO:
@@ -436,10 +440,21 @@ public class App extends Application {
                     mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_CONNECT");
                     try {
                         JSONObject kioskConnectResponse = new JSONObject(response);
+                        int type = kioskConnectResponse.getInt("type");
                         JSONObject kioskDevice = kioskConnectResponse.getJSONObject("kioskDevice");
-                        String kioskUUID = kioskDevice.getString("uuid");
+                        String kioskUUID = kioskDevice.getString("uuid"); // GET Kiosk UUID
                         VMSEdgeCache.getInstance().setVmsKioskUuid(kioskUUID);
-                        AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS));
+
+                        mLog.d(TAG, "type:> " + type);
+
+                        switch(type) {
+                            case 0:
+                                AppBus.getInstance().post(new BusEvent("vms apply update", APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE)); // 一般連線，以本地端為主資料上傳
+                                break;
+                            case 1: // MAPPED Device
+                                AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS)); // 換機連線，以雲端為主資料下載
+                                break;
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -456,7 +471,10 @@ public class App extends Application {
 
                         for (int index = 0; index < vmsRealNamePersons.length(); index++) {
                             JSONObject vmsPersonItem = (JSONObject) vmsRealNamePersons.get(index);
-                            mLog.d(TAG, vmsPersonItem.toString());
+//                            mLog.d(TAG, vmsPersonItem.toString());
+//                            mLog.d(TAG, vmsPersonItem.get("vmsPersonUUID").toString());
+                            vmsPersonSyncMapUUID.put(vmsPersonItem.get("vmsPersonUUID").toString(), vmsPersonItem);
+                            vmsPersonSyncMapSerial.put(vmsPersonItem.get("vmsPersonSerial").toString(), vmsPersonItem);
                         }
                         // sync to device
                         VMSEdgeCache.getInstance().setVmsKioskUuid(kioskDevice.getString("uuid"));
@@ -486,9 +504,10 @@ public class App extends Application {
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(kioskDevice.getString("tEPPassword"));
 
 
+                        VMSEdgeCache.getInstance().setVms_kiosk_settingPassword(kioskDevice.getString("settingPassword"));
+
+
                         LogWriter.storeLogToFile(",SYNC-SERVER-SUCCESS," + new Date().getTime() / 1000);
-
-
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -501,9 +520,9 @@ public class App extends Application {
                         Boolean isNeedSync = kioskDeviceHB.getBoolean("isNeedSync");
                         if (isNeedSync) {
                             AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
-                            String android_id = Settings.Secure.getString(getApplicationContext().getContentResolver(),
-                                    Settings.Secure.ANDROID_ID);
-                            VmsKioskSync mMap = new VmsKioskSync(android_id);
+//                            String android_id = Settings.Secure.getString(getApplicationContext().getContentResolver(),
+//                                    Settings.Secure.ANDROID_ID);
+                            VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
                             try {
                                 OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
                             } catch (IOException e) {
@@ -515,6 +534,14 @@ public class App extends Application {
                     }
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE:
+                    AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS));
+                    AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
+                    VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
+                    try {
+                        OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS:
                     AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS));
@@ -553,9 +580,6 @@ public class App extends Application {
         }
     }
 
-    public static boolean isFRServerConnected = true;
-    public static boolean isThermometerServerConnected = false;
-
     public void onEventBackgroundThread(BusEvent event) {
 //        mLog.i(TAG, " -- Event Bus:> " + event.getEventType());
         switch (event.getEventType()) {
@@ -564,6 +588,9 @@ public class App extends Application {
                 break;
             case APP_CODE_FRS_LOGIN_SUCCESS:
                 mLog.d(TAG, " *** APP_CODE_FRS_LOGIN_SUCCESS *** ");
+                break;
+            case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS:
+                mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS");
                 break;
         }
     }

@@ -1,9 +1,11 @@
 package acl.siot.opencvwpc20191007noc.vfr.adminSetting;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,6 +28,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.chaos.view.PinView;
 import com.github.glomadrian.codeinputlib.CodeInput;
 
 import java.io.IOException;
@@ -39,12 +43,15 @@ import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskConnect;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskRemove;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskTryConnect;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 import devlight.io.library.ntb.NavigationTabBar;
+import studio.carbonylgroup.textfieldboxes.ExtendedEditText;
+import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
 import static acl.siot.opencvwpc20191007noc.App.isBarCodeReaderCanEdit;
@@ -181,8 +188,15 @@ public class VMSAdminSettingFragment extends Fragment {
     TextView avaloComTemp;
     TextView avaloComTempMinus;
     TextView avaloComTempAdd;
+
+    Switch isTempOn;
+    Switch isMaskOn;
     EditText visitorTemplate;
     EditText nonVisitorTemplate;
+
+    // TAB OTHER
+    EditText screenTimeout;
+    Button changePWDBtn;
 
     private void initViewsFeature() {
 
@@ -203,14 +217,17 @@ public class VMSAdminSettingFragment extends Fragment {
 //                        VMSEdgeCache.getInstance().setVmsHost(server_host_name.getText().toString());
 //                        VMSEdgeCache.getInstance().setVms_host_port(server_port.getText().toString());
 //                        VMSEdgeCache.getInstance().setVms_host_is_ssl(server_is_ssl.isChecked());
+                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_host(trd_hostname.getText().toString());
+                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_port(trd_port.getText().toString());
+                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_enable_ssl(trd_is_ssl.isChecked());
+                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_account(trd_account.getText().toString());
+                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(trd_password.getText().toString());
                         break;
                     case TAB_DEVICE:
                         // Server Setting
                         VMSEdgeCache.getInstance().setVmsKioskDeviceName(deviceName.getText().toString());
-                        VMSEdgeCache.getInstance().setVms_host_port(server_port.getText().toString());
-                        VMSEdgeCache.getInstance().setVms_host_is_ssl(server_is_ssl.isChecked());
-                        VMSEdgeCache.getInstance().setVms_kiosk_video_type(optionOptical.isChecked() ? 0 : 1);
-
+//                        VMSEdgeCache.getInstance().setVms_host_port(server_port.getText().toString());
+//                        VMSEdgeCache.getInstance().setVms_host_is_ssl(server_is_ssl.isChecked());
                         mLog.d(TAG, "deviceModeSpinner.getSelectedItem():> " + deviceModeSpinner.getSelectedItem());
                         int mode = 0;
                         switch ((String)deviceModeSpinner.getSelectedItem()) {
@@ -224,15 +241,20 @@ public class VMSAdminSettingFragment extends Fragment {
                         VMSEdgeCache.getInstance().setVms_kiosk_mode(mode);
 
                         VMSEdgeCache.getInstance().setVms_kiosk_device_input_bar_code_scanner(isBarcodeReaderCheckedTemp);
+
+                        VMSEdgeCache.getInstance().setVms_kiosk_video_type(optionOptical.isChecked() ? 0 : 1);
                         break;
                     case TAB_DETECT:
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_device_host(avalo_host.getText().toString());
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_alert_temp(Float.valueOf(avaloAlertTemp.getText().toString()));
                         VMSEdgeCache.getInstance().setVms_kiosk_avalo_temp_compensation(Float.valueOf(avaloComTemp.getText().toString()));
 
+                        VMSEdgeCache.getInstance().setVms_kiosk_is_enable_temp(isTempOn.isChecked());
+                        VMSEdgeCache.getInstance().setVms_kiosk_is_enable_mask(isMaskOn.isChecked());
 
                         break;
                     case TAB_OTHER:
+                        VMSEdgeCache.getInstance().setVms_kiosk_screen_timeout(Integer.valueOf(screenTimeout.getText().toString()));
                         break;
                     case TAB_LOG:
                         break;
@@ -287,7 +309,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
                         trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setEnabled(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
 
@@ -341,6 +363,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         });
                         optionThermal = view.findViewById(R.id.optionThermal);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
+                        optionThermal.setEnabled(isThermometerServerConnected);
                         optionThermal.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -386,10 +409,17 @@ public class VMSAdminSettingFragment extends Fragment {
                         avaloComTemp = view.findViewById(R.id.avaloComTemp);
                         avaloComTempMinus = view.findViewById(R.id.avaloComTempMinus);
                         avaloComTempAdd = view.findViewById(R.id.avaloComTempAdd);
+
+                        isTempOn = view.findViewById(R.id.isTempOn);
+                        isMaskOn = view.findViewById(R.id.isMaskOn);
                         visitorTemplate = view.findViewById(R.id.visitorTemplate);
                         nonVisitorTemplate = view.findViewById(R.id.nonVisitorTemplate);
-                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
-                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
+
+                        isTempOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp());
+                        isMaskOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask());
+                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
+                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
+
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
                         avaloAlertTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()));
                         avaloComTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation()));
@@ -432,6 +462,17 @@ public class VMSAdminSettingFragment extends Fragment {
                         break;
                     case TAB_OTHER:
                         view = LayoutInflater.from(getContext()).inflate(R.layout.tab_other, null, false);
+
+                        screenTimeout = view.findViewById(R.id.screenTimeout);
+                        changePWDBtn = view.findViewById(R.id.changePWDBtn);
+
+                        screenTimeout.setText(VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout().toString());
+                        changePWDBtn.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                AppBus.getInstance().post(new BusEvent("change pwd", SHOW_DIALOG_CHANGE_PWD));
+                            }
+                        });
                         break;
                     case TAB_LOG:
                         view = LayoutInflater.from(getContext()).inflate(R.layout.tab_a, null, false);
@@ -468,7 +509,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
                         trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setEnabled(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
                         break;
@@ -477,6 +518,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceName.setText(VMSEdgeCache.getInstance().getVmsKioskDeviceName());
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
+                        optionThermal.setEnabled(isThermometerServerConnected);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
 
                         barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
@@ -490,10 +532,14 @@ public class VMSAdminSettingFragment extends Fragment {
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
                         avaloAlertTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()));
                         avaloComTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation()));
-                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
-                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
+
+                        isTempOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp());
+                        isMaskOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask());
+                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
+                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
                         break;
                     case TAB_OTHER:
+                        screenTimeout.setText(VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout().toString());
                         break;
                 }
             }
@@ -550,87 +596,262 @@ public class VMSAdminSettingFragment extends Fragment {
         navigationTabBar.setViewPager(viewPager, 0);
     }
 
-    private SweetAlertDialog saDialog_avatar;
+    private SweetAlertDialog saDialog_connect_server;
+
+    private AlertDialog atDialog_connect_server_connect;
+    private AlertDialog atDialog_connect_server_disconnect;
+    private AlertDialog atDialog_change_pwd;
+    AlertDialog.Builder builder;
+    View myView_alertDialog;
+
+    Button cancelBtn;
+    Button summitBtn;
+    Button confirmBtn;
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void onEventMainThread(BusEvent event) {
         switch (event.getEventType()) {
+            case SHOW_DIALOG_CHANGE_PWD:
+
+                LayoutInflater inflater_change_pwd = getLayoutInflater();
+                myView_alertDialog = inflater_change_pwd.inflate(R.layout.dialog_change_pwd_content, null);
+
+
+                final TextFieldBoxes text_field_boxes_old = myView_alertDialog.findViewById(R.id.text_field_boxes_old);
+                final ExtendedEditText extended_edit_text_old = myView_alertDialog.findViewById(R.id.extended_edit_text_old);
+
+                text_field_boxes_old.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mLog.d(TAG, "onClick:> " + extended_edit_text_old.getInputType());
+                        text_field_boxes_old.setEndIcon(extended_edit_text_old.getInputType() == 1 ? R.drawable.icon_eye_open :  R.drawable.icon_eye_close);
+                        extended_edit_text_old.setInputType(extended_edit_text_old.getInputType() == 1 ?
+                                65665 :
+                                InputType.TYPE_CLASS_TEXT);
+                    }
+                });
+
+                final TextFieldBoxes text_field_boxes_new = myView_alertDialog.findViewById(R.id.text_field_boxes_new);
+                final ExtendedEditText extended_edit_text_new = myView_alertDialog.findViewById(R.id.extended_edit_text_new);
+
+                text_field_boxes_old.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mLog.d(TAG, "onClick:> " + extended_edit_text_new.getInputType());
+                        text_field_boxes_new.setEndIcon(extended_edit_text_new.getInputType() == 1 ? R.drawable.icon_eye_open :  R.drawable.icon_eye_close);
+                        extended_edit_text_new.setInputType(extended_edit_text_new.getInputType() == 1 ?
+                                65665 :
+                                InputType.TYPE_CLASS_TEXT);
+                    }
+                });
+
+                final TextFieldBoxes text_field_boxes_confirm = myView_alertDialog.findViewById(R.id.text_field_boxes_confirm);
+                final ExtendedEditText extended_edit_text_confirm = myView_alertDialog.findViewById(R.id.extended_edit_text_confirm);
+
+                text_field_boxes_old.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mLog.d(TAG, "onClick:> " + extended_edit_text_confirm.getInputType());
+                        text_field_boxes_confirm.setEndIcon(extended_edit_text_confirm.getInputType() == 1 ? R.drawable.icon_eye_open :  R.drawable.icon_eye_close);
+                        extended_edit_text_confirm.setInputType(extended_edit_text_confirm.getInputType() == 1 ?
+                                65665 :
+                                InputType.TYPE_CLASS_TEXT);
+                    }
+                });
+
+                cancelBtn = myView_alertDialog.findViewById(R.id.cancelBtn);
+                cancelBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        atDialog_change_pwd.dismiss();
+                    }
+                });
+
+                summitBtn = myView_alertDialog.findViewById(R.id.summitBtn);
+                summitBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        // TODO check PWD
+                        mLog.d(TAG, ":> " + extended_edit_text_old.getText().toString());
+                        mLog.d(TAG, "default:> " + VMSEdgeCache.getInstance().getVms_kiosk_settingPassword());
+                        if (!extended_edit_text_old.getText().toString().equals(VMSEdgeCache.getInstance().getVms_kiosk_settingPassword())) {
+//                            MessageTools.showToast(getContext(), "old password wrong");
+                            text_field_boxes_old.setError("The password is incorrect, please try again.", true);
+                            return;
+                        }
+                        if (!extended_edit_text_new.getText().toString().equals(extended_edit_text_confirm.getText().toString())) {
+//                            MessageTools.showToast(getContext(), "please check confirm password and new password are the same.");
+                            text_field_boxes_confirm.setError("The password do not match, please try again.", true);
+                            return;
+                        }
+
+                        VMSEdgeCache.getInstance().setVms_kiosk_settingPassword(extended_edit_text_new.getText().toString());
+
+                        AppBus.getInstance().post(new BusEvent("vms apply update", APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE));
+                        atDialog_change_pwd.dismiss();
+                    }
+                });
+
+                builder = new AlertDialog.Builder(getContext());
+                builder.setView(myView_alertDialog);
+                atDialog_change_pwd = builder.create();
+                atDialog_change_pwd.show();
+                break;
             case SHOW_DIALOG_CONNECT:
+
+                LayoutInflater inflater_change_connect = getLayoutInflater();
+                myView_alertDialog = inflater_change_connect.inflate(R.layout.dialog_connect_content, null);
+
+//                final CodeInput cInput = (CodeInput) myView_alertDialog.findViewById(R.id.codeInput);
+                final PinView cInput = myView_alertDialog.findViewById(R.id.codeInput);
+
+                cancelBtn = myView_alertDialog.findViewById(R.id.cancelBtn);
+                cancelBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        atDialog_connect_server_connect.dismiss();
+                    }
+                });
+
+                summitBtn = myView_alertDialog.findViewById(R.id.summitBtn);
+                summitBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+//                        String results = "";
+
+//                        for (int i = 0; i < cInput.getCode().length; i++) {
+//                            results += String.valueOf(cInput.getCode()[i]);
+//                        }
+
+//                        mLog.d(TAG, "paring code:> " + results);
+                        mLog.d(TAG, "paring code:> " +  cInput.getText().toString());
+                        String android_id = Settings.Secure.getString(getContext().getContentResolver(),
+                                Settings.Secure.ANDROID_ID);
+                        VmsKioskConnect mMap = new VmsKioskConnect(cInput.getText().toString(), VMSEdgeCache.getInstance().getVmsKioskDeviceName(), android_id);
+                        try {
+                            OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CONNECT);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+                builder = new AlertDialog.Builder(getContext());
+                builder.setView(myView_alertDialog);
+                atDialog_connect_server_connect = builder.create();
+                atDialog_connect_server_connect.show();
+
                 LayoutInflater inflater = LayoutInflater.from(getContext());
                 LinearLayout linearLayout = (LinearLayout) inflater.inflate(R.layout.connect_pin_code, null);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
 
-                final CodeInput cInput = (CodeInput) linearLayout.findViewById(R.id.pairing);
-
-                saDialog_avatar = new SweetAlertDialog(getContext(), SweetAlertDialog.NORMAL_TYPE);
-                saDialog_avatar.setTitleText("Please Enter Paring Code")
-                        .setCustomView(linearLayout)
-                        .setConfirmButton("Connect", new SweetAlertDialog.OnSweetClickListener() {
-                            @Override
-                            public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                saDialog_avatar.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
-                                saDialog_avatar.setCancelable(false);
-                                String results = "";
-                                for (int i = 0; i < cInput.getCode().length; i++) {
-                                    results += String.valueOf(cInput.getCode()[i]);
-                                }
-                                mLog.d(TAG, "paring code:> " + results);
-                                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
-                                        Settings.Secure.ANDROID_ID);
-                                VmsKioskConnect mMap = new VmsKioskConnect(results, VMSEdgeCache.getInstance().getVmsKioskDeviceName(), android_id);
-                                try {
-                                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CONNECT);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        })
-                        .show();
+//                final CodeInput cInput_2 = (CodeInput) linearLayout.findViewById(R.id.pairing);
+//
+//                saDialog_connect_server = new SweetAlertDialog(getContext(), SweetAlertDialog.NORMAL_TYPE);
+//                saDialog_connect_server.setTitleText("Please Enter Paring Code")
+//                        .setCustomView(linearLayout)
+//                        .setConfirmButton("Connect", new SweetAlertDialog.OnSweetClickListener() {
+//                            @Override
+//                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+//                                saDialog_connect_server.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
+//                                saDialog_connect_server.setCancelable(false);
+//                                String results = "";
+//                                for (int i = 0; i < cInput.getCode().length; i++) {
+//                                    results += String.valueOf(cInput.getCode()[i]);
+//                                }
+//                                mLog.d(TAG, "paring code:> " + results);
+//                                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
+//                                        Settings.Secure.ANDROID_ID);
+//                                VmsKioskConnect mMap = new VmsKioskConnect(results, VMSEdgeCache.getInstance().getVmsKioskDeviceName(), android_id);
+//                                try {
+//                                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CONNECT);
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        })
+//                        .show();
 
                 break;
             case SHOW_DIALOG_DISCONNECT:
-                saDialog_avatar = new SweetAlertDialog(getContext(), SweetAlertDialog.NORMAL_TYPE);
-                saDialog_avatar.setTitleText("Disconnect")
-                        .setContentText("Please confirm that you would like to disconnect from the server. Select \" Confirm \" to disconnect from the server, or \" Cancel \" to abort the operation.")
-                        .setConfirmButton("Confirm", new SweetAlertDialog.OnSweetClickListener() {
-                            @Override
-                            public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                saDialog_avatar.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
-                                saDialog_avatar.setCancelable(false);
-                                VmsKioskRemove mMap = new VmsKioskRemove(VMSEdgeCache.getInstance().getVmsKioskUuid());
-                                try {
-                                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_REMOVE);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        })
-                        .setCancelButton("Cancel", new SweetAlertDialog.OnSweetClickListener() {
-                            @Override
-                            public void onClick(SweetAlertDialog sweetAlertDialog) {
-                                saDialog_avatar.dismiss();
-                            }
-                        })
-                        .show();
+
+                LayoutInflater inflater_change_disconnect = getLayoutInflater();
+                myView_alertDialog = inflater_change_disconnect.inflate(R.layout.dialog_disconnect_content, null);
+
+                cancelBtn = myView_alertDialog.findViewById(R.id.cancelBtn);
+                cancelBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        atDialog_connect_server_disconnect.dismiss();
+                    }
+                });
+
+                confirmBtn = myView_alertDialog.findViewById(R.id.confirmBtn);
+                confirmBtn.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        VmsKioskRemove mMap = new VmsKioskRemove(VMSEdgeCache.getInstance().getVmsKioskUuid());
+                        try {
+                            OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_REMOVE);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+
+
+                builder = new AlertDialog.Builder(getContext());
+                builder.setView(myView_alertDialog);
+                atDialog_connect_server_disconnect = builder.create();
+                atDialog_connect_server_disconnect.show();
+
+
+
+//                saDialog_connect_server = new SweetAlertDialog(getContext(), SweetAlertDialog.NORMAL_TYPE);
+//                saDialog_connect_server.setTitleText("Disconnect")
+//                        .setContentText("Please confirm that you would like to disconnect from the server. Select \" Confirm \" to disconnect from the server, or \" Cancel \" to abort the operation.")
+//                        .setConfirmButton("Confirm", new SweetAlertDialog.OnSweetClickListener() {
+//                            @Override
+//                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+//                                saDialog_connect_server.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
+//                                saDialog_connect_server.setCancelable(false);
+//                                VmsKioskRemove mMap = new VmsKioskRemove(VMSEdgeCache.getInstance().getVmsKioskUuid());
+//                                try {
+//                                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_REMOVE);
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        })
+//                        .setCancelButton("Cancel", new SweetAlertDialog.OnSweetClickListener() {
+//                            @Override
+//                            public void onClick(SweetAlertDialog sweetAlertDialog) {
+//                                saDialog_connect_server.dismiss();
+//                            }
+//                        })
+//                        .show();
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_REMOVE_SUCCESS:
-                saDialog_avatar.changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
-                saDialog_avatar.getButton(BUTTON_CONFIRM).setEnabled(false);
+                if (atDialog_connect_server_disconnect != null && atDialog_connect_server_disconnect.isShowing()) {
+                    atDialog_connect_server_disconnect.dismiss();
+                }
+
+//                saDialog_connect_server.changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+//                saDialog_connect_server.getButton(BUTTON_CONFIRM).setEnabled(false);
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS:
-                connectVmsBtn_server.setText("DISCONNECT");
-                connectVmsBtn_server.setBackground(getResources().getDrawable(R.drawable.ic_btn_disconnect));
-                saDialog_avatar.changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
-                saDialog_avatar.setCancelable(true);
-                if (saDialog_avatar.isShowing()) {
-                    saDialog_avatar.setTitle("Connect SUCCEED");
-                }
+//                connectVmsBtn_server.setText("DISCONNECT");
+//                connectVmsBtn_server.setBackground(getResources().getDrawable(R.drawable.ic_btn_disconnect));
+//                saDialog_connect_server.changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
+//                saDialog_connect_server.setCancelable(true);
+//                if (saDialog_connect_server != null && saDialog_connect_server.isShowing()) {
+//                    saDialog_connect_server.setTitle("Connect SUCCEED");
+//                }
                 mLog.d(TAG, "kiosk UUID:> " + VMSEdgeCache.getInstance().getVmsKioskUuid());
-                saDialog_avatar.getButton(BUTTON_CONFIRM).setEnabled(false);
+//                saDialog_connect_server.getButton(BUTTON_CONFIRM).setEnabled(false);
                 AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
-                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
-                        Settings.Secure.ANDROID_ID);
-                VmsKioskSync mMap = new VmsKioskSync(android_id);
+                VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
                 try {
                     OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
                 } catch (IOException e) {
@@ -638,12 +859,13 @@ public class VMSAdminSettingFragment extends Fragment {
                 }
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL:
-                saDialog_avatar.changeAlertType(SweetAlertDialog.ERROR_TYPE);
-                saDialog_avatar.setCancelable(true);
-                mLog.d(TAG, event.getMessage());
-                if (saDialog_avatar.isShowing()) {
-                    saDialog_avatar.setTitle(event.getMessage());
-                }
+//                saDialog_connect_server.changeAlertType(SweetAlertDialog.ERROR_TYPE);
+//                saDialog_connect_server.setCancelable(true);
+//                mLog.d(TAG, event.getMessage());
+//                if (saDialog_connect_server != null && saDialog_connect_server.isShowing()) {
+//                    saDialog_connect_server.setTitle(event.getMessage());
+//                }
+                MessageTools.showLongToast(getContext(), event.getMessage());
                 break;
             case TIME_TICK:
                 Date d = new Date();
@@ -667,22 +889,21 @@ public class VMSAdminSettingFragment extends Fragment {
 
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS:
-                saDialog_avatar.getButton(BUTTON_CONFIRM).setEnabled(true);
-                AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
-                android_id = Settings.Secure.getString(getContext().getContentResolver(),
-                        Settings.Secure.ANDROID_ID);
-                mMap = new VmsKioskSync(android_id);
-                try {
-                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                saDialog_connect_server.getButton(BUTTON_CONFIRM).setEnabled(true);
+//                AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
+//                mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
+//                try {
+//                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL:
-                saDialog_avatar.changeAlertType(SweetAlertDialog.ERROR_TYPE);
-                saDialog_avatar.setTitleText("VMS Server Host is not Exist");
-                saDialog_avatar.getButton(BUTTON_CONFIRM).setEnabled(false);
+//                saDialog_connect_server.changeAlertType(SweetAlertDialog.ERROR_TYPE);
+//                saDialog_connect_server.setTitleText("VMS Server Host is not Exist");
+//                saDialog_connect_server.getButton(BUTTON_CONFIRM).setEnabled(false);
                 mLog.d(TAG, event.getMessage());
+                MessageTools.showLongToast(getContext(), event.getMessage());
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
 //                thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
@@ -696,7 +917,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
                         trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setEnabled(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
                         break;
@@ -705,6 +926,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         deviceName.setText(VMSEdgeCache.getInstance().getVmsKioskDeviceName());
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
+                        optionThermal.setEnabled(isThermometerServerConnected);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
 
                         barcodeReaderCheckBox.setEnabled(isBarCodeReaderCanEdit);
@@ -718,11 +940,18 @@ public class VMSAdminSettingFragment extends Fragment {
                         avalo_host.setText(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host());
                         avaloAlertTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()));
                         avaloComTemp.setText(String.valueOf(VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation()));
-                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
-                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
+
+                        isTempOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp());
+                        isMaskOn.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask());
+                        visitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskVisitorTemplateUuid());
+                        nonVisitorTemplate.setText(VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid() == "" ? "None" : VMSEdgeCache.getInstance().getVmsKioskDefaultTemplateUuid());
                         break;
                     case TAB_OTHER:
+                        screenTimeout.setText(VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout().toString());
                         break;
+                }
+                if (atDialog_connect_server_connect != null && atDialog_connect_server_connect.isShowing()) {
+                    atDialog_connect_server_connect.dismiss();
                 }
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL:
@@ -735,6 +964,8 @@ public class VMSAdminSettingFragment extends Fragment {
 
     final int SHOW_DIALOG_CONNECT = 10015;
     final int SHOW_DIALOG_DISCONNECT = 10016;
+
+    final int SHOW_DIALOG_CHANGE_PWD = 10025;
 
     // -------------------------------------------
     public interface OnFragmentInteractionListener {

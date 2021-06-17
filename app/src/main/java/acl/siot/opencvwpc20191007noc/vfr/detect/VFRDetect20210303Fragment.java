@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import acl.siot.opencvwpc20191007noc.App;
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
@@ -79,9 +80,9 @@ import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
 import acl.siot.opencvwpc20191007noc.wbSocket.AvaloWebSocketClient;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
-import static acl.siot.opencvwpc20191007noc.App.detectSerialNumber;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
+import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
@@ -93,7 +94,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 @RequiresApi(api = Build.VERSION_CODES.N)
 public class VFRDetect20210303Fragment extends Fragment {
 
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants
@@ -109,7 +110,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     final int FACE_DETECT_DONE = 2001;
     final int FACE_DETECT_TEST = 20019;
 
-    final int FACE_CAPTURE_DONE = 4001;
+    final int DETECT_ROUND_DONE = 4001;
 
     final int SHOW_NO_VMS_SERVER_QRCODE = 5009;
 
@@ -291,7 +292,14 @@ public class VFRDetect20210303Fragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (isQRCodeView) {
-                    reCheck();
+                    switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+                        case 0:
+                            reCheck();
+                            break;
+                        case 1:
+                            backToWelcomePage();
+                            break;
+                    }
                 } else {
                     reCheck();
                 }
@@ -310,11 +318,9 @@ public class VFRDetect20210303Fragment extends Fragment {
         });
     }
 
-    private void uploadData() {
+    private void uploadData() throws JSONException {
         //TODO send data to VMS
-        Bitmap uploadTargetBitmap;
-
-        uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
+        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
@@ -322,13 +328,65 @@ public class VFRDetect20210303Fragment extends Fragment {
 
         String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
 
+        boolean isVisitor = false;
+
+        // Interface including: rfid, barcode, card
+        String interfaceMethod = "";
+
+        // mode including: normal, realname, invitation, event
+        String dataUploadMode = "Normal";
+
+        switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+            case 0:
+                isVisitor = true;
+                interfaceMethod = "";
+                dataUploadMode = "Normal";
+                break;
+            case 1:
+                isVisitor = false;
+                if (App.isRFIDFunctionOn) {
+                    interfaceMethod = "rfid";
+                } else if (App.isBarCodeFunctionOn) {
+                    interfaceMethod = "barcode";
+                }
+                dataUploadMode = "RealName";
+                break;
+        }
+
+        boolean isWearMask = false;
+
+        switch (maskResults) {
+            case 0: // wear mask
+                isWearMask = true;
+                break;
+            case 1: // no wear mask
+                isWearMask = false;
+                break;
+        }
+
+        // status including: Filling-out, Exception
+        // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
+        String status = "Filling-out".toLowerCase();
+        String exception = "";
+        if (!isWearMask) {
+            exception = "No-Wear-Mask".toLowerCase();
+            status = "Exception".toLowerCase();
+        }
+        if (Float.valueOf(String.valueOf(formatter.format(person_temp_static))) >=
+                VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
+            exception = "High-Fever".toLowerCase();
+            status = "Exception".toLowerCase();
+        }
+
         VmsUpload mMap = new VmsUpload(encoded,
-                maskResults == 1 ? false : true,
+                isWearMask,
                 String.valueOf(formatter.format(person_temp_static)),
-                VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0 ? "" : detectSerialNumber,
-                VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0 ? "" : "mappingName",
-                VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0 ? "" : "rfid",
-                VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0 ? true : false
+                uploadPersonData,
+                interfaceMethod,
+                isVisitor,
+                dataUploadMode,
+                exception,
+                status
         );
         try {
             OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
@@ -552,13 +610,17 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                 if (maskResults == 1 && !isCaptureFaceDone) { // NoMask
                     maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_off));
-                    AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
+                    AppBus.getInstance().post(new BusEvent("show confirm view", DETECT_ROUND_DONE));
                     isCaptureFaceDone = true;
                     isDetectValidate = false;
                     msg_big.setText("FAIL");
                     reCheckBtn.setVisibility(View.VISIBLE);
                     if (isVmsConnected) {
-                        uploadData();
+                        try {
+                            uploadData();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         startRecheckProcess();
                     }
@@ -571,11 +633,15 @@ public class VFRDetect20210303Fragment extends Fragment {
                     isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false;
                     mLog.d(TAG, "isDetectValidate:> " + isDetectValidate);
                     if (!isDetectValidate) {
-                        AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
+                        AppBus.getInstance().post(new BusEvent("show confirm view", DETECT_ROUND_DONE));
                     }
                     reCheckBtn.setVisibility(View.VISIBLE);
                     if (isVmsConnected) {
-                        uploadData();
+                        try {
+                            uploadData();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
                     }
@@ -840,7 +906,7 @@ public class VFRDetect20210303Fragment extends Fragment {
             case FACE_DETECT_TEST:
 //                Toast.makeText(getContext(), "Please modified your face angle to detect again.", Toast.LENGTH_LONG).show();
                 break;
-            case FACE_CAPTURE_DONE:
+            case DETECT_ROUND_DONE:
                 detectView.setVisibility(View.INVISIBLE);
 //                thermo_view.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
@@ -941,7 +1007,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                     e.printStackTrace();
                 }
                 break;
-            case SHOW_NO_VMS_SERVER_QRCODE:
+            case SHOW_NO_VMS_SERVER_QRCODE: // Deprecated
                 startRecheckProcess();
                 detectView.setVisibility(View.INVISIBLE);
 //                thermo_view.setVisibility(View.INVISIBLE);
@@ -955,7 +1021,8 @@ public class VFRDetect20210303Fragment extends Fragment {
 
 //                String qucodeString = "Advantech-VMS-Code,v1.0.0,0,9,2021-03-23T11:43:57Z,2021-03-23T17:59:59Z,00000000,fTd46eW";
                 String qucodeString = "Advantech-VMS-Code,v1.0.0,0,9," + startDate +
-                        "," + endDate + "," + detectSerialNumber + ",fTd46eW";
+//                        "," + endDate + "," + detectSerialNumber + ",fTd46eW";
+                        "," + endDate + "," + "00000000" + ",fTd46eW";
                 Bitmap myBitmap = QRCode.from(qucodeString).bitmap();
                 faceCapture.setImageBitmap(myBitmap);
 
@@ -992,6 +1059,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     }
 
     private void startRecheckProcess() {
+        mLog.d(TAG, "timeout" + VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout());
         recheckHandler.removeCallbacks(mFragmentRunnable);
         recheckHandler.postDelayed(mFragmentRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
     }
@@ -1040,7 +1108,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Thread detectPageThread;
     private Runnable detectPageRunnable = new Runnable() {
         // 1 second
-        private static final long task_minimum_tick_time_msec = 300;
+        private static final long task_minimum_tick_time_msec = 300; // one tick 0.3s
         int period = 5;
 
         @Override
@@ -1106,7 +1174,14 @@ public class VFRDetect20210303Fragment extends Fragment {
     private class FragmentRunnable implements Runnable {
         @Override
         public void run() {
-            reCheck();
+            switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+                case 0:
+                    reCheck();
+                    break;
+                case 1:
+                    backToWelcomePage();
+                    break;
+            }
         }
     }
 

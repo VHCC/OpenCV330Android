@@ -4,11 +4,13 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -209,6 +211,7 @@ public class VFRMainActivity extends AppCompatActivity {
             super(fm);
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public Fragment getItem(int position) {
             Fragment fragment = null;
@@ -547,6 +550,7 @@ public class VFRMainActivity extends AppCompatActivity {
             case APP_CODE_VMS_KIOSK_RFID_DETECT_DONE:
                 mLog.d(TAG, "mViewPager.getCurrentItem():> " + mViewPager.getCurrentItem());
                 if (mViewPager.getCurrentItem() == PAGE_WELCOME) {
+                    mLog.d(TAG, "RFID:> " + event.getMessage());
                     mViewPager.setCurrentItem(PAGE_DETECT);
                 }
                 break;

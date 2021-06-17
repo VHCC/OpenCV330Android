@@ -7,7 +7,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 7
-        versionName "1.1.210512"
+        versionName "1.1.210512_test"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -60,6 +60,7 @@ dependencies {
     implementation 'com.github.f0ris.sweetalert:library:1.6.2'
     implementation 'com.github.HITGIF:TextFieldBoxes:1.4.5'
     implementation 'com.github.kenglxn.QRGen:android:2.6.0'
+    implementation 'com.chaos.view:pinview:1.4.4'
 
 
 }

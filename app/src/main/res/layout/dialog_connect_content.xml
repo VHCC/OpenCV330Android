@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#064A7E"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_gravity="center"
+    android:layout_width="800dp"
+    android:layout_height="500dp">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="30dp"
+            android:textColor="#FFFFFF"
+            android:text="Please Enter Connection Code"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:paddingLeft="20dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+<!--        <com.github.glomadrian.codeinputlib.CodeInput-->
+<!--            android:id="@+id/codeInput"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            app:underline_color="#457ad1"-->
+<!--            app:underline_selected_color="#9e1ace"-->
+<!--            app:text_color="#b12eff"-->
+<!--            app:hint_color="#77ce9d"-->
+<!--            app:codes="6"-->
+<!--            app:hint_text="Pairing code" />-->
+
+        <com.chaos.view.PinView
+            android:id="@+id/codeInput"
+            style="@style/PinWidget.PinView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:cursorVisible="true"
+            android:hint="Hint."
+            android:inputType="text"
+            android:padding="15dp"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cursorColor="#FFFFFF"
+            app:cursorWidth="2dp"
+            app:hideLineWhenFilled="true"
+            app:itemCount="6"
+            app:itemHeight="72dp"
+            app:itemRadius="4dp"
+            app:itemSpacing="15dp"
+            app:itemWidth="72dp"
+            app:lineColor="#FFFFFF"
+            app:lineWidth="2dp"
+            app:viewType="rectangle" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:padding="10dp"
+        android:weightSum="4"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:visibility="invisible"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+        <Button
+            android:visibility="invisible"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+        <Button
+            android:id="@+id/cancelBtn"
+            android:background="#1A6AA7"
+            android:text="Cancel"
+            android:textColor="#FFFFFF"
+            android:textSize="20dp"
+            android:layout_margin="15dp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+        <Button
+            android:id="@+id/summitBtn"
+            android:background="#229CBB"
+            android:textSize="20dp"
+            android:text="Summit"
+            android:textColor="#FFFFFF"
+            android:layout_margin="15dp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+    </LinearLayout>
+
+
+</LinearLayout>

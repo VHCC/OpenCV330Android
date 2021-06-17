@@ -3,15 +3,12 @@ package acl.siot.opencvwpc20191007noc.vfr.adminSetting;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,6 +23,7 @@ import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.cache.VFRAppSetting;
+import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import studio.carbonylgroup.textfieldboxes.ExtendedEditText;
 import studio.carbonylgroup.textfieldboxes.SimpleTextChangedWatcher;
@@ -33,7 +31,6 @@ import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 
 /**
  * Created by IChen.Chu on 2020/05/25
@@ -125,7 +122,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (VFRAppSetting.getInstance().getPwd().equals(passwordInput.toString())) {
+                if (VMSEdgeCache.getInstance().getVms_kiosk_settingPassword().equals(passwordInput.toString())) {
                     onFragmentInteractionListener.clickConfirmPWD();
                 } else {
                     text_field_boxes.setLabelText("");

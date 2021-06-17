@@ -69,6 +69,10 @@ public class VMSEdgeCache {
     public static final String SHARE_VMS_EDGE_INFO_KIOSK_MEMO =
             "share_vms_edge_info_kiosk_memo";
 
+    private String vms_kiosk_settingPassword = "123456";
+    public static final String SHARE_VMS_EDGE_SETTING_PWD =
+            "share_vms_edge_setting_pwd";
+
     private Integer vms_kiosk_screen_timeout = 30; // 1 seconds per one tick, default: 30s
     public static final String SHARE_VMS_EDGE_INFO_VMS_KIOSK_SCREEN_TIMEOUT =
             "share_vms_edge_info_vms_kiosk_screen_timeout";
@@ -424,6 +428,17 @@ public class VMSEdgeCache {
         this.vms_kiosk_device_input_card_reader = vms_kiosk_device_input_card_reader;
         editor = sp.edit();
         editor.putBoolean(SHARE_VMS_EDGE_INPUT_CARD_READER, vms_kiosk_device_input_card_reader).commit();
+    }
+
+    public String getVms_kiosk_settingPassword() {
+        Map<String, ?> map = sp.getAll();
+        return ((String) map.get(SHARE_VMS_EDGE_SETTING_PWD)   == null ? vms_kiosk_settingPassword : (String) map.get(SHARE_VMS_EDGE_SETTING_PWD));
+    }
+
+    public void setVms_kiosk_settingPassword(String vms_kiosk_settingPassword) {
+        this.vms_kiosk_settingPassword = vms_kiosk_settingPassword;
+        editor = sp.edit();
+        editor.putString(SHARE_VMS_EDGE_SETTING_PWD, vms_kiosk_settingPassword).commit();
     }
 
     public String showInfoAll() {

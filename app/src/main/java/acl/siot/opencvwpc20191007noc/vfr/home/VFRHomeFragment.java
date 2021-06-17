@@ -166,13 +166,13 @@ public class VFRHomeFragment extends Fragment {
                 syncDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialogInterface) {
-                        mHandler.postDelayed(mFragmentRunnable, 500L);
+                        mHandler.postDelayed(mFragmentRunnable, 100L);
                     }
                 });
-                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
-                        Settings.Secure.ANDROID_ID);
+//                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
+//                        Settings.Secure.ANDROID_ID);
 
-                VmsKioskSync mMap = new VmsKioskSync(android_id);
+                VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
                 try {
                     OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
                 } catch (IOException e) {

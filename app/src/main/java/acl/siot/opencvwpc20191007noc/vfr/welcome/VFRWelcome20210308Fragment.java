@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,10 +36,10 @@ import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
-import acl.siot.opencvwpc20191007noc.util.MessageTools;
 
 import static acl.siot.opencvwpc20191007noc.App.VFR_HEART_BEATS;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
+import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 
 /**
@@ -189,6 +190,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
             public void onClick(View v) {
                 mLog.d(TAG, "rfidBtn onclick");
                 mainEdit.requestFocus();
+                mainEdit.setInputType(InputType.TYPE_NULL);
+
                 App.isRFIDFunctionOn = true;
                 App.isBarCodeFunctionOn = false;
 
@@ -215,15 +218,32 @@ public class VFRWelcome20210308Fragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                mLog.d(TAG, "charSequence:> " + charSequence);
-                if ( App.isBarCodeFunctionOn) {
-                    MessageTools.showToast(getContext(), charSequence.toString());
+                String[] scannedInput = charSequence.toString().split(",");
+//                if (scannedInput.length == 7) {
+//                    if (scannedInput[6].trim().length() == 8) {
+//                        mLog.d(TAG, "CARD ID:> " + scannedInput[6].trim());
+//                    }
+//                }
+                if (scannedInput.length == 8) {
+                    if (scannedInput[7].trim().length() == 24) {
+                        mLog.d(TAG, "personUUID:> " + scannedInput[7].trim());
+                        mLog.d(TAG, "vmsPersonSyncMap:> " + App.vmsPersonSyncMapUUID.size());
+                        if (App.vmsPersonSyncMapUUID.containsKey( scannedInput[7].trim())) {
+                            uploadPersonData = App.vmsPersonSyncMapUUID.get(scannedInput[7].trim());
+                            mLog.d(TAG, "barCodeScanned Person:> " + uploadPersonData);
+                            mGotoDetectHandler.removeCallbacks(mFragmentRunnable);
+                            mGotoDetectHandler.postDelayed(mFragmentRunnable, 300L);
+                        }
+                    }
                 }
+//                if (App.isBarCodeFunctionOn) {
+//                    MessageTools.showToast(getContext(), charSequence.toString());
+//                }
             }
 
             @Override
             public void afterTextChanged(Editable editable) {
-                mLog.d(TAG, "afterTextChanged");
+//                mLog.d(TAG, "afterTextChanged");
             }
         });
 
@@ -283,6 +303,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
                 public void onClick(View v) {
                     mLog.d(TAG, "frameRFID onclick");
                     mainEdit.requestFocus();
+                    mainEdit.setInputType(InputType.TYPE_NULL);
+
                     App.isRFIDFunctionOn = false;
                     App.isBarCodeFunctionOn = true;
 
@@ -309,6 +331,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
         initViewIDs(mainView);
         initViewsFeature();
         mainEdit.requestFocus();
+        mainEdit.setInputType(InputType.TYPE_NULL);
+
         msg_big.setText("Please choose a way to login");
 //        adminHomeBtn.callOnClick();
     }
@@ -402,5 +426,26 @@ public class VFRWelcome20210308Fragment extends Fragment {
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         drawable.draw(canvas);
         return bitmap;
+    }
+
+    // Handler
+    private Handler mGotoDetectHandler = new MainHandler();
+    private Runnable mFragmentRunnable = new FragmentRunnable();
+
+
+    // -------------------------------------------
+    private class MainHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    }
+
+    private class FragmentRunnable implements Runnable {
+
+        @Override
+        public void run() {
+            onFragmentInteractionListener.clickToDetectPage();
+        }
     }
 }

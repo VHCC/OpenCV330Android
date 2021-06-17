@@ -64,9 +64,11 @@
                         </TextView>
 
                         <EditText
+                            android:id="@+id/screenTimeout"
                             android:singleLine="true"
                             android:background="@drawable/bg_round_rect_setting_edit"
                             android:paddingLeft="15dp"
+                            android:inputType="number"
                             android:textSize="16sp"
                             android:textColor="#FFFFFF"
                             android:hint="Screen Timeout"
@@ -107,6 +109,7 @@
                         </TextView>
 
                         <Button
+                            android:id="@+id/changePWDBtn"
                             android:background="@drawable/bg_round_rect_btn_green"
                             android:text="Change Password"
                             android:textSize="16sp"

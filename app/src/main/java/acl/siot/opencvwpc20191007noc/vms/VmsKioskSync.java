@@ -15,11 +15,11 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_UR
  */
 public class VmsKioskSync extends HashMap<Object, Object> {
 
-    final String API_KEY_ANDROIDID = "androidID";
+    final String API_KEY_KIOSKUUID = "kioskUUID";
 
-    public VmsKioskSync(String androidID) {
+    public VmsKioskSync(String kioskUUID) {
         LogWriter.storeLogToFile(",SYNC-SERVER-REQUEST," + new Date().getTime()/1000);
-        super.put(API_KEY_ANDROIDID, androidID );
+        super.put(API_KEY_KIOSKUUID, kioskUUID );
 
         String httpPrefix = VMSEdgeCache.getInstance().getVms_host_is_ssl() ? "https://" : "http://";
         String vmsPort = VMSEdgeCache.getInstance().getVms_host_port() == "" ? VMSEdgeCache.getInstance().getVms_host_is_ssl() ? ":443" : ":80" : ":"+VMSEdgeCache.getInstance().getVms_host_port();

@@ -40,12 +40,12 @@
         <TextView
             android:id="@+id/time_left"
             android:layout_width="match_parent"
+            android:textColor="#ffffff"
             android:layout_height="match_parent"
             android:layout_marginTop="20dp"
             android:layout_marginRight="273dp"
             android:gravity="top|right"
             android:text="YYYY-MM-DD"
-            android:textColor="#feb005"
             android:textSize="20dp"></TextView>
 
         <TextView
@@ -56,7 +56,7 @@
             android:layout_marginRight="196dp"
             android:gravity="top|right"
             android:text="--:--"
-            android:textColor="#1D1F20"
+            android:textColor="#ffffff"
             android:textSize="20dp"></TextView>
 
     </FrameLayout>

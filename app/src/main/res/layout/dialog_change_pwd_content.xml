@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#064A7E"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_gravity="center"
+    android:layout_width="800dp"
+    android:layout_height="500dp">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="30dp"
+            android:textColor="#FFFFFF"
+            android:text="CHANGE PASSWORD"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:padding="10dp"
+        android:weightSum="3"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="20dp"
+            android:textColor="#FFFFFF"
+            android:text="Old Password"
+            android:textStyle="bold"/>
+
+        <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
+            android:layout_weight="2"
+            android:id="@+id/text_field_boxes_old"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:panelBackgroundColor="#39729D"
+            app:helperTextColor="#FDFDFD"
+            app:primaryColor="#FDFDFD"
+            app:endIcon="@drawable/icon_eye_open"
+            app:hasClearButton="true">
+
+            <studio.carbonylgroup.textfieldboxes.ExtendedEditText
+                android:singleLine="true"
+                android:id="@+id/extended_edit_text_old"
+                android:inputType="textPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </studio.carbonylgroup.textfieldboxes.TextFieldBoxes>
+    </LinearLayout>
+
+    <!-- NEW PWD   -->
+    <LinearLayout
+        android:padding="10dp"
+        android:weightSum="3"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="20dp"
+            android:textColor="#FFFFFF"
+            android:text="New Password"
+            android:textStyle="bold"/>
+
+        <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
+            android:layout_weight="2"
+            android:id="@+id/text_field_boxes_new"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:panelBackgroundColor="#39729D"
+            app:helperTextColor="#FDFDFD"
+            app:primaryColor="#FDFDFD"
+            app:endIcon="@drawable/icon_eye_open"
+            app:hasClearButton="true">
+
+            <studio.carbonylgroup.textfieldboxes.ExtendedEditText
+                android:singleLine="true"
+                android:id="@+id/extended_edit_text_new"
+                android:inputType="textPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </studio.carbonylgroup.textfieldboxes.TextFieldBoxes>
+    </LinearLayout>
+
+    <!-- CONFIRM PWD   -->
+    <LinearLayout
+        android:padding="10dp"
+        android:weightSum="3"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textSize="20dp"
+            android:textColor="#FFFFFF"
+            android:text="Confirm Password"
+            android:textStyle="bold"/>
+
+        <studio.carbonylgroup.textfieldboxes.TextFieldBoxes
+            android:layout_weight="2"
+            android:id="@+id/text_field_boxes_confirm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:panelBackgroundColor="#39729D"
+            app:helperTextColor="#FDFDFD"
+            app:primaryColor="#FDFDFD"
+            app:endIcon="@drawable/icon_eye_open"
+            app:hasClearButton="true">
+
+            <studio.carbonylgroup.textfieldboxes.ExtendedEditText
+                android:singleLine="true"
+                android:id="@+id/extended_edit_text_confirm"
+                android:inputType="textPassword"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </studio.carbonylgroup.textfieldboxes.TextFieldBoxes>
+    </LinearLayout>
+
+    <LinearLayout
+        android:padding="10dp"
+        android:weightSum="4"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:visibility="invisible"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+        <Button
+            android:visibility="invisible"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+        <Button
+            android:id="@+id/cancelBtn"
+            android:background="#1A6AA7"
+            android:text="Cancel"
+            android:textColor="#FFFFFF"
+            android:textSize="20dp"
+            android:layout_margin="15dp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+        <Button
+            android:id="@+id/summitBtn"
+            android:background="#229CBB"
+            android:textSize="20dp"
+            android:text="Summit"
+            android:textColor="#FFFFFF"
+            android:layout_margin="15dp"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content">
+        </Button>
+
+    </LinearLayout>
+
+
+</LinearLayout>
