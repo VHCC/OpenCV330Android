@@ -209,6 +209,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
     // TAB LOG
     Spinner logFileSpinner;
+    ArrayAdapter adapter_log;
     TextView logView;
 
     private void initViewsFeature() {
@@ -497,7 +498,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         logView = view.findViewById(R.id.logView);
 
                         logFileSpinner = (Spinner) view.findViewById(R.id.log_file_spinner);
-                        ArrayAdapter adapter_log = new ArrayAdapter<>(view.getContext(), R.layout.vms_spinner_item, log_files_array);
+                        adapter_log = new ArrayAdapter<>(view.getContext(), R.layout.vms_spinner_item, log_files_array);
                         adapter_log.setDropDownViewResource(R.layout.vms_spinner_drpodown_item);
                         logFileSpinner.setAdapter(adapter_log);
 
@@ -514,6 +515,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
                             }
                         });
+                        readFile(adapter_log.getItem(0).toString());
                 }
 
                 container.addView(view);
@@ -570,6 +572,10 @@ public class VMSAdminSettingFragment extends Fragment {
                         break;
                     case TAB_OTHER:
                         screenTimeout.setText(VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout().toString());
+                        break;
+                    case TAB_LOG:
+                        logFileSpinner.setSelection(0);
+                        readFile(adapter_log.getItem(0).toString());
                         break;
                 }
             }

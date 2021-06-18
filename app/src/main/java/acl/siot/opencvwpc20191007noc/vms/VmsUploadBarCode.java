@@ -14,9 +14,9 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_UR
 
 
 /**
- * Created by IChen on 2021/04/22.
+ * Created by IChen on 2021/06/18.
  */
-public class VmsUpload extends HashMap<Object, Object> {
+public class VmsUploadBarCode extends HashMap<Object, Object> {
 
     final String API_KEY_DEVICEUUID = "deviceUuid";
     final String API_KEY_MAPPINGPERSONUUID = "mappingPersonUUID";
@@ -41,44 +41,30 @@ public class VmsUpload extends HashMap<Object, Object> {
     final String API_KEY_AVALO_MASK = "avalo_mask";
     final String API_KEY_AVALO_UTC_TIMESTAMP = "avalo_utc_timestamp";
 
-    public VmsUpload(String encoded,
-                     boolean isMask,
-                     String tempDetect,
-                     JSONObject uploadPersonData,
-                     String interfaceMethod,
-                     Boolean isVisitor,
-                     String dataUploadMode,
-                     String exception,
-                     String status) throws JSONException {
+    public VmsUploadBarCode(JSONObject uploadPersonData) throws JSONException {
 
         NumberFormat formatter = new DecimalFormat("#00.0");
         super.put(API_KEY_DEVICEUUID, VMSEdgeCache.getInstance().getVmsKioskUuid());
         super.put(API_KEY_UPLOADDEVICENAME, VMSEdgeCache.getInstance().getVmsKioskDeviceName());
         super.put(API_KEY_AVALO_DEVICE_GROUP, "");
-        super.put(API_KEY_AVALO_MODE,  dataUploadMode.toLowerCase());
-        super.put(API_KEY_AVALO_INTERFACE, interfaceMethod.toLowerCase());
-        super.put(API_KEY_AVALO_SNAPSHOT, "data:image/jpeg;base64," + encoded);
-        super.put(API_KEY_AVALO_STATUS, status);
-        super.put(API_KEY_AVALO_EXCEPTION, exception);
+        super.put(API_KEY_AVALO_MODE,  "RealName".toLowerCase());
+        super.put(API_KEY_AVALO_INTERFACE, "barcode".toLowerCase());
+//        super.put(API_KEY_AVALO_SNAPSHOT, "data:image/jpeg;base64," + encoded);
+        super.put(API_KEY_AVALO_STATUS, "authorized");
+        super.put(API_KEY_AVALO_EXCEPTION, "");
         super.put(API_KEY_MAPPINGPERSONUUID, uploadPersonData.getString("vmsPersonUUID"));
         super.put(API_KEY_AVALO_SERIAL, uploadPersonData.getString("vmsPersonSerial"));
         super.put(API_KEY_AVALO_NAME, uploadPersonData.getString("vmsPersonName"));
-        super.put(API_KEY_AVALO_VISITOR, isVisitor);
+        super.put(API_KEY_AVALO_VISITOR, false);
         super.put(API_KEY_AVALO_EMAIL, uploadPersonData.getString("vmsPersonEmail"));
         super.put(API_KEY_AVALO_DEPARTMENT, "");
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-            super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(tempDetect));
-        } else {
-            super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(-1));
-        }
+        super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(-1));
         super.put(API_KEY_AVALO_ENABLE_TEMPERATURE, VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp());
         super.put(API_KEY_AVALO_AVALO_TEMPERATURE_THRESHOLD, VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp());
         super.put(API_KEY_AVALO_TEMPERATURE_ADJUST, VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation());
         super.put(API_KEY_AVALO_TEMPERATURE_UNIT,  VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_unit());
         super.put(API_KEY_AVALO_ENABLE_MASK, VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask());
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
-            super.put(API_KEY_AVALO_MASK, isMask);
-        }
+//            super.put(API_KEY_AVALO_MASK, isMask);
         super.put(API_KEY_AVALO_UTC_TIMESTAMP, System.currentTimeMillis());
 
         String httpPrefix = VMSEdgeCache.getInstance().getVms_host_is_ssl() ? "https://" : "http://";

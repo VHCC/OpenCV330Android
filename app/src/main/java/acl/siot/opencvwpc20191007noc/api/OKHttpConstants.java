@@ -68,7 +68,10 @@ public class OKHttpConstants {
         public static final int APP_CODE_VMS_KIOSK_DEVICE_REMOVE_SUCCESS = 200051;
 
         public static final int APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE = 20006;
-        public static final int APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS = 200021;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS = 200061;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL = 20007;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS = 200071;
 
         public static final int APP_CODE_VMS_KIOSK_RFID_DETECT_DONE = 30001;
 

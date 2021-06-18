@@ -59,7 +59,6 @@ import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -77,6 +76,7 @@ import acl.siot.opencvwpc20191007noc.objectDetect.TLiteObjectDetectionAPI;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout;
+import acl.siot.opencvwpc20191007noc.vms.CheckVmsPersonSerial;
 import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
 import acl.siot.opencvwpc20191007noc.wbSocket.AvaloWebSocketClient;
 
@@ -85,6 +85,8 @@ import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 
@@ -110,11 +112,11 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     final int FACE_DETECT_DONE = 2001;
 
-    final int DETECT_ROUND_DONE = 4001;
+    final int DETECT_INVALIDATE = 4001;
 
     final int SHOW_NO_VMS_SERVER_QRCODE = 5009;
 
-    // Flag
+    // Device Setting
     private boolean isFrontCamera = true;
 
     // View
@@ -129,12 +131,16 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Button reCheckBtn;
     private ImageView scan_png;
 
-    // Flags
-    private boolean isCaptureFaceDone = false;
-    private boolean isQRCodeView = false;
-    private boolean startToDetectGate = false;
-    private boolean isDetectValidate = false;
+    // Process Flags
+    private boolean isFullDetectProcessDone = false; // 完整偵測流程結束與否
+    private boolean isQRCodeViewShow = false; // QRCode 顯示畫面與否
+    private boolean canStartToDetectGate = false;
+    private boolean isDetectValidate = false; // 結果合格與否
 
+    public static boolean staticDetectMaskSwitch = false; // 控制 每次偵測與每次偵測之間間隔
+    public static boolean canShowTempFlag = false; // 顯示溫度與否。規格為：確認完成臉部後，才顯示溫度
+
+    // View
     private OverLayLinearLayout circleOverlay;
     private OverLayLinearLayout circleOverlay_green;
     private TextView time_left;
@@ -142,20 +148,25 @@ public class VFRDetect20210303Fragment extends Fragment {
     private TextView msg_big;
     private TextView msg_small;
 
-    private FrameLayout detectBg;
-    private FrameLayout detectView;
+    // Core View
+    private FrameLayout detectFrame;
 
     private ImageView faceStatus;
-    private ImageView faceCapture;
-    private ImageView thermoStatus;
-    private ImageView thermoConnectStatus;
-    private ImageView maskStatus;
+    private ImageView faceCapture; // 主畫面抓臉結果
+    private ImageView thermalDetect_bg; // 溫度結果 背景
+    private ImageView thermalConnectStatus; // 右上角 thermal 連線狀態
+    private ImageView maskDetectResults; // 口罩偵測結果
+
+    // Thermal Function
+    private ImageView thermal_view; // 熱區圖
+    private NumberFormat tempDetectFormatter = new DecimalFormat("#00.0");
+    private float person_temp_static = 0.0f;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
     private OpenCVCameraListener openCVCameraListener = new OpenCVCameraListener();
 
-    // Fields
+    // camera ftp value
     private int preview_frames = 0;
     private int fps = 0;
 
@@ -165,9 +176,6 @@ public class VFRDetect20210303Fragment extends Fragment {
     private int mAbsoluteFaceSize = 0;
     private Mat mGray;
     private Mat mRgba;
-
-    public static boolean staticDetectMaskSwitch = false;
-    public static boolean canCaptureFaceFlag = false;
 
     // Constructor
     public VFRDetect20210303Fragment() {
@@ -182,7 +190,9 @@ public class VFRDetect20210303Fragment extends Fragment {
     private static final String TF_OD_API_MODEL_FILE = "face_mask_detection.tflite";
     private static final String TF_OD_API_LABELS_FILE = "file:///android_asset/face_mask_detection.txt";
 
-    AudioManager audioManager;
+    // Audio
+    private AudioManager audioManager;
+    private MediaPlayer mPlayer;
 
     /**
      * Use this factory method to create a new instance of
@@ -206,20 +216,16 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
         initWindowSettings();
         AppBus.getInstance().register(this);
-
         anchors = AnchorUtil.getInstance().generateAnchors();
     }
-
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreateView");
         View rootView = inflater.inflate(R.layout.vfr_fragment_detect_20210303, container, false);
-
         initViewIDs(rootView);
         initViewsFeature();
-
         return rootView;
     }
 
@@ -228,7 +234,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         promptTv = rootView.findViewById(R.id.promptTv);
         tempDetected = rootView.findViewById(R.id.tempDetected);
         tempUnit = rootView.findViewById(R.id.tempUnit);
-//        detectStatus = rootView.findViewById(R.id.detectStatus);
 
         openCvCameraView = rootView.findViewById(R.id.camera_view);
         cancelDetectBtn = rootView.findViewById(R.id.cancelDetectBtn);
@@ -242,15 +247,14 @@ public class VFRDetect20210303Fragment extends Fragment {
         circleOverlay = rootView.findViewById(R.id.circleOverlay);
         circleOverlay_green = rootView.findViewById(R.id.circleOverlay_green);
 
-        detectBg = rootView.findViewById(R.id.detectBg);
-        detectView = rootView.findViewById(R.id.detectView);
+        detectFrame = rootView.findViewById(R.id.detectView);
 
         faceStatus = rootView.findViewById(R.id.faceStatus);
-        thermoConnectStatus = rootView.findViewById(R.id.thermoConnectStatus);
-        thermoStatus = rootView.findViewById(R.id.thermoStatus);
-        maskStatus = rootView.findViewById(R.id.maskStatus);
+        thermalConnectStatus = rootView.findViewById(R.id.thermoConnectStatus);
+        thermalDetect_bg = rootView.findViewById(R.id.thermoStatus);
+        maskDetectResults = rootView.findViewById(R.id.maskStatus);
 
-        thermo_view = rootView.findViewById(R.id.thermo_view);
+        thermal_view = rootView.findViewById(R.id.thermo_view);
         time_left = rootView.findViewById(R.id.time_left);
         time_right = rootView.findViewById(R.id.time_right);
         msg_big = rootView.findViewById(R.id.msg_big);
@@ -262,7 +266,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private void initViewsFeature() {
         appVersion.setText("v " + AppUtils.getAppVersionName());
 
-        openCvCameraView.setCvCameraViewListener(openCVCameraListener); // 设置相机监听
+        openCvCameraView.setCvCameraViewListener(openCVCameraListener);
         cancelDetectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -280,9 +284,10 @@ public class VFRDetect20210303Fragment extends Fragment {
         adminHomeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MessageTools.showToast(getContext(), "Home Btn Click");
                 if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 1) {
                     backToWelcomePage();
+                } else {
+                    MessageTools.showToast(getContext(), "It's Normal Mode");
                 }
             }
         });
@@ -290,17 +295,17 @@ public class VFRDetect20210303Fragment extends Fragment {
         confirmBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isQRCodeView) {
+                if (isQRCodeViewShow) {
                     switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
-                        case 0:
+                        case 0: // Normal
                             reCheck();
                             break;
-                        case 1:
+                        case 1: // Advanced
                             backToWelcomePage();
                             break;
                     }
                 } else {
-                    reCheck();
+                    reCheck(); // 結果不合格一律 recheck
                 }
             }
         });
@@ -317,8 +322,8 @@ public class VFRDetect20210303Fragment extends Fragment {
         });
     }
 
+    // Upload data to vms backend
     private void uploadData() throws JSONException {
-        //TODO send data to VMS
         Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -367,39 +372,51 @@ public class VFRDetect20210303Fragment extends Fragment {
         // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
         String status = "Filling-out".toLowerCase();
         String exception = "";
-        if (!isWearMask) {
-            exception = "No-Wear-Mask".toLowerCase();
-            status = "Exception".toLowerCase();
-        }
-        if (Float.valueOf(String.valueOf(formatter.format(person_temp_static))) >=
-                VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
-            exception = "High-Fever".toLowerCase();
-            status = "Exception".toLowerCase();
+        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+            if (!isWearMask) {
+                exception = "No-Wear-Mask".toLowerCase();
+                status = "Exception".toLowerCase();
+            }
         }
 
-        VmsUpload mMap = new VmsUpload(encoded,
-                isWearMask,
-                String.valueOf(formatter.format(person_temp_static)),
-                uploadPersonData,
-                interfaceMethod,
-                isVisitor,
-                dataUploadMode,
-                exception,
-                status
-        );
+        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+            if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
+                    VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
+                exception = "High-Fever".toLowerCase();
+                status = "Exception".toLowerCase();
+            }
+        }
+
         try {
+            mLog.d(TAG, "uploadPersonData:> " + uploadPersonData);
+            VmsUpload mMap = new VmsUpload(encoded,
+                    isWearMask,
+                    String.valueOf(tempDetectFormatter.format(person_temp_static)),
+                    uploadPersonData,
+                    interfaceMethod,
+                    isVisitor,
+                    dataUploadMode,
+                    exception,
+                    status
+            );
             OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            e.getStackTrace();
         }
     }
 
+    // including start detect process
     private void reCheck() {
-        recheckHandler.removeCallbacks(mFragmentRunnable);
+        if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0) {
+            uploadPersonData = null;
+        }
+
+        reCheckHandler.removeCallbacks(mFragmentRunnable);
         tick_count = 0;
-        isCaptureFaceDone = false;
-        startToDetectGate = false;
-        isQRCodeView = false;
+        isFullDetectProcessDone = false;
+        canStartToDetectGate = false;
+        isQRCodeViewShow = false;
+        canShowTempFlag = false;
 
         threadObject.setRunning(true);
 
@@ -412,27 +429,35 @@ public class VFRDetect20210303Fragment extends Fragment {
 
         confirmBtn.setVisibility(View.INVISIBLE);
         reCheckBtn.setVisibility(View.INVISIBLE);
-        detectView.setVisibility(View.VISIBLE);
-        thermo_view.setVisibility(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 1 ? View.VISIBLE : View.INVISIBLE);
+        detectFrame.setVisibility(View.VISIBLE);
         faceCapture.setVisibility(View.INVISIBLE);
         tempUnit.setVisibility(View.INVISIBLE);
 
-        maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+        maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
 
         scan_png.setVisibility(View.INVISIBLE);
 
         msg_big.setText("Please wait for few second");
         msg_small.setText("Temperature detection distance 20 cm");
 
+        thermal_view.setVisibility(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 1 ? View.VISIBLE : View.INVISIBLE);
         tempDetected.setText("");
-        maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
-        thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
+        maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+        thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
         tempUnit.setVisibility(View.INVISIBLE);
+
+        if (null == uploadPersonData) {
+            try {
+                CheckVmsPersonSerial mMap = new CheckVmsPersonSerial("00000000");
+                OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL);
+            } catch (Exception e) {
+                e.getStackTrace();
+            }
+        }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        mLog.d(TAG, " * onViewCreated");
         super.onViewCreated(view, savedInstanceState);
     }
 
@@ -446,20 +471,10 @@ public class VFRDetect20210303Fragment extends Fragment {
         mLog.d(TAG, "isVisibleToUser= " + isVisibleToUser);
         if (isVisibleToUser) {
             mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
-            thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
-//            if (isFRServerConnected || isThermometerServerConnected) {
-//            if (isThermometerServerConnected) {
-            if (true) {
-                mLog.d(TAG, "VMSEdgeCache.getInstance().getVms_kiosk_video_type():> " + VMSEdgeCache.getInstance().getVms_kiosk_video_type());
-                detectView.setVisibility(View.VISIBLE);
-                thermo_view.setVisibility(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 1 ? View.VISIBLE : View.INVISIBLE);
-                staticDetectMaskSwitch = true;
-                lazyLoad();
-            } else {
-//                detectView.setVisibility(View.INVISIBLE);
-//                thermo_view.setVisibility(View.INVISIBLE);
-            }
-        } else {
+            mLog.d(TAG, " ### VMSEdgeCache.getInstance().getVms_kiosk_video_type()= " + VMSEdgeCache.getInstance().getVms_kiosk_video_type());
+            detectFrame.setVisibility(View.VISIBLE);
+            staticDetectMaskSwitch = true;
+            lazyLoad();
         }
     }
 
@@ -467,10 +482,15 @@ public class VFRDetect20210303Fragment extends Fragment {
     private void lazyLoad() {
         mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
         if (getUserVisibleHint()) {
+            if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0) {
+                uploadPersonData = null;
+            }
+
             tick_count = 0;
-            isCaptureFaceDone = false;
-            startToDetectGate = false;
-            isQRCodeView = false;
+            isFullDetectProcessDone = false;
+            canStartToDetectGate = false;
+            isQRCodeViewShow = false;
+            canShowTempFlag = false;
 
             faceCapture.setVisibility(View.INVISIBLE);
             tempUnit.setVisibility(View.INVISIBLE);
@@ -509,19 +529,26 @@ public class VFRDetect20210303Fragment extends Fragment {
             detectPageThread.start();
 
             connectAvaloThermalSocket();
-//            openCvCameraView.setVisibility(standardMode ? View.VISIBLE : View.GONE);
-//            thermo_view.setVisibility(!VFREdgeCache.getInstance().isImageStandardMode() ? View.VISIBLE : View.GONE);
 
+            thermal_view.setVisibility(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 1 ? View.VISIBLE : View.INVISIBLE);
             tempDetected.setText("");
-            maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
-            thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
+            maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+            thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
             tempUnit.setVisibility(View.INVISIBLE);
 
             mPlayer = MediaPlayer.create(getActivity().getBaseContext(), R.raw.alarm_20210524);
+
+            if (null == uploadPersonData) {
+                try {
+                    CheckVmsPersonSerial mMap = new CheckVmsPersonSerial("00000000");
+                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL);
+                } catch (Exception e) {
+                    e.getStackTrace();
+                }
+            }
+
         }
     }
-
-    MediaPlayer mPlayer;
 
     private AvaloWebSocketClient c;
     private final Object mSyncObject = new Object();
@@ -563,12 +590,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-    // field
-    private ImageView thermo_view;
-    NumberFormat formatter = new DecimalFormat("#00.0");
-
-//    private boolean isTempAbnormal = false;
-
     private BleHandler mHandler = new BleHandler(getContext());
 
     class BleHandler extends Handler {
@@ -586,66 +607,92 @@ public class VFRDetect20210303Fragment extends Fragment {
                 mLog.d(TAG, "weakReference == null");
                 return;
             }
-            thermo_view.setImageBitmap((Bitmap) msg.obj);
-            thermalBitmap = (Bitmap) msg.obj;
 
-            if (!startToDetectGate) {
+            if (isFullDetectProcessDone) return; // 偵測完成後 不動作
+
+            thermal_view.setImageBitmap((Bitmap) msg.obj); // preview
+            thermalBitmap = (Bitmap) msg.obj; // results
+
+            if (!canShowTempFlag) {
                 tempDetected.setText("");
-                maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
-                thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
                 tempUnit.setVisibility(View.INVISIBLE);
-                return;
-            }
-            if (isCaptureFaceDone) return;
-
-            if (!isCaptureFaceDone)
-                tempDetected.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
-            if (!thermo_is_human && !isCaptureFaceDone) {
-                thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
-                maskStatus.setImageBitmap(maskResults == 2 ? getBitmap(R.drawable.ic_mask_detect) : maskResults == 1 ? getBitmap(R.drawable.ic_mask_off) : getBitmap(R.drawable.ic_mask_on));
+                thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
+                maskDetectResults.setImageBitmap(maskResults == 2 ? getBitmap(R.drawable.ic_mask_detect) : maskResults == 1 ? getBitmap(R.drawable.ic_mask_off) : getBitmap(R.drawable.ic_mask_on));
             } else {
-                if (!isCaptureFaceDone)
-                    thermoStatus.setImageBitmap(person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp() ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
-
-                if (maskResults == 1 && !isCaptureFaceDone) { // NoMask
-                    maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_off));
-                    AppBus.getInstance().post(new BusEvent("show confirm check view", DETECT_ROUND_DONE));
-                    isCaptureFaceDone = true;
-                    isDetectValidate = false;
-                    msg_big.setText("FAIL");
-                    reCheckBtn.setVisibility(View.VISIBLE);
-                    if (isVmsConnected) {
-                        try {
-                            uploadData();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        startRecheckProcess();
-                    }
-                    stopTickThread();
-                } else if (maskResults == 0 && !isCaptureFaceDone) { // MASK
-                    maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_on));
-//                    AppBus.getInstance().post(new BusEvent("face capture done", FACE_CAPTURE_DONE));
-                    isCaptureFaceDone = true;
-                    msg_big.setText(person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp() ? "PASS" : "FAIL");
-                    isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false;
-                    mLog.d(TAG, "isDetectValidate:> " + isDetectValidate);
-                    if (!isDetectValidate) {
-                        AppBus.getInstance().post(new BusEvent("show confirmcheck  view", DETECT_ROUND_DONE));
-                    }
-                    reCheckBtn.setVisibility(View.VISIBLE);
-                    if (isVmsConnected) {
-                        try {
-                            uploadData();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
-                    }
-                    stopTickThread();
+                if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                    tempDetected.setText(person_temp_static > 0.1f ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
+                    thermalDetect_bg.setImageBitmap(person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp() ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
                 }
+                //以下算一次完整偵測
+                switch (maskResults) {
+                    case 1: // NoMask
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+                            maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_off));
+                            isDetectValidate = false; // 沒戴口罩 一定不合格
+                            msg_big.setText("FAIL");
+                        } else {
+                            // disable mask
+                            maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+                            if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                                isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false; // 體溫小於門檻 才合格
+                                msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
+                            } else {
+                                // disable mask and temp
+                                isDetectValidate = true;
+                                msg_big.setText("PASS");
+                            }
+                        }
+                        isFullDetectProcessDone = true; // 算一次完整偵測
+
+                        AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_INVALIDATE));
+
+                        if (isVmsConnected) {
+                            try {
+                                uploadData();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            startRecheckProcess();
+                        }
+                        break;
+                    case 0: // Wear Mask on
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+                            maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_on));
+                        } else {
+                            maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+                        }
+
+                        isFullDetectProcessDone = true; // 算一次完整偵測
+
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                            isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false; // 體溫小於門檻 才合格
+                        } else {
+                            isDetectValidate = true;
+                        }
+                        msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
+
+                        if (!isDetectValidate) {
+                            AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_INVALIDATE));
+                        }
+                        if (isVmsConnected) {
+                            try {
+                                uploadData();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
+                        }
+                        break;
+                }
+
+                if (!isDetectValidate) {
+                    if(!mPlayer.isPlaying()) {
+                        mPlayer.start();
+                    }
+                }
+                stopDetectThread();
             }
         }
     }
@@ -670,7 +717,7 @@ public class VFRDetect20210303Fragment extends Fragment {
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
         }
-        stopTickThread();
+        stopDetectThread();
     }
 
     @Override
@@ -739,18 +786,17 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     int noDetectCount = 0;
 
-    static Bitmap maskProcessBitmap;
-    static Bitmap maskProcessBitmapClone;
-    static Bitmap thermalBitmap;
-    static int maskResults = 1;
-    static ObjectDetectInfo detectResult;
+    private Bitmap maskProcessBitmap;
+    private Bitmap maskProcessBitmapClone;
+    private Bitmap thermalBitmap;
+    private int maskResults = 2;
+    private ObjectDetectInfo detectResult;
 
     private class OpenCVCameraListener implements CameraBridgeViewBase.CvCameraViewListener2 {
 
         @Override
         public void onCameraViewStarted(int width, int height) {
             mLog.d(TAG, " * onCameraViewStarted");
-            vfrFaceCacheArray = new ArrayList<>();
             display = getActivity().getWindowManager().getDefaultDisplay();
             display.getSize(size);
             screenWidth = size.x;
@@ -798,14 +844,10 @@ public class VFRDetect20210303Fragment extends Fragment {
                 classifier.detectMultiScale(mGray, faces, 1.1, 2, 0,
                         new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
                 Rect[] facesArray = faces.toArray();
-                if (facesArray.length != 0) {
-//                    mLog.d(TAG, " * facesArray= " + facesArray.length);
-                }
                 Scalar faceRectColor = new Scalar(0, 255, 0, 255);
                 Scalar faceRectColor_no_detect = new Scalar(0, 255, 255, 255);
                 Rect theLargeFace = null;
                 for (Rect faceRect : facesArray) {
-//                    mLog.d(TAG, "faceRect.area()= " + faceRect.area());
                     if (null != theLargeFace && faceRect.area() > theLargeFace.area()) {
                         theLargeFace = faceRect;
                     }
@@ -819,6 +861,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 //                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
                 }
                 try {
+                    // 選擇畫面中最大的臉做運算
                     if (theLargeFace != null && theLargeFace.width > FACE_THRESHOLD && theLargeFace.height > FACE_THRESHOLD && theLargeFace.area() > faceArea) {
                         faceArea = theLargeFace.area() * 0.85d;
 
@@ -829,11 +872,9 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                         Utils.matToBitmap(mRgba, bitmap);
                         Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, theLargeFace.x, theLargeFace.y, theLargeFace.width, theLargeFace.height);
-//                    mLog.d(TAG, "*****maskProcessBitmap:> " + maskProcessBitmap);
                         if (faceImageBitmap != null) {
-//                            mLog.d(TAG, "maskProcessBitmap OK");
                             maskProcessBitmap = faceImageBitmap;
-                            maskProcessBitmapClone = faceImageBitmap;
+                            maskProcessBitmapClone = faceImageBitmap; // 得到運算的臉
                         }
                     } else {
 //                        mLog.d(TAG, "NO OVER FACE_THRESHOLD" + FACE_THRESHOLD + ", * width= " + faceRect.width + ", height= " + faceRect.height);
@@ -843,14 +884,14 @@ public class VFRDetect20210303Fragment extends Fragment {
                     e.printStackTrace();
                 }
 
-                if (facesArray.length == 0) {
+                if (facesArray.length == 0) { //畫面中沒有臉
                     noDetectCount++;
                 }
 
-                if (noDetectCount > FACE_THRESHOLD_COUNT) {
+                if (noDetectCount > FACE_THRESHOLD_COUNT) { // 多少frame後，顯示藍色框框
                     AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
                     faceArea = 0.0d;
-                    maskProcessBitmap = null;
+                    maskProcessBitmap = null; // 清空cache
                 }
                 fps++;
             }
@@ -858,16 +899,9 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-    public static ArrayList<Bitmap> vfrFaceCacheArray = new ArrayList<>();
-
-    public static float person_temp_static = 0.0f;
-    public static Boolean thermo_is_human = false;
 
     public void onEventMainThread(BusEvent event) {
 //        mLog.d(TAG, "event:> " + event.getEventType());
-        if (null != c) {
-//            mLog.d(TAG, "c isOpen:> " + c.isOpen() + ", c isClosed:> " + c.isClosed());
-        }
         switch (event.getEventType()) {
             case TIME_TICK:
                 Date d = new Date();
@@ -880,43 +914,43 @@ public class VFRDetect20210303Fragment extends Fragment {
                 circleOverlay.setVisibility(View.GONE);
                 circleOverlay_green.setVisibility(View.VISIBLE);
                 promptTv.setText("Please Stay the Position for 3 Seconds");
-                if (isQRCodeView) return;
-                if (!isCaptureFaceDone) msg_big.setText("Please wait for few second");
+                if (isQRCodeViewShow) return;
+                if (!isFullDetectProcessDone) msg_big.setText("Please wait for few second");
                 break;
             case OVER_LAY_BLUE:
                 maskResults = 2;
                 circleOverlay.setVisibility(View.VISIBLE);
                 circleOverlay_green.setVisibility(View.GONE);
                 promptTv.setText("Please Come Closer to Camera");
-                if (isQRCodeView) return;
-                if (!isCaptureFaceDone)
+                if (isQRCodeViewShow) return;
+                if (!isFullDetectProcessDone)
                     msg_big.setText("Please get closer to the screen for testing");
                 break;
             case FACE_DETECT_DONE:
                 stopCameraFunction();
                 break;
-            case DETECT_ROUND_DONE:
-                detectView.setVisibility(View.INVISIBLE);
+            case DETECT_INVALIDATE:
+                detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
                 faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap);
                 confirmBtn.setVisibility(View.INVISIBLE);
                 reCheckBtn.setVisibility(View.VISIBLE);
-                tempUnit.setVisibility(View.VISIBLE);
+                if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                    tempUnit.setVisibility(View.VISIBLE);
+                }
                 msg_small.setText("Please click confirm button to save the data");
                 break;
-            case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
+            case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS: // get temp
                 try {
                     String response = event.getMessage();
                     JSONObject jsonObj = new JSONObject(response);
                     person_temp_static = (float) jsonObj.getDouble("Temperature");
-                    thermo_is_human = (Boolean) jsonObj.getBoolean("ishuman");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 break;
             case MASK_DETECT:
                 // *** CORE MASK DETECT PROCESS ***
-                maskResults = 2;
                 try {
                     if (maskProcessBitmap == null) return;
                     Matrix frameToCropTransform;
@@ -935,13 +969,13 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                     final Canvas canvas = new Canvas(croppedBitmap);
                     canvas.drawBitmap(maskProcessBitmapClone, frameToCropTransform, null);
-                    if (!staticDetectMaskSwitch) return;
-//                    mLog.d(TAG, "try mask detect...");
+                    if (!canStartToDetectGate) return;
+
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
                     if (results != null && results.getConfidence() > 0.94) {
                         maskResults = results.getClasses();
                         detectResult = results;
-                        canCaptureFaceFlag = true;
+                        canShowTempFlag = true;
                         switch (results.getClasses()) {
                             case 1: // NoMask
 //                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
@@ -958,11 +992,15 @@ public class VFRDetect20210303Fragment extends Fragment {
                         }
                         mLog.i(TAG, "mask result= " + results.toString() + ", confidence:> " + results.getConfidence());
                     } else {
+                        maskResults = 2; // 2 means not detected yet
+                        canShowTempFlag = false;
                         mLog.w(TAG, "maskResults is NULL!!!!!");
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    maskResults = 2; // 2 means not detected yet
+                    canShowTempFlag = false;
                     mLog.e(TAG, "MASK_DETECT, e:> " + e);
+                    e.printStackTrace();
                 }
                 break;
             case APP_CODE_VMS_SERVER_UPLOAD_SUCCESS:
@@ -972,7 +1010,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                     startRecheckProcess();
                     return;
                 }
-                isQRCodeView = true;
+                isQRCodeViewShow = true;
                 try {
                     JSONObject kioskUploadResponse = new JSONObject(event.getMessage());
                     String url = kioskUploadResponse.getString("url");
@@ -987,24 +1025,24 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                     Bitmap urlBitmap = QRCode.from(url).bitmap();
                     faceCapture.setImageBitmap(urlBitmap);
-                    detectView.setVisibility(View.INVISIBLE);
-//                    thermo_view.setVisibility(View.INVISIBLE);
+
+                    detectFrame.setVisibility(View.INVISIBLE);
                     faceCapture.setVisibility(View.VISIBLE);
-                    tempUnit.setVisibility(View.VISIBLE);
+                    if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                        tempUnit.setVisibility(View.VISIBLE);
+                    }
                     startRecheckProcess();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
                 break;
-            case SHOW_NO_VMS_SERVER_QRCODE: // Deprecated
+            case SHOW_NO_VMS_SERVER_QRCODE: // Deprecated on 20210503
                 startRecheckProcess();
-                detectView.setVisibility(View.INVISIBLE);
-//                thermo_view.setVisibility(View.INVISIBLE);
+                detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
 
                 Date today = new Date();
                 Date today_end = new Date(today.getYear(), today.getMonth(), today.getDate(), 23, 59, 59);
-//                String startDate = toRFC3339(today);
                 String startDate = (String) android.text.format.DateFormat.format("yyyy-MM-dd'T'HH:mm:ssZ", today.getTime());
                 String endDate = (String) android.text.format.DateFormat.format("yyyy-MM-dd'T'HH:mm:ssZ", today_end.getTime());
 
@@ -1022,16 +1060,18 @@ public class VFRDetect20210303Fragment extends Fragment {
                 scan_png.setImageDrawable(getResources().getDrawable(R.drawable.icon_pic));
                 scan_png.setVisibility(View.VISIBLE);
 
-//                String startDate_display = toDisplay(today);
                 String startDate_display = (String) android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", today.getTime());
                 String endDate_display = (String) android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", today_end.getTime());
 
                 msg_big.setText("Allow access " + startDate_display + " ~ " + endDate_display);
                 msg_small.setText("");
                 break;
+            case APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS:
+                mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS");
+                break;
         }
-        if (null != thermoConnectStatus)
-            thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
+        if (null != thermalConnectStatus)
+            thermalConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
 
         if (!isThermometerServerConnected) {
             if (null != c && !c.isOpen()) {
@@ -1043,24 +1083,23 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
         if (!isThermometerServerConnected) {
             person_temp_static = 0.0f;
-            thermo_is_human = false;
         }
     }
 
     private void startRecheckProcess() {
-        mLog.d(TAG, "timeout" + VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout());
-        recheckHandler.removeCallbacks(mFragmentRunnable);
-        recheckHandler.postDelayed(mFragmentRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
+        mLog.d(TAG, "timeout:> " + VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() + " s");
+        reCheckHandler.removeCallbacks(mFragmentRunnable);
+        reCheckHandler.postDelayed(mFragmentRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
     }
 
     private void stopCameraFunction() {
         if (openCvCameraView != null) {
             openCvCameraView.disableView();
         }
-        stopTickThread();
+        stopDetectThread();
     }
 
-    private void stopTickThread() {
+    private void stopDetectThread() {
         if (detectPageThread != null && detectPageThread.isAlive()) {
             detectPageThread.interrupt();
             threadObject.setRunning(false);
@@ -1112,13 +1151,13 @@ public class VFRDetect20210303Fragment extends Fragment {
                         fps = 0;
                     }
 
-                    if (tick_count % 10 == 9) {
-                        if (!isCaptureFaceDone) {
-                            startToDetectGate = true;
+                    if (tick_count % 10 == 9) { // 0.3 * 9 = 2.7s
+                        if (!isFullDetectProcessDone) {
+                            canStartToDetectGate = true;
                         }
                     }
 
-                    if (tick_count % 3 == 0) {
+                    if (tick_count % 3 == 0) { // 0.3 * 3 = 0.9s，運算一次口罩偵測
                         AppBus.getInstance().post(new BusEvent("mask detect", MASK_DETECT));
                     }
 
@@ -1143,7 +1182,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     }
 
     // Handler
-    private Handler recheckHandler = new MainHandler();
+    private Handler reCheckHandler = new MainHandler();
     private Runnable mFragmentRunnable = new FragmentRunnable();
 
     // -------------------------------------------
@@ -1168,15 +1207,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-    SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.TAIWAN);
-    SimpleDateFormat displayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.TAIWAN);
-
-    String toRFC3339(Date d) {
-        return rfc3339.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
-    }
-
-    String toDisplay(Date d) {
-        return displayFormat.format(d).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
-    }
-
+    private SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.TAIWAN);
+    private SimpleDateFormat displayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.TAIWAN);
 }

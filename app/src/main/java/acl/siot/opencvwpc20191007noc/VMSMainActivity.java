@@ -28,21 +28,18 @@ import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminSettingFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRLanguageFragment;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VMSAdminSettingFragment;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
-import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetectFragment;
 import acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment;
-import acl.siot.opencvwpc20191007noc.vfr.upload.VFRVerifyFragment;
 import acl.siot.opencvwpc20191007noc.vfr.webView.VFRWebViewFragment;
 import acl.siot.opencvwpc20191007noc.vfr.welcome.VFRWelcome20210308Fragment;
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static acl.siot.opencvwpc20191007noc.App.TRAIL_IS_EXPIRE;
-import static acl.siot.opencvwpc20191007noc.VFRMainActivity.SectionsPagerAdapter.PAGE_DETECT;
-import static acl.siot.opencvwpc20191007noc.VFRMainActivity.SectionsPagerAdapter.PAGE_WELCOME;
+import static acl.siot.opencvwpc20191007noc.VMSMainActivity.SectionsPagerAdapter.PAGE_DETECT;
+import static acl.siot.opencvwpc20191007noc.VMSMainActivity.SectionsPagerAdapter.PAGE_WELCOME;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_RFID_DETECT_DONE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO_SUCCESS;
 
-public class VFRMainActivity extends AppCompatActivity {
+public class VMSMainActivity extends AppCompatActivity {
 
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
@@ -372,26 +369,6 @@ public class VFRMainActivity extends AppCompatActivity {
             }
         };
 
-        private VFRDetectFragment.OnFragmentInteractionListener vfrDetectPageInteractionListener
-                = new VFRDetectFragment.OnFragmentInteractionListener() {
-            @Override
-            public void onClickCancelDetect() {
-                mViewPager.setCurrentItem(PAGE_WELCOME, false);
-//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_UPLOAD);
-//                MessageTools.showToast(mContext, "Logout Succeed!");
-            }
-
-            @Override
-            public void onClickAdminSetting() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_PWD, false);
-            }
-
-            @Override
-            public void onDetectThreeFaces() {
-//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_VERIFY);
-            }
-        };
-
         // 20210303
         private VFRDetect20210303Fragment.OnFragmentInteractionListener vfrDetect20210303PageInteractionListener
                 = new VFRDetect20210303Fragment.OnFragmentInteractionListener() {
@@ -408,19 +385,6 @@ public class VFRMainActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_PWD, false);
             }
 
-        };
-
-        private VFRVerifyFragment.OnFragmentInteractionListener vfrVerifyPageInteractionListener
-                = new VFRVerifyFragment.OnFragmentInteractionListener() {
-            @Override
-            public void clickRetry() {
-                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_DETECT, false);
-            }
-
-            @Override
-            public void uploadImageFinish() {
-//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_RESULT);
-            }
         };
 
         private VFRAdminPassword20210429Fragment.OnFragmentInteractionListener vfrAdminPasswordPageInteractionListener

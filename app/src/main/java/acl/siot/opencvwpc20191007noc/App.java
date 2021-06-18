@@ -77,6 +77,8 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS;
@@ -422,7 +424,7 @@ public class App extends Application {
                         String kioskUUID = kioskDevice.getString("uuid"); // GET Kiosk UUID
                         VMSEdgeCache.getInstance().setVmsKioskUuid(kioskUUID);
 
-                        mLog.d(TAG, "type:> " + type);
+                        mLog.d(TAG, "type:> " + type + ", kioskUUID:> " + kioskUUID);
 
                         switch(type) {
                             case 0:
@@ -521,6 +523,16 @@ public class App extends Application {
                 case APP_CODE_VMS_KIOSK_DEVICE_REMOVE:
                     isVmsConnected = false;
                     AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_REMOVE_SUCCESS));
+                    break;
+                case APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL:
+                    JSONObject vmsPerson = null;
+                    try {
+                        vmsPerson = new JSONObject(response);
+                        uploadPersonData = vmsPerson.getJSONObject("vmsPerson");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS));
                     break;
             }
         }

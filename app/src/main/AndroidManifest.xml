@@ -47,7 +47,7 @@
             android:launchMode = "singleInstance">
         </activity>
 
-        <activity android:name=".VFRMainActivity"
+        <activity android:name=".VMSMainActivity"
             android:screenOrientation="landscape"
             android:launchMode="singleInstance"
             android:configChanges="orientation">

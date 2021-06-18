@@ -27,6 +27,9 @@ import androidx.fragment.app.Fragment;
 
 import com.blankj.utilcode.util.AppUtils;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Date;
 
@@ -34,13 +37,20 @@ import acl.siot.opencvwpc20191007noc.App;
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
+import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
+import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
+import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
+import acl.siot.opencvwpc20191007noc.vms.VmsUploadBarCode;
 
 import static acl.siot.opencvwpc20191007noc.App.VFR_HEART_BEATS;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 
 /**
  * Created by IChen.Chu on 2021/03/08
@@ -160,6 +170,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
 
     }
 
+    String[] scannedInput;
 
     private void initViewsFeature() {
         Date d = new Date();
@@ -218,7 +229,12 @@ public class VFRWelcome20210308Fragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                String[] scannedInput = charSequence.toString().split(",");
+                if (charSequence.toString().trim().isEmpty()) return;
+                isStartScanBarCode = true;
+                readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
+                readBarcodeHandler.postDelayed(mReadBarCodeFragmentRunnable, 2 * 1000);
+
+                scannedInput = charSequence.toString().split(",");
 //                if (scannedInput.length == 7) {
 //                    if (scannedInput[6].trim().length() == 8) {
 //                        mLog.d(TAG, "CARD ID:> " + scannedInput[6].trim());
@@ -231,8 +247,19 @@ public class VFRWelcome20210308Fragment extends Fragment {
                         if (App.vmsPersonSyncMapUUID.containsKey( scannedInput[7].trim())) {
                             uploadPersonData = App.vmsPersonSyncMapUUID.get(scannedInput[7].trim());
                             mLog.d(TAG, "barCodeScanned Person:> " + uploadPersonData);
-                            mGotoDetectHandler.removeCallbacks(mFragmentRunnable);
-                            mGotoDetectHandler.postDelayed(mFragmentRunnable, 300L);
+                            VmsUploadBarCode mMap = null;
+                            try {
+                                mMap = new VmsUploadBarCode(uploadPersonData);
+                                OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
+                            } catch (JSONException | IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
+                            setViewLayout(R.layout.vfr_fragment_welcome_20210308_fail_check_in);
+                            initViewIDs(mainView);
+                            initViewsFeature();
+                            isStartScanBarCode = false;
                         }
                     }
                 }
@@ -254,6 +281,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
 //            }
 //        });
     }
+
+    private boolean isStartScanBarCode = false;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -415,6 +444,13 @@ public class VFRWelcome20210308Fragment extends Fragment {
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
                 thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
                 break;
+            case APP_CODE_VMS_SERVER_UPLOAD_SUCCESS:
+                readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
+                setViewLayout(R.layout.vfr_fragment_welcome_20210308_success_check_in);
+                initViewIDs(mainView);
+                initViewsFeature();
+                isStartScanBarCode = false;
+                break;
         }
     }
 
@@ -448,4 +484,31 @@ public class VFRWelcome20210308Fragment extends Fragment {
             onFragmentInteractionListener.clickToDetectPage();
         }
     }
+
+    // Handler
+    private Handler readBarcodeHandler = new ReadBarcodeHandler();
+    private Runnable mReadBarCodeFragmentRunnable = new ReadBarCodeFragmentRunnable();
+
+    private class ReadBarcodeHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    }
+
+    private class ReadBarCodeFragmentRunnable implements Runnable {
+
+        @Override
+        public void run() {
+            if (!isStartScanBarCode) return;
+            mLog.d(TAG, "QQQQ");
+            if (scannedInput.length != 8) {
+                readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
+                setViewLayout(R.layout.vfr_fragment_welcome_20210308_fail_check_in);
+                initViewIDs(mainView);
+                initViewsFeature();
+            }
+        }
+    }
+
 }
