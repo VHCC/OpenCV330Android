@@ -28,7 +28,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 
 /**
@@ -167,7 +166,6 @@ public class VFRAdminSettingFragment extends Fragment {
 
 
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
-                AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
 
                 HashMap<String, String> mMap = new GetTemp();
                 try {

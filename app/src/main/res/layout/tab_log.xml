@@ -5,11 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ScrollView
-        android:fillViewport="false"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -39,7 +34,7 @@
                         android:background="#292929"
                         android:paddingLeft="20dp"
                         android:gravity="left|center_vertical"
-                        android:text="Other Setting"
+                        android:text="System Log"
                         android:textSize="20sp"
                         android:textColor="#FFFFFF"
                         android:layout_width="match_parent"
@@ -54,7 +49,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="50dp">
                         <TextView
-                            android:text="Screen Timeout"
+                            android:text="Log File"
                             android:gravity="left|center_vertical"
                             android:paddingLeft="50dp"
                             android:textColor="#929292"
@@ -64,63 +59,58 @@
                             android:layout_height="match_parent">
                         </TextView>
 
-                        <EditText
-                            android:id="@+id/screenTimeout"
-                            android:singleLine="true"
-                            android:background="@drawable/bg_round_rect_setting_edit"
-                            android:paddingLeft="15dp"
-                            android:inputType="number"
-                            android:textSize="16sp"
-                            android:textColor="#FFFFFF"
-                            android:hint="Screen Timeout"
-                            android:layout_weight="3"
+                        <Spinner
+                            android:id="@+id/log_file_spinner"
+                            android:background="@drawable/spinner_back"
                             android:layout_width="0dp"
-                            android:layout_height="match_parent">
-                        </EditText>
-
-                        <TextView
-                            android:paddingLeft="15dp"
-                            android:textSize="16sp"
+                            android:layout_weight="4"
                             android:textColor="#FFFFFF"
-                            android:gravity="center_vertical|left"
                             android:layout_marginRight="20dp"
-                            android:text="seconds"
-                            android:layout_weight="1"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent">
-                        </TextView>
+                            android:layout_height="match_parent"
+                            android:spinnerMode="dropdown"
+                            android:dropDownVerticalOffset="40dp"
+                            android:paddingLeft="15dp"/>
+
                     </LinearLayout>
 
-                    <!-- DATA   -->
+                    <!--  Log View -->
                     <LinearLayout
-                        android:paddingTop="15dp"
-                        android:weightSum="5"
-                        android:orientation="horizontal"
+                        android:layout_margin="25dp"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp">
-                        <TextView
-                            android:text="Password"
-                            android:gravity="left|center_vertical"
-                            android:paddingLeft="50dp"
-                            android:textColor="#929292"
-                            android:textSize="16sp"
-                            android:layout_weight="1"
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent">
-                        </TextView>
+                        android:layout_height="match_parent">
 
-                        <Button
-                            android:id="@+id/changePWDBtn"
-                            android:background="@drawable/bg_round_rect_btn_green"
-                            android:text="Change Password"
-                            android:textSize="16sp"
-                            android:textColor="#FFFFFF"
-                            android:gravity="center"
-                            android:layout_weight="1"
-                            android:layout_width="0dp"
+                        <ScrollView
+                            android:background="#D4D8D9"
+                            android:fillViewport="false"
+                            android:orientation="vertical"
+                            android:layout_width="match_parent"
                             android:layout_height="match_parent">
-                        </Button>
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent">
+
+                                <TextView
+                                    android:singleLine="false"
+                                    android:enabled="false"
+                                    android:id="@+id/logView"
+                                    android:paddingLeft="15dp"
+                                    android:textSize="16dp"
+                                    android:textColor="#000000"
+                                    android:text="adsfafaf"
+                                    android:paddingBottom="15dp"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent">
+
+                                </TextView>
+
+                            </LinearLayout>
+
+
+                        </ScrollView>
+
                     </LinearLayout>
+
 
                 </LinearLayout>
                 <!--    END    -->
@@ -129,7 +119,5 @@
 
         </LinearLayout>
 
-
-    </ScrollView>
 
 </LinearLayout>

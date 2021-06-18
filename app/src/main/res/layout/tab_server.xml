@@ -37,7 +37,8 @@
                     <!-- HEADER   -->
                     <TextView
                         android:background="#292929"
-                        android:gravity="center"
+                        android:paddingLeft="20dp"
+                        android:gravity="left|center_vertical"
                         android:text="Server Setting"
                         android:textSize="20sp"
                         android:textColor="#FFFFFF"
@@ -216,7 +217,8 @@
                     <!-- HEADER   -->
                     <TextView
                         android:background="#292929"
-                        android:gravity="center"
+                        android:paddingLeft="20dp"
+                        android:gravity="left|center_vertical"
                         android:text="3rd Event Post"
                         android:textSize="20sp"
                         android:textColor="#FFFFFF"

@@ -31,7 +31,6 @@ import acl.siot.opencvwpc20191007noc.vms.VmsKioskHB;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
-import static acl.siot.opencvwpc20191007noc.App.FRS_SERVER_CONNECT_TRY;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_HB;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL;
@@ -93,8 +92,6 @@ public class VFRHomeFragment extends Fragment {
         }
         // register event Bus
         AppBus.getInstance().register(this);
-
-        AppBus.getInstance().post(new BusEvent("try connect FRS Server", FRS_SERVER_CONNECT_TRY));
 
 
         mLog.d(TAG, VMSEdgeCache.getInstance().showInfoAll());

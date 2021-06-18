@@ -37,7 +37,8 @@
                     <!-- HEADER   -->
                     <TextView
                         android:background="#292929"
-                        android:gravity="center"
+                        android:paddingLeft="20dp"
+                        android:gravity="left|center_vertical"
                         android:text="Device Info"
                         android:textSize="20sp"
                         android:textColor="#FFFFFF"
@@ -131,7 +132,7 @@
 
                         <Spinner
                             android:id="@+id/device_mode_spinner"
-                            android:background="@drawable/bg_round_rect_setting_edit"
+                            android:background="@drawable/spinner_back"
                             android:layout_width="0dp"
                             android:layout_weight="2"
                             android:textColor="#FFFFFF"
@@ -164,7 +165,8 @@
                         <!-- HEADER   -->
                         <TextView
                             android:background="#292929"
-                            android:gravity="center"
+                            android:paddingLeft="20dp"
+                            android:gravity="left|center_vertical"
                             android:text="Reader Setting"
                             android:textSize="20sp"
                             android:textColor="#FFFFFF"
@@ -278,7 +280,8 @@
                         <!-- HEADER   -->
                         <TextView
                             android:background="#292929"
-                            android:gravity="center"
+                            android:paddingLeft="20dp"
+                            android:gravity="left|center_vertical"
                             android:text="Camera Image Display"
                             android:textSize="20sp"
                             android:textColor="#FFFFFF"

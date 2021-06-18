@@ -136,6 +136,10 @@ public class LogWriter {
         return sdf.format(new Date());
     }
 
+    static public String showLogFileFolder() {
+        return android.os.Environment.getExternalStorageDirectory().getAbsolutePath();
+    }
+
 }
 
 

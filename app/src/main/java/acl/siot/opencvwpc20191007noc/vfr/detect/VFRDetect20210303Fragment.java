@@ -9,6 +9,7 @@ import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.icu.text.SimpleDateFormat;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -108,7 +109,6 @@ public class VFRDetect20210303Fragment extends Fragment {
     final int MASK_DETECT = 3001;
 
     final int FACE_DETECT_DONE = 2001;
-    final int FACE_DETECT_TEST = 20019;
 
     final int DETECT_ROUND_DONE = 4001;
 
@@ -122,7 +122,6 @@ public class VFRDetect20210303Fragment extends Fragment {
     private TextView promptTv;
     private TextView tempDetected;
     private TextView tempUnit;
-    //    private TextView detectStatus;
     private Button cancelDetectBtn;
     private Button adminSettingBtn;
     private Button adminHomeBtn;
@@ -130,9 +129,11 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Button reCheckBtn;
     private ImageView scan_png;
 
+    // Flags
     private boolean isCaptureFaceDone = false;
     private boolean isQRCodeView = false;
     private boolean startToDetectGate = false;
+    private boolean isDetectValidate = false;
 
     private OverLayLinearLayout circleOverlay;
     private OverLayLinearLayout circleOverlay_green;
@@ -146,7 +147,6 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     private ImageView faceStatus;
     private ImageView faceCapture;
-    //    private ImageView tempStatusBg;
     private ImageView thermoStatus;
     private ImageView thermoConnectStatus;
     private ImageView maskStatus;
@@ -167,8 +167,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Mat mRgba;
 
     public static boolean staticDetectMaskSwitch = false;
-    public static boolean addCacheFlag = false;
-    public static boolean addCache_DelayFlag = false;
+    public static boolean canCaptureFaceFlag = false;
 
     // Constructor
     public VFRDetect20210303Fragment() {
@@ -517,8 +516,12 @@ public class VFRDetect20210303Fragment extends Fragment {
             maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
             thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
             tempUnit.setVisibility(View.INVISIBLE);
+
+            mPlayer = MediaPlayer.create(getActivity().getBaseContext(), R.raw.alarm_20210524);
         }
     }
+
+    MediaPlayer mPlayer;
 
     private AvaloWebSocketClient c;
     private final Object mSyncObject = new Object();
@@ -583,7 +586,6 @@ public class VFRDetect20210303Fragment extends Fragment {
                 mLog.d(TAG, "weakReference == null");
                 return;
             }
-
             thermo_view.setImageBitmap((Bitmap) msg.obj);
             thermalBitmap = (Bitmap) msg.obj;
 
@@ -599,18 +601,15 @@ public class VFRDetect20210303Fragment extends Fragment {
             if (!isCaptureFaceDone)
                 tempDetected.setText(person_temp_static > 0.1f ? String.valueOf(formatter.format(person_temp_static)) : "");
             if (!thermo_is_human && !isCaptureFaceDone) {
-//            if (!true && !isCaptureFaceDone) {
-//            if (true) {
                 thermoStatus.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
                 maskStatus.setImageBitmap(maskResults == 2 ? getBitmap(R.drawable.ic_mask_detect) : maskResults == 1 ? getBitmap(R.drawable.ic_mask_off) : getBitmap(R.drawable.ic_mask_on));
             } else {
-//                if (!isCaptureFaceDone) thermoStatus.setImageBitmap(person_temp_static > VFRThermometerCache.getInstance().getAlertTemp() ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
                 if (!isCaptureFaceDone)
                     thermoStatus.setImageBitmap(person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp() ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
 
                 if (maskResults == 1 && !isCaptureFaceDone) { // NoMask
                     maskStatus.setImageBitmap(getBitmap(R.drawable.ic_mask_off));
-                    AppBus.getInstance().post(new BusEvent("show confirm view", DETECT_ROUND_DONE));
+                    AppBus.getInstance().post(new BusEvent("show confirm check view", DETECT_ROUND_DONE));
                     isCaptureFaceDone = true;
                     isDetectValidate = false;
                     msg_big.setText("FAIL");
@@ -633,7 +632,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                     isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false;
                     mLog.d(TAG, "isDetectValidate:> " + isDetectValidate);
                     if (!isDetectValidate) {
-                        AppBus.getInstance().post(new BusEvent("show confirm view", DETECT_ROUND_DONE));
+                        AppBus.getInstance().post(new BusEvent("show confirmcheck  view", DETECT_ROUND_DONE));
                     }
                     reCheckBtn.setVisibility(View.VISIBLE);
                     if (isVmsConnected) {
@@ -650,8 +649,6 @@ public class VFRDetect20210303Fragment extends Fragment {
             }
         }
     }
-
-    private boolean isDetectValidate = false;
 
     @Override
     public void onStart() {
@@ -693,8 +690,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         void onClickConfirmBackToHome();
 
         void onClickAdminSetting();
-
-        void onDetectThreeFaces();
     }
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {
@@ -899,16 +894,9 @@ public class VFRDetect20210303Fragment extends Fragment {
                 break;
             case FACE_DETECT_DONE:
                 stopCameraFunction();
-                if (getUserVisibleHint()) {
-                    onFragmentInteractionListener.onDetectThreeFaces();
-                }
-                break;
-            case FACE_DETECT_TEST:
-//                Toast.makeText(getContext(), "Please modified your face angle to detect again.", Toast.LENGTH_LONG).show();
                 break;
             case DETECT_ROUND_DONE:
                 detectView.setVisibility(View.INVISIBLE);
-//                thermo_view.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
                 faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap);
                 confirmBtn.setVisibility(View.INVISIBLE);
@@ -927,6 +915,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                 }
                 break;
             case MASK_DETECT:
+                // *** CORE MASK DETECT PROCESS ***
                 maskResults = 2;
                 try {
                     if (maskProcessBitmap == null) return;
@@ -937,7 +926,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                     frameToCropTransform =
                             ImageUtils.getTransformationMatrix(
-                                    maskProcessBitmap.getWidth(), maskProcessBitmap.getHeight(),
+                                    maskProcessBitmapClone.getWidth(), maskProcessBitmapClone.getHeight(),
                                     260, 260,
                                     0, false);
 
@@ -949,10 +938,10 @@ public class VFRDetect20210303Fragment extends Fragment {
                     if (!staticDetectMaskSwitch) return;
 //                    mLog.d(TAG, "try mask detect...");
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
-                    if (results != null && results.getConfidence() > 0.92) {
+                    if (results != null && results.getConfidence() > 0.94) {
                         maskResults = results.getClasses();
                         detectResult = results;
-                        addCacheFlag = true;
+                        canCaptureFaceFlag = true;
                         switch (results.getClasses()) {
                             case 1: // NoMask
 //                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
@@ -1130,15 +1119,9 @@ public class VFRDetect20210303Fragment extends Fragment {
                     }
 
                     if (tick_count % 3 == 0) {
-//                        mLog.d(TAG, "getFace, vfrFaceCacheArray= " + vfrFaceCacheArray.size());
                         AppBus.getInstance().post(new BusEvent("mask detect", MASK_DETECT));
                     }
 
-                    if (addCache_DelayFlag) {
-                        if (tick_count % 20 == 0) {
-                            addCache_DelayFlag = false;
-                        }
-                    }
                     long end_time_tick = System.currentTimeMillis();
                     Thread.sleep(task_minimum_tick_time_msec);
                     tick_count++;

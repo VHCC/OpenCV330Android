@@ -6,9 +6,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -28,10 +30,16 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.blankj.utilcode.util.DeviceUtils;
 import com.chaos.view.PinView;
 import com.github.glomadrian.codeinputlib.CodeInput;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -42,6 +50,7 @@ import acl.siot.opencvwpc20191007noc.BusEvent;
 import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
+import acl.siot.opencvwpc20191007noc.util.LogWriter;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskConnect;
@@ -197,6 +206,10 @@ public class VMSAdminSettingFragment extends Fragment {
     // TAB OTHER
     EditText screenTimeout;
     Button changePWDBtn;
+
+    // TAB LOG
+    Spinner logFileSpinner;
+    TextView logView;
 
     private void initViewsFeature() {
 
@@ -374,7 +387,7 @@ public class VMSAdminSettingFragment extends Fragment {
 
                         ArrayAdapter<CharSequence> adapter =
                                 ArrayAdapter.createFromResource(getContext(),    //對應的Context
-                                        R.array.setting_device_mode,                             //資料選項內容
+                                        R.array.setting_device_mode,             //資料選項內容
                                         R.layout.vms_spinner_item);
                         adapter.setDropDownViewResource(R.layout.vms_spinner_drpodown_item);
                         deviceModeSpinner.setAdapter(adapter);
@@ -475,15 +488,32 @@ public class VMSAdminSettingFragment extends Fragment {
                         });
                         break;
                     case TAB_LOG:
-                        view = LayoutInflater.from(getContext()).inflate(R.layout.tab_a, null, false);
-                        Button connectVmsBtn = view.findViewById(R.id.connectVmsBtn);
-                        connectVmsBtn.setOnClickListener(new View.OnClickListener() {
+                        view = LayoutInflater.from(getContext()).inflate(R.layout.tab_log, null, false);
+
+                        ArrayList<String> log_files_array = new ArrayList<>();
+                        File logDir = new File(LogWriter.showLogFileFolder());
+                        walkDir(logDir, log_files_array);
+
+                        logView = view.findViewById(R.id.logView);
+
+                        logFileSpinner = (Spinner) view.findViewById(R.id.log_file_spinner);
+                        ArrayAdapter adapter_log = new ArrayAdapter<>(view.getContext(), R.layout.vms_spinner_item, log_files_array);
+                        adapter_log.setDropDownViewResource(R.layout.vms_spinner_drpodown_item);
+                        logFileSpinner.setAdapter(adapter_log);
+
+                        logFileSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                             @Override
-                            public void onClick(View view) {
-                                AppBus.getInstance().post(new BusEvent("connect vms", SHOW_DIALOG_CONNECT));
+                            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                                String selectedItem = adapterView.getItemAtPosition(i).toString();
+                                mLog.d(TAG, ":> " + selectedItem);
+                                readFile(selectedItem);
+                            }
+
+                            @Override
+                            public void onNothingSelected(AdapterView<?> adapterView) {
+
                             }
                         });
-                        break;
                 }
 
                 container.addView(view);
@@ -974,6 +1004,62 @@ public class VMSAdminSettingFragment extends Fragment {
 
     public void setOnFragmentInteractionListener(OnFragmentInteractionListener listener) {
         onFragmentInteractionListener = listener;
+    }
+
+    private void walkDir(File dir, ArrayList log_array) {
+        String txtPattern = ".txt";
+
+        File listFile[] = dir.listFiles();
+
+        if (listFile != null) {
+            for (int i = 0; i < listFile.length; i++) {
+
+                if (listFile[i].isDirectory()) {
+                    walkDir(listFile[i], log_array);
+                } else {
+                    if (listFile[i].getName().endsWith(txtPattern) && listFile[i].getName().contains(DeviceUtils.getAndroidID())){
+                        log_array.add(listFile[i].getName());
+                        mLog.d(TAG, listFile[i].getName());
+                        //Do what ever u want
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void readFile(String logFile) {
+        logView.setText(" *** " + logFile + " *** ");
+        InputStream fis = null;
+        try {
+            // open the file for reading
+            fis = new FileInputStream(LogWriter.showLogFileFolder() + File.separator + logFile);
+            // if file the available for reading
+            if (fis != null) {
+                // prepare the file for reading
+                InputStreamReader chapterReader = new InputStreamReader(fis);
+                BufferedReader buffreader = new BufferedReader(chapterReader);
+
+                String line;
+                // read every line of the file into the line-variable, on line at the time
+                do {
+                    line = buffreader.readLine();
+                    // do something with the line
+                    mLog.d(TAG, line);
+                    logView.append("\n\n" + line);
+                } while (line != null);
+            }
+        } catch (Exception e) {
+            // print stack trace.
+        } finally {
+            // close the file.
+            try {
+                if (fis != null)
+                    fis.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

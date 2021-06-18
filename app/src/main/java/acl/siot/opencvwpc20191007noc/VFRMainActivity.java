@@ -408,10 +408,6 @@ public class VFRMainActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_PWD, false);
             }
 
-            @Override
-            public void onDetectThreeFaces() {
-//                mViewPager.setCurrentItem(SectionsPagerAdapter.PAGE_VERIFY);
-            }
         };
 
         private VFRVerifyFragment.OnFragmentInteractionListener vfrVerifyPageInteractionListener
