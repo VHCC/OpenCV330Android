@@ -1,13 +1,6 @@
 package acl.siot.opencvwpc20191007noc.vms;
 
-import android.util.Log;
-
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashMap;
 
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;

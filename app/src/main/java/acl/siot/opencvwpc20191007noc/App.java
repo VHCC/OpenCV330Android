@@ -480,6 +480,7 @@ public class App extends Application {
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_account(kioskDevice.getString("tEPAccount"));
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(kioskDevice.getString("tEPPassword"));
 
+                        mLog.d(TAG, " VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable:> " +  VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable());
 
                         VMSEdgeCache.getInstance().setVms_kiosk_settingPassword(kioskDevice.getString("settingPassword"));
 

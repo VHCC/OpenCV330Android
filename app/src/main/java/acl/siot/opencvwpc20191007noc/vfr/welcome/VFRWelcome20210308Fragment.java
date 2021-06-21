@@ -44,6 +44,8 @@ import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
 import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
 import acl.siot.opencvwpc20191007noc.vms.VmsUploadBarCode;
+import acl.siot.opencvwpc20191007noc.vms.VmsUploadBarCode_TPE;
+import acl.siot.opencvwpc20191007noc.vms.VmsUpload_TPE;
 
 import static acl.siot.opencvwpc20191007noc.App.VFR_HEART_BEATS;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
@@ -51,6 +53,7 @@ import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_TPE;
 
 /**
  * Created by IChen.Chu on 2021/03/08
@@ -253,6 +256,15 @@ public class VFRWelcome20210308Fragment extends Fragment {
                                 OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
                             } catch (JSONException | IOException e) {
                                 e.printStackTrace();
+                            }
+
+                            if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+                                try {
+                                    VmsUploadBarCode_TPE mMap_TPE = new VmsUploadBarCode_TPE(uploadPersonData);
+                                    OKHttpAgent.getInstance().postTPERequest(mMap_TPE, APP_CODE_VMS_SERVER_UPLOAD_TPE);
+                                } catch (JSONException | IOException e) {
+                                    e.printStackTrace();
+                                }
                             }
                         } else {
                             readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);

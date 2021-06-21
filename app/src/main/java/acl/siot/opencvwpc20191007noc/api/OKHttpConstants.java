@@ -49,6 +49,9 @@ public class OKHttpConstants {
         public static final int APP_CODE_VMS_SERVER_UPLOAD = 20000;
         public static final int APP_CODE_VMS_SERVER_UPLOAD_SUCCESS = 200001;
 
+        public static final int APP_CODE_VMS_SERVER_UPLOAD_TPE = 20008;
+        public static final int APP_CODE_VMS_SERVER_UPLOAD_TPE_SUCCESS = 200081;
+
         public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT = 20001;
         public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT_SUCCESS = 200011;
         public static final int APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL = 200019;

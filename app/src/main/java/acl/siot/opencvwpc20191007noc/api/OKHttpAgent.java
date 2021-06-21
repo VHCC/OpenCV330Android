@@ -30,12 +30,15 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
+import okhttp3.Authenticator;
+import okhttp3.Credentials;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.Route;
 
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
@@ -63,11 +66,13 @@ public class OKHttpAgent {
     /*  */
 //    private final OkHttpClient mClient = new OkHttpClient();
     private final OkHttpClient mClient;
+    private OkHttpClient mClient_TPE;
     private IRequestInterface mIRequestInterface;
+    OkHttpClient.Builder mBuilder;
+    SSLContext ssLContext = null;
 
     private OKHttpAgent() {
-        OkHttpClient.Builder mBuilder = new OkHttpClient.Builder();
-        SSLContext ssLContext = null;
+        mBuilder = new OkHttpClient.Builder();
         try {
             ssLContext = SSLContext.getInstance("TLS");
             ssLContext.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
@@ -144,6 +149,10 @@ public class OKHttpAgent {
                 e.printStackTrace();
                 mLog.e(TAG, "e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+            } catch (Exception e){
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             }
         }
 
@@ -170,6 +179,97 @@ public class OKHttpAgent {
                         }
                     }
                     // TODO
+                    // watch out the situations whose errorCode are not 0.
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    protected class PostTPEThread extends Thread {
+
+        private HashMap mData;
+
+        private int postCodeTPE;
+
+        public PostTPEThread(HashMap data, int requestCode) {
+            mData = data;
+            postCodeTPE = requestCode;
+        }
+
+        @Override
+        public void run() {
+            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+            mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+            JSONObject jsonObjRaw = new JSONObject(mData);
+            String json = null;
+            try {
+                json = jsonObjRaw.toString(4);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            mLog.d(TAG, "PostTPEThread@" + this.hashCode() + ", request= " + json);
+            RequestBody body = RequestBody.create(JSON, json);
+
+            try {
+                Request request = new Request.Builder()
+                        .url(mainURL)
+//                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
+//                    .header("Content-signUpEventType", "application/json")
+                        .header("Content-Type", "application/json")
+                        .post(body)
+                        .build();
+                Response response = mClient_TPE.newCall(request).execute();
+                String result = response.body().string();
+                JSONObject jsonObj = new JSONObject(result);
+//                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+                switch(response.code()) {
+                    case 200: {
+                        handleResult(jsonObj, postCodeTPE);
+                        break;
+                    }
+                    default: {
+                        handleResult(jsonObj, postCodeTPE);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
+            } catch (Exception e){
+                e.printStackTrace();
+                mLog.e(TAG, "e= " + e.getMessage());
+                mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
+            }
+        }
+
+        private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
+//            System.out.println(jsonObj.toString());
+            writeToFile(jsonObj.toString());
+//            if (AppSetting.isEngineering()) {
+            if (false) {
+                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
+            } else {
+                mLog.d(TAG, "PostTPEThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
+
+                try {
+                    if (jsonObj.toString().contains("code")) {
+                        int errorCode = jsonObj.getInt("code");
+                        mLog.w(TAG, "errorCode= " + errorCode);
+                        switch (errorCode) {
+                            case 0:
+                                mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
+                                break;
+                            default:
+                                mIRequestInterface.onRequestFail(jsonObj.getString("message"), postCode);
+                                break;
+                        }
+                    }
                     // watch out the situations whose errorCode are not 0.
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -505,6 +605,34 @@ public class OKHttpAgent {
 //        mLog.d(TAG, "request post= " + mData.toString());
         PostThread postThread = new PostThread(mData, requestCode);
         postThread.start();
+    }
+
+    public synchronized void postTPERequest(HashMap mData, int requestCode) throws IOException {
+        if (mClient_TPE == null && VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+            OkHttpClient.Builder mBuilder_TPE = new OkHttpClient.Builder();
+            mBuilder_TPE.authenticator(new Authenticator() {
+                @Override
+                public Request authenticate(Route route, Response response) throws IOException {
+                    mLog.d(TAG, " *** authenticate *** ");
+                    String credential = Credentials.basic(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account(), VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
+                    return response.request().newBuilder().header("Authorization", credential).build();
+                }
+            });
+            try {
+                ssLContext = SSLContext.getInstance("TLS");
+                ssLContext.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (KeyManagementException e) {
+                e.printStackTrace();
+            }
+            mBuilder.sslSocketFactory(ssLContext.getSocketFactory());
+            mBuilder.hostnameVerifier(new NullHostNameVerifier());
+            mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
+            mClient_TPE = mBuilder.build();
+        }
+        PostTPEThread postTPEThread = new PostTPEThread(mData, requestCode);
+        postTPEThread.start();
     }
 
     public synchronized void postUploadFileRequest(HashMap mData, int requestCode) throws IOException {

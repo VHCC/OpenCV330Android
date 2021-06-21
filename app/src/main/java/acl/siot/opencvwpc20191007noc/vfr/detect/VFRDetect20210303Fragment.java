@@ -78,6 +78,7 @@ import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.view.overLay.OverLayLinearLayout;
 import acl.siot.opencvwpc20191007noc.vms.CheckVmsPersonSerial;
 import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
+import acl.siot.opencvwpc20191007noc.vms.VmsUpload_TPE;
 import acl.siot.opencvwpc20191007noc.wbSocket.AvaloWebSocketClient;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
@@ -89,6 +90,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_TPE;
 
 /**
  * Created by IChen.Chu on 2021/03/03
@@ -402,6 +404,24 @@ public class VFRDetect20210303Fragment extends Fragment {
             OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
         } catch (Exception e) {
             e.getStackTrace();
+        }
+
+        if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+            try {
+                VmsUpload_TPE mMap = new VmsUpload_TPE(encoded,
+                        isWearMask,
+                        String.valueOf(tempDetectFormatter.format(person_temp_static)),
+                        uploadPersonData,
+                        interfaceMethod,
+                        isVisitor,
+                        dataUploadMode,
+                        exception,
+                        status
+                );
+                OKHttpAgent.getInstance().postTPERequest(mMap, APP_CODE_VMS_SERVER_UPLOAD_TPE);
+            } catch (Exception e) {
+                e.getStackTrace();
+            }
         }
     }
 
