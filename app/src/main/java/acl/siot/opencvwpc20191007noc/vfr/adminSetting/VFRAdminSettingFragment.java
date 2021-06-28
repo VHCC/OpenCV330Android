@@ -167,12 +167,12 @@ public class VFRAdminSettingFragment extends Fragment {
 
                 Toast.makeText(getContext(), "save Setting Succeed", Toast.LENGTH_SHORT).show();
 
-                HashMap<String, String> mMap = new GetTemp();
-                try {
-                    OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                HashMap<String, String> mMap = new GetTemp();
+//                try {
+//                    OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
                 onFragmentInteractionListener.clickConfirm();
             }

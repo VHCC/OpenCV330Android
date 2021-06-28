@@ -180,6 +180,9 @@ public class VFRHomeFragment extends Fragment {
                 mHandler.postDelayed(mFragmentRunnable, mDelay);
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL:
+
+                VMSEdgeCache.getInstance().setVms_kiosk_mode(0);
+
                 syncDialog.changeAlertType(SweetAlertDialog.WARNING_TYPE);
                 syncDialog.setTitleText("Warn");
                 syncDialog.setContentText("Device isn't connect to VMS yet");

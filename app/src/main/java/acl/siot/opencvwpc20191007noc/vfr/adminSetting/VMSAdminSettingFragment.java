@@ -23,8 +23,6 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
-import acl.siot.opencvwpc20191007noc.vms.VmsKioskApplyUpdate;
-import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -34,7 +32,6 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.blankj.utilcode.util.DeviceUtils;
 import com.chaos.view.PinView;
-import com.github.glomadrian.codeinputlib.CodeInput;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -272,6 +269,13 @@ public class VMSAdminSettingFragment extends Fragment {
 
                         break;
                     case TAB_OTHER:
+//                        mLog.d(TAG, "screenTimeout:> " + screenTimeout.getText().toString());
+//                        mLog.d(TAG, " > 180? " + (Integer.valueOf(screenTimeout.getText().toString()) > 180));
+//                        mLog.d(TAG, " < 30 ? " + (Integer.valueOf(screenTimeout.getText().toString()) < 10));
+                        if ((Integer.valueOf(screenTimeout.getText().toString()) < 10) || (Integer.valueOf(screenTimeout.getText().toString()) > 180)) {
+                            MessageTools.showLongToast(getContext(), "screenTimeOut out of limit.");
+                            return;
+                        }
                         VMSEdgeCache.getInstance().setVms_kiosk_screen_timeout(Integer.valueOf(screenTimeout.getText().toString()));
                         break;
                     case TAB_LOG:
@@ -446,6 +450,9 @@ public class VMSAdminSettingFragment extends Fragment {
                         avaloAlertTempMinus.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
+                                if (Float.valueOf(avaloAlertTemp.getText().toString()) == 35.0f) {
+                                    return;
+                                }
                                 avaloAlertTemp.setText(String.valueOf(formatter.format(Float.valueOf(avaloAlertTemp.getText().toString()) - 0.1f)));
                             }
                         });
@@ -453,6 +460,9 @@ public class VMSAdminSettingFragment extends Fragment {
                         avaloAlertTempAdd.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
+                                if (Float.valueOf(avaloAlertTemp.getText().toString()) == 40.0f) {
+                                    return;
+                                }
                                 avaloAlertTemp.setText(String.valueOf(formatter.format(Float.valueOf(avaloAlertTemp.getText().toString()) + 0.1f)));
                             }
                         });
@@ -460,6 +470,9 @@ public class VMSAdminSettingFragment extends Fragment {
                         avaloComTempMinus.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
+                                if (Float.valueOf(avaloComTemp.getText().toString()) == -5.0f) {
+                                    return;
+                                }
                                 avaloComTemp.setText(String.valueOf(formatterCom.format(Float.valueOf(avaloComTemp.getText().toString()) - 0.1f)));
                             }
                         });
@@ -467,6 +480,9 @@ public class VMSAdminSettingFragment extends Fragment {
                         avaloComTempAdd.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
+                                if (Float.valueOf(avaloComTemp.getText().toString()) == 5.0f) {
+                                    return;
+                                }
                                 avaloComTemp.setText(String.valueOf(formatterCom.format(Float.valueOf(avaloComTemp.getText().toString()) + 0.1f)));
                             }
                         });
@@ -477,6 +493,7 @@ public class VMSAdminSettingFragment extends Fragment {
                                         R.layout.vms_spinner_item);
                         adapterTempUnit.setDropDownViewResource(R.layout.vms_spinner_drpodown_item);
                         tempUnitSpinner.setAdapter(adapterTempUnit);
+                        tempUnitSpinner.setEnabled(false);
 
                         break;
                     case TAB_OTHER:
@@ -677,7 +694,7 @@ public class VMSAdminSettingFragment extends Fragment {
                 final TextFieldBoxes text_field_boxes_new = myView_alertDialog.findViewById(R.id.text_field_boxes_new);
                 final ExtendedEditText extended_edit_text_new = myView_alertDialog.findViewById(R.id.extended_edit_text_new);
 
-                text_field_boxes_old.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
+                text_field_boxes_new.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         mLog.d(TAG, "onClick:> " + extended_edit_text_new.getInputType());
@@ -691,7 +708,7 @@ public class VMSAdminSettingFragment extends Fragment {
                 final TextFieldBoxes text_field_boxes_confirm = myView_alertDialog.findViewById(R.id.text_field_boxes_confirm);
                 final ExtendedEditText extended_edit_text_confirm = myView_alertDialog.findViewById(R.id.extended_edit_text_confirm);
 
-                text_field_boxes_old.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
+                text_field_boxes_confirm.getEndIconImageButton().setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         mLog.d(TAG, "onClick:> " + extended_edit_text_confirm.getInputType());

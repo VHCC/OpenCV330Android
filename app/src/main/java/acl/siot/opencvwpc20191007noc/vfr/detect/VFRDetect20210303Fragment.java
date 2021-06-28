@@ -707,6 +707,8 @@ public class VFRDetect20210303Fragment extends Fragment {
                 thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
                 maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
             } else {
+                mLog.d(TAG, "origin temp:> " + person_temp_static + ", compensation:> " + VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation());
+                person_temp_static = person_temp_static + VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation();
                 boolean tempValidate = person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp();
 //                mLog.d(TAG, "tempValidate:> " + tempValidate + ", maskResults:> " + maskResults + ", temp-detect:> " + person_temp_static);
                 // maskResults = 1, 2 算一次完整偵測
@@ -991,7 +993,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                 // tl : top-left
                 // br : bottom-right
                 if (theLargeFace != null) {
-                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+//                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
                 }
                 try {
                     // 選擇畫面中最大的臉做運算
@@ -1069,12 +1071,18 @@ public class VFRDetect20210303Fragment extends Fragment {
                 detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
                 faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap);
-                confirmBtn.setVisibility(View.INVISIBLE);
-                reCheckBtn.setVisibility(View.VISIBLE);
+                if (isVmsConnected) {
+                    confirmBtn.setVisibility(View.INVISIBLE);
+                    reCheckBtn.setVisibility(View.VISIBLE);
+                } else {
+                    confirmBtn.setVisibility(isDetectValidate ? View.VISIBLE : View.INVISIBLE);
+                    reCheckBtn.setVisibility(isDetectValidate ? View.INVISIBLE : View.VISIBLE);
+                }
+
                 if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
                     tempUnit.setVisibility(View.VISIBLE);
                 }
-                msg_small.setText("Please click confirm button to save the data");
+                msg_small.setText(isDetectValidate ? "Check-in Success !! " : "Please click re-check button to recheck");
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS: // get temp
                 try {

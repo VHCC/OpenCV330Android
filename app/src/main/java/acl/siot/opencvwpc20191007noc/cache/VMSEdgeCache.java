@@ -37,7 +37,7 @@ public class VMSEdgeCache {
     public static final String SHARE_VMS_EDGE_INFO_VMS_HOST_IS_SSL =
             "share_vms_edge_info_vms_host_is_ssl";
 
-    private String vms_kiosk_uuid = ""; // vms_web can not edit
+    private String vms_kiosk_uuid = "kioskUUIDNULL"; // vms_web can not edit
     public static final String SHARE_VMS_EDGE_INFO_KIOSK_UUID =
             "share_vms_edge_info_kiosk_uuid";
 

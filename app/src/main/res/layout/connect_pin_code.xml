@@ -8,16 +8,16 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <com.github.glomadrian.codeinputlib.CodeInput
-        android:id="@+id/pairing"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:underline_color="#457ad1"
-        app:underline_selected_color="#9e1ace"
-        app:text_color="#b12eff"
-        app:hint_color="#77ce9d"
-        app:codes="6"
-        app:hint_text="Pairing code" />
+<!--    <com.github.glomadrian.codeinputlib.CodeInput-->
+<!--        android:id="@+id/pairing"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:underline_color="#457ad1"-->
+<!--        app:underline_selected_color="#9e1ace"-->
+<!--        app:text_color="#b12eff"-->
+<!--        app:hint_color="#77ce9d"-->
+<!--        app:codes="6"-->
+<!--        app:hint_text="Pairing code" />-->
 
 </LinearLayout>

@@ -65,13 +65,15 @@ public class OKHttpAgent {
 
     /*  */
 //    private final OkHttpClient mClient = new OkHttpClient();
-    private final OkHttpClient mClient;
+    private OkHttpClient mClient;
+    private OkHttpClient mClient_getTemp;
     private OkHttpClient mClient_TPE;
     private IRequestInterface mIRequestInterface;
     OkHttpClient.Builder mBuilder;
     SSLContext ssLContext = null;
 
     private OKHttpAgent() {
+        mLog.d(TAG, " *** OKHttpAgent *** ");
         mBuilder = new OkHttpClient.Builder();
         try {
             ssLContext = SSLContext.getInstance("TLS");
@@ -85,6 +87,7 @@ public class OKHttpAgent {
         mBuilder.hostnameVerifier(new NullHostNameVerifier());
         mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
         mClient = mBuilder.build();
+        mClient_getTemp = mBuilder.build();
     }
 
     public static OKHttpAgent getInstance() {
@@ -213,7 +216,6 @@ public class OKHttpAgent {
                 }
                 mLog.d(TAG, "PostTPEThread@" + this.hashCode() + ", request= " + json);
                 RequestBody body = RequestBody.create(JSON, json);
-
 
                 Request request = new Request.Builder()
                         .url(mainURL)
@@ -443,6 +445,7 @@ public class OKHttpAgent {
 
     protected class PostAvaloThread extends Thread {
         private boolean switchFlag;
+        private final Object mSyncObject = new Object();
 
         public PostAvaloThread(boolean flag) {
             switchFlag = flag;
@@ -450,29 +453,32 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
-//            final String mainURL = "http://192.168.4.1/websocket.json";
-            final String mainURL = "http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host() + "/websocket.json";
-            mLog.d(TAG, "PostAvaloThread@" + this.hashCode());
-            String bodyString = switchFlag ? "websocket,1" : "websocket,0";
-            RequestBody body = RequestBody.create(URL_ENCODED, bodyString);
-            try {
-            Request request = new Request.Builder()
-                    .url(mainURL)
-                    .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-                    .post(body)
-                    .build();
-                Response response = mClient.newCall(request).execute();
-                String result = response.body().string();
-                mLog.d(TAG, "PostAvaloThread@" + this.hashCode() + ", response.code()= " + response.code());
-            } catch (IOException e) {
-                e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+            synchronized (mSyncObject){
+                //            final String mainURL = "http://192.168.4.1/websocket.json";
+                final String mainURL = "http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host() + "/websocket.json";
+                mLog.d(TAG, "PostAvaloThread@" + this.hashCode());
+                String bodyString = switchFlag ? "websocket,1" : "websocket,0";
+                RequestBody body = RequestBody.create(URL_ENCODED, bodyString);
+                try {
+                    Request request = new Request.Builder()
+                            .url(mainURL)
+                            .header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
+                            .post(body)
+                            .build();
+                    Response response = mClient.newCall(request).execute();
+                    String result = response.body().string();
+                    mLog.d(TAG, "PostAvaloThread@" + this.hashCode() + ", response.code()= " + response.code());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    mLog.e(TAG, "e= " + e.getMessage());
+                }
             }
         }
     }
 
     protected class GetThread extends Thread {
         private HashMap mData;
+        private final Object mSyncObject = new Object();
 
         private int getCode;
 
@@ -484,38 +490,40 @@ public class OKHttpAgent {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-            mLog.d(TAG, "get request= " + mainURL);
-            try {
-            Request request = new Request.Builder()
-                    .url(mainURL)
+            synchronized (mSyncObject){
+                final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+                mLog.d(TAG, "get request= " + mainURL);
+                try {
+                    Request request = new Request.Builder()
+                            .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
 //                    .header("Content-signUpEventType", "application/json")
 //                    .header("Content-Type", "application/json")
-                    .get()
-                    .build();
-                Response response = mClient.newCall(request).execute();
-                String result = response.body().string();
-                JSONObject jsonObj = new JSONObject(result);
+                            .get()
+                            .build();
+                    Response response = mClient_getTemp.newCall(request).execute();
+                    String result = response.body().string();
+                    JSONObject jsonObj = new JSONObject(result);
 //                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
-                switch(response.code()) {
-                    case 200:
-                        handleResult(jsonObj, getCode);
-                        break;
-                    default:
-                        handleResult(jsonObj, getCode);
-                        break;
+                    switch(response.code()) {
+                        case 200:
+                            handleResult(jsonObj, getCode);
+                            break;
+                        default:
+                            handleResult(jsonObj, getCode);
+                            break;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    isThermometerServerConnected = false;
+                    mLog.e(TAG, "e= " + e.getMessage());
+//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    isThermometerServerConnected = false;
+                    mLog.e(TAG, "e= " + e.getMessage());
+//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-                isThermometerServerConnected = false;
-                mLog.e(TAG, "e= " + e.getMessage());
-//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                isThermometerServerConnected = false;
-                mLog.e(TAG, "e= " + e.getMessage());
-//                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
             }
         }
 
