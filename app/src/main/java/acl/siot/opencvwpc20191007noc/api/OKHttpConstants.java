@@ -26,8 +26,6 @@ public class OKHttpConstants {
     }
 
     public static class FrsRequestCode {
-        public static final int APP_CODE_FRS_LOGIN = 10001;
-        public static final int APP_CODE_FRS_LOGIN_SUCCESS = 100011;
 
         public static final int APP_CODE_FRS_VERIFY = 10002;
         public static final int APP_CODE_FRS_VERIFY_SUCCESS = 100021;
@@ -75,6 +73,9 @@ public class OKHttpConstants {
 
         public static final int APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL = 20007;
         public static final int APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS = 200071;
+
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST = 20010;
+        public static final int APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS = 200101;
 
         public static final int APP_CODE_VMS_KIOSK_RFID_DETECT_DONE = 30001;
 

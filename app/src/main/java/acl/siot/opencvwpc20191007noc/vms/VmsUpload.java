@@ -60,11 +60,11 @@ public class VmsUpload extends HashMap<Object, Object> {
         super.put(API_KEY_AVALO_SNAPSHOT, "data:image/jpeg;base64," + encoded);
         super.put(API_KEY_AVALO_STATUS, status);
         super.put(API_KEY_AVALO_EXCEPTION, exception);
-        super.put(API_KEY_MAPPINGPERSONUUID, uploadPersonData.getString("vmsPersonUUID"));
-        super.put(API_KEY_AVALO_SERIAL, uploadPersonData.getString("vmsPersonSerial"));
-        super.put(API_KEY_AVALO_NAME, uploadPersonData.getString("vmsPersonName"));
+        super.put(API_KEY_MAPPINGPERSONUUID, uploadPersonData == null ? "vmsPersonUUIDNULL" : uploadPersonData.getString("vmsPersonUUID"));
+        super.put(API_KEY_AVALO_SERIAL, uploadPersonData == null ? "vmsPersonSerialNULL" : uploadPersonData.getString("vmsPersonSerial"));
+        super.put(API_KEY_AVALO_NAME, uploadPersonData == null ? "vmsPersonNameNULL" : uploadPersonData.getString("vmsPersonName"));
         super.put(API_KEY_AVALO_VISITOR, isVisitor);
-        super.put(API_KEY_AVALO_EMAIL, uploadPersonData.getString("vmsPersonEmail"));
+        super.put(API_KEY_AVALO_EMAIL, uploadPersonData == null ? "vmsPersonEmailNULL" : uploadPersonData.getString("vmsPersonEmail"));
         super.put(API_KEY_AVALO_DEPARTMENT, "");
         if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
             super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(tempDetect));

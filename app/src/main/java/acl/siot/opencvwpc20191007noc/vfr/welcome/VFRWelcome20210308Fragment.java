@@ -213,7 +213,9 @@ public class VFRWelcome20210308Fragment extends Fragment {
                 frameWelcomeTxt.setVisibility(View.INVISIBLE);
 
                 frameRFID.setVisibility(View.INVISIBLE);
-                frameBarCode.setVisibility(View.INVISIBLE);
+                if (null != frameBarCode) {
+                    frameBarCode.setVisibility(View.INVISIBLE);
+                }
 
                 frameMain.setVisibility(View.VISIBLE);
                 mainBtn.setImageBitmap(getBitmap(R.drawable.ic_rfid_btn));

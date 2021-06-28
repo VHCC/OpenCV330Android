@@ -67,10 +67,12 @@ public class VmsUploadBarCode_TPE extends HashMap<Object, Object> {
 //            super.put(API_KEY_AVALO_MASK, isMask);
         super.put(API_KEY_AVALO_UTC_TIMESTAMP, System.currentTimeMillis());
 
-        String httpPrefix = VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl() ? "https://" : "http://";
-        String vmsPort = VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port() == "" ? VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl() ? ":443" : ":80" : ":"+ VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port();
-        super.put(APP_KEY_HTTPS_URL, httpPrefix + VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host() + vmsPort +
-                "/api/v2/vmsKioskReports/uploadKioskData");
+//        String httpPrefix = VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl() ? "https://" : "http://";
+//        String vmsPort = VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port() == "" ? VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl() ? ":443" : ":80" : ":"+ VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port();
+//        super.put(APP_KEY_HTTPS_URL, httpPrefix + VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host() + vmsPort +
+//                "/api/v2/vmsKioskReports/uploadKioskData");
+
+        super.put(APP_KEY_HTTPS_URL, VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
     }
 
 

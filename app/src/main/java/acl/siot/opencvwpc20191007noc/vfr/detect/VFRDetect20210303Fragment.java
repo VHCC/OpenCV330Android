@@ -7,7 +7,6 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
-import android.icu.text.SimpleDateFormat;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -26,6 +25,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import acl.siot.opencvwpc20191007noc.util.LogWriter;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -46,6 +46,7 @@ import org.opencv.core.MatOfRect;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.ByteArrayOutputStream;
@@ -103,7 +104,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     // Constants
-    static final int FACE_THRESHOLD = 200;
+    static final int FACE_THRESHOLD = 100;
     static final int FACE_THRESHOLD_COUNT = 9;
 
     // handler event
@@ -114,7 +115,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     final int FACE_DETECT_DONE = 2001;
 
-    final int DETECT_INVALIDATE = 4001;
+    final int DETECT_DONE_SHOW_SNAPSHOT = 4001;
 
     final int SHOW_NO_VMS_SERVER_QRCODE = 5009;
 
@@ -136,11 +137,11 @@ public class VFRDetect20210303Fragment extends Fragment {
     // Process Flags
     private boolean isFullDetectProcessDone = false; // 完整偵測流程結束與否
     private boolean isQRCodeViewShow = false; // QRCode 顯示畫面與否
-    private boolean canStartToDetectGate = false;
+    private boolean canStartToDetectGate = false; // 控制 每次偵測與每次偵測之間間隔
     private boolean isDetectValidate = false; // 結果合格與否
 
-    public static boolean staticDetectMaskSwitch = false; // 控制 每次偵測與每次偵測之間間隔
-    public static boolean canShowTempFlag = false; // 顯示溫度與否。規格為：確認完成臉部後，才顯示溫度
+//    public static boolean staticDetectMaskSwitch = false; // 控制 每次偵測與每次偵測之間間隔
+    private boolean canShowTempFlag = false; // 顯示溫度與否。規格為：確認完成臉部後，才顯示溫度
 
     // View
     private OverLayLinearLayout circleOverlay;
@@ -163,6 +164,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private ImageView thermal_view; // 熱區圖
     private NumberFormat tempDetectFormatter = new DecimalFormat("#00.0");
     private float person_temp_static = 0.0f;
+    private final float TEMP_BASIC_THRESHOLD = 32.0f;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -322,6 +324,8 @@ public class VFRDetect20210303Fragment extends Fragment {
                 reCheck();
             }
         });
+
+        mPlayer = MediaPlayer.create(getActivity().getBaseContext(), R.raw.alarm_20210524);
     }
 
     // Upload data to vms backend
@@ -405,28 +409,92 @@ public class VFRDetect20210303Fragment extends Fragment {
         } catch (Exception e) {
             e.getStackTrace();
         }
+    }
 
-        if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
-            try {
-                VmsUpload_TPE mMap = new VmsUpload_TPE(encoded,
-                        isWearMask,
-                        String.valueOf(tempDetectFormatter.format(person_temp_static)),
-                        uploadPersonData,
-                        interfaceMethod,
-                        isVisitor,
-                        dataUploadMode,
-                        exception,
-                        status
-                );
-                OKHttpAgent.getInstance().postTPERequest(mMap, APP_CODE_VMS_SERVER_UPLOAD_TPE);
-            } catch (Exception e) {
-                e.getStackTrace();
+    private void uploadDataTPE() throws JSONException {
+        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+        String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+        boolean isVisitor = false;
+
+        // Interface including: rfid, barcode, card
+        String interfaceMethod = "";
+
+        // mode including: normal, realname, invitation, event
+        String dataUploadMode = "Normal";
+
+        switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+            case 0:
+                isVisitor = true;
+                interfaceMethod = "";
+                dataUploadMode = "Normal";
+                break;
+            case 1:
+                isVisitor = false;
+                if (App.isRFIDFunctionOn) {
+                    interfaceMethod = "rfid";
+                } else if (App.isBarCodeFunctionOn) {
+                    interfaceMethod = "barcode";
+                }
+                dataUploadMode = "RealName";
+                break;
+        }
+
+        boolean isWearMask = false;
+
+        switch (maskResults) {
+            case 0: // wear mask
+                isWearMask = true;
+                break;
+            case 1: // no wear mask
+                isWearMask = false;
+                break;
+        }
+
+        // status including: Filling-out, Exception
+        // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
+        String status = "Filling-out".toLowerCase();
+        String exception = "";
+        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+            if (!isWearMask) {
+                exception = "No-Wear-Mask".toLowerCase();
+                status = "Exception".toLowerCase();
             }
+        }
+
+        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+            if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
+                    VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
+                exception = "High-Fever".toLowerCase();
+                status = "Exception".toLowerCase();
+            }
+        }
+
+        try {
+            VmsUpload_TPE mMap = new VmsUpload_TPE(encoded,
+                    isWearMask,
+                    String.valueOf(tempDetectFormatter.format(person_temp_static)),
+                    uploadPersonData,
+                    interfaceMethod,
+                    isVisitor,
+                    dataUploadMode,
+                    exception,
+                    status
+            );
+            OKHttpAgent.getInstance().postTPERequest(mMap, APP_CODE_VMS_SERVER_UPLOAD_TPE);
+        } catch (Exception e) {
+            e.getStackTrace();
         }
     }
 
     // including start detect process
     private void reCheck() {
+        mLog.d(TAG, " *** reCheck *** ");
         if (VMSEdgeCache.getInstance().getVms_kiosk_mode() == 0) {
             uploadPersonData = null;
         }
@@ -438,12 +506,12 @@ public class VFRDetect20210303Fragment extends Fragment {
         isQRCodeViewShow = false;
         canShowTempFlag = false;
 
-        threadObject.setRunning(true);
-
         if (detectPageThread != null && detectPageThread.isAlive()) {
             detectPageThread.interrupt();
+            threadObject.setRunning(false);
         }
 
+        threadObject.setRunning(true);
         detectPageThread = new Thread(detectPageRunnable);
         detectPageThread.start();
 
@@ -452,8 +520,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         detectFrame.setVisibility(View.VISIBLE);
         faceCapture.setVisibility(View.INVISIBLE);
         tempUnit.setVisibility(View.INVISIBLE);
-
-        maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
 
         scan_png.setVisibility(View.INVISIBLE);
 
@@ -493,8 +559,9 @@ public class VFRDetect20210303Fragment extends Fragment {
             mLog.d(TAG, " ### isThermometerServerConnected= " + isThermometerServerConnected);
             mLog.d(TAG, " ### VMSEdgeCache.getInstance().getVms_kiosk_video_type()= " + VMSEdgeCache.getInstance().getVms_kiosk_video_type());
             detectFrame.setVisibility(View.VISIBLE);
-            staticDetectMaskSwitch = true;
+//            staticDetectMaskSwitch = true;
             lazyLoad();
+            connectAvaloThermalSocket();
         }
     }
 
@@ -538,25 +605,21 @@ public class VFRDetect20210303Fragment extends Fragment {
 
             initClassifier();
 
-            threadObject.setRunning(true);
-
             if (detectPageThread != null && detectPageThread.isAlive()) {
                 detectPageThread.interrupt();
+                threadObject.setRunning(false);
             }
 
+            threadObject.setRunning(true);
             // Task Schedule handle thread
             detectPageThread = new Thread(detectPageRunnable);
             detectPageThread.start();
-
-            connectAvaloThermalSocket();
 
             thermal_view.setVisibility(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 1 ? View.VISIBLE : View.INVISIBLE);
             tempDetected.setText("");
             maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
             thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
             tempUnit.setVisibility(View.INVISIBLE);
-
-            mPlayer = MediaPlayer.create(getActivity().getBaseContext(), R.raw.alarm_20210524);
 
             if (null == uploadPersonData) {
                 try {
@@ -569,6 +632,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
         }
     }
+
 
     private AvaloWebSocketClient c;
     private final Object mSyncObject = new Object();
@@ -610,9 +674,11 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
+    
+    // 處理 avalo websocket data
+    // 連到 avalo 才有資料
     private BleHandler mHandler = new BleHandler(getContext());
-
-    class BleHandler extends Handler {
+    private class BleHandler extends Handler {
 
         WeakReference weakReference;
 
@@ -633,38 +699,53 @@ public class VFRDetect20210303Fragment extends Fragment {
             thermal_view.setImageBitmap((Bitmap) msg.obj); // preview
             thermalBitmap = (Bitmap) msg.obj; // results
 
+            String detectLog = "";
+
             if (!canShowTempFlag) {
                 tempDetected.setText("");
                 tempUnit.setVisibility(View.INVISIBLE);
                 thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
-                maskDetectResults.setImageBitmap(maskResults == 2 ? getBitmap(R.drawable.ic_mask_detect) : maskResults == 1 ? getBitmap(R.drawable.ic_mask_off) : getBitmap(R.drawable.ic_mask_on));
+                maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
             } else {
-                if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-                    tempDetected.setText(person_temp_static > 0.1f ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
-                    thermalDetect_bg.setImageBitmap(person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp() ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
-                }
-                //以下算一次完整偵測
+                boolean tempValidate = person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp();
+//                mLog.d(TAG, "tempValidate:> " + tempValidate + ", maskResults:> " + maskResults + ", temp-detect:> " + person_temp_static);
+                // maskResults = 1, 2 算一次完整偵測
                 switch (maskResults) {
+                    case 2: // detecting
+                        detectLog += "maskResult:> DETECTING, detect temp:> " + person_temp_static;
+//                        startRecheckProcess();
+                        maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
+                        break;
                     case 1: // NoMask
+                        detectLog += "maskResult:> No-MASK(1), detect temp:> " + person_temp_static;
                         if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
                             maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_off));
                             isDetectValidate = false; // 沒戴口罩 一定不合格
-                            msg_big.setText("FAIL");
                         } else {
                             // disable mask
                             maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
                             if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-                                isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false; // 體溫小於門檻 才合格
-                                msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
+                                isDetectValidate = tempValidate ? false : true; // 體溫小於門檻 才合格
                             } else {
                                 // disable mask and temp
                                 isDetectValidate = true;
-                                msg_big.setText("PASS");
                             }
                         }
-                        isFullDetectProcessDone = true; // 算一次完整偵測
 
-                        AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_INVALIDATE));
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                            if (person_temp_static <= TEMP_BASIC_THRESHOLD) return;
+                            tempDetected.setText(person_temp_static > TEMP_BASIC_THRESHOLD ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
+                            thermalDetect_bg.setImageBitmap(tempValidate ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
+                        }
+
+                        detectLog += ", enable Mask:> " + VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask() + ", enable temp:> "
+                                + VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp();
+
+                        mLog.d(TAG, detectLog);
+                        isFullDetectProcessDone = true; // 算一次完整偵測
+                        msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
+
+                        AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_DONE_SHOW_SNAPSHOT));
 
                         if (isVmsConnected) {
                             try {
@@ -675,26 +756,55 @@ public class VFRDetect20210303Fragment extends Fragment {
                         } else {
                             startRecheckProcess();
                         }
+
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+                            try {
+                                uploadDataTPE();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        LogWriter.storeLogToFile("," + detectLog + "," + new Date().getTime() / 1000);
+
+                        if (!isDetectValidate) {
+                            if(!mPlayer.isPlaying()) {
+                                mPlayer.start();
+                            }
+                        }
+                        stopDetectThread();
                         break;
                     case 0: // Wear Mask on
+                        detectLog += "maskResult:> Wear-MASK(0), detect temp:> " + person_temp_static;
                         if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
                             maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_on));
                         } else {
                             maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
                         }
 
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                            if (person_temp_static <= TEMP_BASIC_THRESHOLD) return;
+                            tempDetected.setText(person_temp_static > TEMP_BASIC_THRESHOLD ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
+                            thermalDetect_bg.setImageBitmap(tempValidate ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
+                        }
+
+                        detectLog += ", enable Mask:> " + VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask() + ", enable temp:> "
+                                + VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp();
+
+                        mLog.d(TAG, detectLog);
                         isFullDetectProcessDone = true; // 算一次完整偵測
 
                         if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-                            isDetectValidate = (person_temp_static < VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) ? true : false; // 體溫小於門檻 才合格
+                            isDetectValidate = tempValidate ? false : true; // 體溫小於門檻 才合格
                         } else {
                             isDetectValidate = true;
                         }
-                        msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
 
                         if (!isDetectValidate) {
-                            AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_INVALIDATE));
+                            AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_DONE_SHOW_SNAPSHOT));
                         }
+
+                        msg_big.setText(isDetectValidate ? "PASS" : "FAIL");
                         if (isVmsConnected) {
                             try {
                                 uploadData();
@@ -702,17 +812,20 @@ public class VFRDetect20210303Fragment extends Fragment {
                                 e.printStackTrace();
                             }
                         } else {
-                            AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
+                            AppBus.getInstance().post(new BusEvent("show re-check check view", DETECT_DONE_SHOW_SNAPSHOT));
+                            startRecheckProcess();
+//                            AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
                         }
+                        LogWriter.storeLogToFile("," + detectLog + "," + new Date().getTime() / 1000);
+
+                        if (!isDetectValidate) {
+                            if(!mPlayer.isPlaying()) {
+                                mPlayer.start();
+                            }
+                        }
+                        stopDetectThread();
                         break;
                 }
-
-                if (!isDetectValidate) {
-                    if(!mPlayer.isPlaying()) {
-                        mPlayer.start();
-                    }
-                }
-                stopDetectThread();
             }
         }
     }
@@ -803,6 +916,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     Point size = new Point();
     int screenWidth;
     int screenHeight;
+    float offset = 5.0f;
 
     int noDetectCount = 0;
 
@@ -833,7 +947,6 @@ public class VFRDetect20210303Fragment extends Fragment {
             mRgba.release();
         }
 
-        private int numberOfFace = 1;
         double faceArea = 0.0d;
 
         @Override
@@ -878,7 +991,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                 // tl : top-left
                 // br : bottom-right
                 if (theLargeFace != null) {
-//                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
                 }
                 try {
                     // 選擇畫面中最大的臉做運算
@@ -889,6 +1002,10 @@ public class VFRDetect20210303Fragment extends Fragment {
                         noDetectCount = 0;
 
                         final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
+
+//                        Imgproc.rectangle(mRgba, theLargeFace.tl(), theLargeFace.br(), faceRectColor, 3);
+//                        Imgproc.putText(mRgba, "width:> " + theLargeFace.width + ", height:> " + theLargeFace.height, theLargeFace.tl(), Core.TYPE_MARKER, 2.0, new Scalar(0,255,0), 2);
+//                        Imgproc.putText(mRgba, "size:> " + FACE_THRESHOLD , theLargeFace.br() , Core.TYPE_MARKER, 2.0, new Scalar(0,0,255), 2);
 
                         Utils.matToBitmap(mRgba, bitmap);
                         Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, theLargeFace.x, theLargeFace.y, theLargeFace.width, theLargeFace.height);
@@ -919,7 +1036,6 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-
     public void onEventMainThread(BusEvent event) {
 //        mLog.d(TAG, "event:> " + event.getEventType());
         switch (event.getEventType()) {
@@ -949,7 +1065,7 @@ public class VFRDetect20210303Fragment extends Fragment {
             case FACE_DETECT_DONE:
                 stopCameraFunction();
                 break;
-            case DETECT_INVALIDATE:
+            case DETECT_DONE_SHOW_SNAPSHOT:
                 detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
                 faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap);
@@ -995,26 +1111,48 @@ public class VFRDetect20210303Fragment extends Fragment {
                     if (results != null && results.getConfidence() > 0.94) {
                         maskResults = results.getClasses();
                         detectResult = results;
-                        canShowTempFlag = true;
                         switch (results.getClasses()) {
                             case 1: // NoMask
-//                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width - offset, results.getY_min() * height - offset),
-//                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_red, 3);
+                                canShowTempFlag = true;
+//                                mLog.d(TAG, "results.getX_min():> " + results.getX_min() + ", results.getX_max():> " + results.getX_max());
+//                                mLog.d(TAG, "(int)(results.getX_min() * screenWidth - offset):> " + (int)(results.getX_min() * screenWidth - offset) +
+//                                        ", (int)(results.getY_min() * screenHeight - offset):> " + (int)(results.getY_min() * screenHeight - offset));
+////                                mLog.d(TAG, "results.getY_min():> " + results.getY_min() + ", results.getY_max():> " + results.getY_max());
+//                                mLog.d(TAG, "(int)(results.getX_max() * screenWidth + offset):> " + (int)(results.getX_max() * screenWidth + offset) +
+//                                        ", (int)(results.getY_max() * screenHeight + offset):> " + (int)(results.getY_max() * screenHeight + offset));
+//                        Imgproc.rectangle(mRgba,
+////                                new org.opencv.core.Point( (int) 5, (int)5),
+////                                new org.opencv.core.Point( (int)5, (int)5),
+//                                new org.opencv.core.Point( (int)(results.getX_min() * screenWidth - offset), (int)(results.getY_min() * screenHeight - offset) ),
+//                                new org.opencv.core.Point( (int)(results.getX_max() * screenWidth + offset), (int)(results.getY_max() * screenHeight + offset) ),
+//                                new Scalar(0, 255, 0, 255), 3);
 //                        Imgproc.putText(mRgba, "No Mask " + String.format("{"Attachments":[{"__type":"ItemIdAttachment:#Exchange","ItemId":{"__type":"ItemId:#Exchange","ChangeKey":null,"Id":"AAMkADA3N2YzZWEwLWIzYjMtNDgxOS1iZTgyLWVjNDNiMjY3ZDM1YQBGAAAAAAAcl1sCtwkBSbeQy2pznjzTBwBbCJtwEhi3QbCQIbpG/X6PAAAAAAEMAABbCJtwEhi3QbCQIbpG/X6PAAJAiVVQAAA="},"Name":"大家的尾牙善款_成為雪中的熱炭","IsInline":false},{"__type":"ItemIdAttachment:#Exchange","ItemId":{"__type":"ItemId:#Exchange","ChangeKey":null,"Id":"AAMkADA3N2YzZWEwLWIzYjMtNDgxOS1iZTgyLWVjNDNiMjY3ZDM1YQBGAAAAAAAcl1sCtwkBSbeQy2pznjzTBwBbCJtwEhi3QbCQIbpG/X6PAAAAAAEMAABbCJtwEhi3QbCQIbpG/X6PAAJAiVVPAAA="},"Name":"大家的尾牙善款_成為雪中的熱炭","IsInline":false}]}(%.1f%%) ", results.getConfidence() * 100.0f) , new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(255,0,0), 2);
 //                                MessageTools.showToast(getContext(), "No Mask");
                                 break;
                             case 0: // Mask
-//                        Imgproc.rectangle(mRgba, new Point(results.getX_min() * width + offset, results.getY_min() * height + offset),
-//                                new Point(results.getX_max() * width + offset, results.getY_max() * height + offset), faceRectColor_green, 3);
+                                canShowTempFlag = true;
+//                                //                                mLog.d(TAG, "results.getX_min():> " + results.getX_min() + ", results.getX_max():> " + results.getX_max());
+//                                mLog.d(TAG, "(int)(results.getX_min() * screenWidth - offset):> " + (int)(results.getX_min() * screenWidth - offset) +
+//                                        ", (int)(results.getY_min() * screenHeight - offset):> " + (int)(results.getY_min() * screenHeight - offset));
+////                                mLog.d(TAG, "results.getY_min():> " + results.getY_min() + ", results.getY_max():> " + results.getY_max());
+//                                mLog.d(TAG, "(int)(results.getX_max() * screenWidth + offset):> " + (int)(results.getX_max() * screenWidth + offset) +
+//                                        ", (int)(results.getY_max() * screenHeight + offset):> " + (int)(results.getY_max() * screenHeight + offset));
+
+//                                Imgproc.rectangle(mRgba,
+//                                new org.opencv.core.Point(results.getX_min() * screenWidth + offset, results.getY_min() * screenHeight + offset),
+//                                new org.opencv.core.Point(results.getX_max() * screenWidth + offset, results.getY_max() * screenHeight + offset),
+//                                new Scalar(0, 255, 255, 0), 3);
 //                        Imgproc.putText(mRgba, "Mask " + String.format("(%.1f%%) ", results.getConfidence() * 100.0f), new Point(results.getX_min() * width, results.getY_min() * height), Core.TYPE_MARKER, 5.0, new Scalar(0,255,0), 2);
 //                                MessageTools.showToast(getContext(), "Mask On");
                                 break;
+                            default:
+                                throw new IllegalStateException("Unexpected value: " + results.getClasses());
                         }
-                        mLog.i(TAG, "mask result= " + results.toString() + ", confidence:> " + results.getConfidence());
+                        mLog.i(TAG, "mask result:> " + results.toString() + ", confidence:> " + results.getConfidence());
                     } else {
                         maskResults = 2; // 2 means not detected yet
                         canShowTempFlag = false;
-                        mLog.w(TAG, "maskResults is NULL!!!!!");
+                        mLog.w(TAG, "* detect frame NO RESULTS *");
                     }
                 } catch (Exception e) {
                     maskResults = 2; // 2 means not detected yet
@@ -1107,7 +1245,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     }
 
     private void startRecheckProcess() {
-        mLog.d(TAG, "timeout:> " + VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() + " s");
+        mLog.d(TAG, "startRecheckProcess, timeout:> " + VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() + " s");
         reCheckHandler.removeCallbacks(mFragmentRunnable);
         reCheckHandler.postDelayed(mFragmentRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
     }
@@ -1157,7 +1295,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private Runnable detectPageRunnable = new Runnable() {
         // 1 second
         private static final long task_minimum_tick_time_msec = 300; // one tick 0.3s
-        int period = 5;
+        int period = 10;
 
         @Override
         public void run() {
@@ -1166,12 +1304,12 @@ public class VFRDetect20210303Fragment extends Fragment {
                 try {
                     long start_time_tick = System.currentTimeMillis();
                     if (tick_count % period == 0) {
-//                        mLog.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
+//                            mLog.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
                         preview_frames = 0;
                         fps = 0;
                     }
 
-                    if (tick_count % 10 == 9) { // 0.3 * 9 = 2.7s
+                    if (tick_count % 5 == 1) { // 0.3 * 5 = 1.5s
                         if (!isFullDetectProcessDone) {
                             canStartToDetectGate = true;
                         }
@@ -1227,6 +1365,4 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-    private SimpleDateFormat rfc3339 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.TAIWAN);
-    private SimpleDateFormat displayFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.TAIWAN);
 }

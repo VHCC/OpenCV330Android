@@ -25,6 +25,10 @@ import android.os.Build;
 import android.view.InputDevice;
 import android.widget.Toast;
 
+import com.blankj.utilcode.util.DeviceUtils;
+
+import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
+import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -40,6 +44,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -69,10 +74,9 @@ import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_LOG_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE;
@@ -91,6 +95,8 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_RFID_DETECT_DONE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
@@ -293,7 +299,7 @@ public class App extends Application {
     private Thread appThread;
     private Runnable appRunnable = new Runnable() {
 
-        private static final long task_minimum_tick_time_msec = 800; // 1 second
+        private static final long task_minimum_tick_time_msec = 800; // 0.8 second
 
         @Override
         public void run() {
@@ -364,7 +370,6 @@ public class App extends Application {
         return Build.MODEL;
     }
 
-    public static String staticFRSSessionID;
 
     private DecimalFormat df = new DecimalFormat("0.00");
 
@@ -382,16 +387,6 @@ public class App extends Application {
             switch (requestCode) {
                 case APP_CODE_UPDATE_IMAGE:
                     AppBus.getInstance().post(new BusEvent("hide overlay", APP_CODE_UPDATE_IMAGE_SUCCESS));
-                    break;
-                case APP_CODE_FRS_LOGIN:
-                    try {
-                        JSONObject loginResponse = new JSONObject(response);
-                        staticFRSSessionID = loginResponse.getString("sessionId");
-                        mLog.i(TAG, "getFRS Customer List, sessionId= " + staticFRSSessionID);
-                        OKHttpAgent.getInstance().getFRSRequest();
-                    } catch (JSONException | IOException e) {
-                        e.printStackTrace();
-                    }
                     break;
                 case APP_CODE_FRS_GET_FACE_ORIGINAL:
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS));
@@ -495,6 +490,7 @@ public class App extends Application {
                         JSONObject kioskDeviceHBResp = new JSONObject(response);
                         JSONObject kioskDeviceHB = kioskDeviceHBResp.getJSONObject("vmsKioskDeviceHB");
                         Boolean isNeedSync = kioskDeviceHB.getBoolean("isNeedSync");
+                        Boolean isNeedCheckLogFile = kioskDeviceHB.getBoolean("isNeedCheckLogFile");
                         if (isNeedSync) {
                             AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
                             VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
@@ -504,6 +500,17 @@ public class App extends Application {
                                 e.printStackTrace();
                             }
                         }
+                        if (isNeedCheckLogFile) {
+                            File logDir = new File(LogWriter.showLogFileFolder());
+                            walkDir(logDir);
+                            VmsKioskUpdateLogFileList mMap = new VmsKioskUpdateLogFileList(VMSEdgeCache.getInstance().getVmsKioskUuid(), fileNameList, fileSizeList);
+                            try {
+                                OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -535,6 +542,29 @@ public class App extends Application {
                     }
                     AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS));
                     break;
+                case APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST:
+                    try {
+                        JSONObject responseLogFile = new JSONObject(response);
+                        JSONArray needUploadFiles = responseLogFile.getJSONArray("needUploadFileList");
+                        mLog.d(TAG, needUploadFiles.toString());
+                        mLog.d(TAG, "array size:> " + needUploadFiles.length());
+
+                        for (int index = 0; index < needUploadFiles.length(); index ++) {
+                            File logfile = new File(android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + needUploadFiles.get(index));
+
+                            HashMap<Object, Object> mMapUpload = new VmsLogUploadFile(logfile);
+                            try {
+                                OKHttpAgent.getInstance().postUploadFileRequest(mMapUpload, APP_CODE_LOG_UPLOAD);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS));
+                    break;
             }
         }
 
@@ -547,8 +577,6 @@ public class App extends Application {
         public void onRequestFail(String errorResult, int requestCode) {
             mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult + ", requestCode= " + requestCode);
             switch (requestCode) {
-                case APP_CODE_FRS_LOGIN:
-                    break;
                 case APP_CODE_THC_1101_HU_GET_TEMP:
                     isThermometerServerConnected = false;
                     break;
@@ -567,9 +595,6 @@ public class App extends Application {
 
     public void onEventBackgroundThread(BusEvent event) {
         switch (event.getEventType()) {
-            case APP_CODE_FRS_LOGIN_SUCCESS:
-                mLog.d(TAG, " *** APP_CODE_FRS_LOGIN_SUCCESS *** ");
-                break;
             case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS:
                 mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS");
                 break;
@@ -604,4 +629,32 @@ public class App extends Application {
     // handler event
     public static final int VFR_HEART_BEATS = 6001;
     public static final int TIME_TICK = 7001;
+
+
+    private ArrayList<String> fileNameList;
+    private ArrayList<Long> fileSizeList;
+    private void walkDir(File dir) {
+        fileNameList = new ArrayList<>();
+        fileSizeList = new ArrayList<>();
+
+        String txtPattern = ".txt";
+
+        File listFile[] = dir.listFiles();
+
+        if (listFile != null) {
+            for (int i = 0; i < listFile.length; i++) {
+
+                if (listFile[i].isDirectory()) {
+                    walkDir(listFile[i]);
+                } else {
+                    if (listFile[i].getName().endsWith(txtPattern) && listFile[i].getName().contains(DeviceUtils.getAndroidID())){
+                        fileNameList.add(listFile[i].getName());
+                        fileSizeList.add(listFile[i].length());
+                        mLog.d(TAG, "name:> " + listFile[i].getName() + ", file Size:> " + listFile[i].length());
+                        //Do what ever u want
+                    }
+                }
+            }
+        }
+    }
 }

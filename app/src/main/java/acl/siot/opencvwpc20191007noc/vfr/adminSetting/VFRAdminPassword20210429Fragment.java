@@ -50,7 +50,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
     private TextFieldBoxes text_field_boxes;
     private ExtendedEditText extended_edit_text;
 
-    private String passwordInput = "123456";
+    private String passwordInput = "";
     private ImageView thermoConnectStatus;
 
     private Button adminHomeBtn;

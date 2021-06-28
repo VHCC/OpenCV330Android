@@ -6,7 +6,6 @@ import java.util.HashMap;
 import acl.siot.opencvwpc20191007noc.api.URLConstants;
 import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 
-import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.APP_KEY_HTTPS_URL;
 
 
@@ -25,7 +24,6 @@ public class FrsVerify extends HashMap<Object, Object> {
 
     public FrsVerify(String encoded) {
 
-        super.put(API_KEY_SESSIONID, staticFRSSessionID);
         super.put(API_KEY_TARGET_SCORE, Float.valueOf(VFREdgeCache.getInstance().getMatchScore()));
         super.put(API_KEY_REQUEST_CLIENT, "465");
         super.put(API_KEY_ACTION_ENABLE, 0);

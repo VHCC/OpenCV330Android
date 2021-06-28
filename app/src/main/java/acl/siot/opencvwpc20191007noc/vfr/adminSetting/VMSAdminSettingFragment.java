@@ -23,6 +23,8 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import acl.siot.opencvwpc20191007noc.vms.VmsKioskApplyUpdate;
+import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -44,6 +46,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import acl.siot.opencvwpc20191007noc.AppBus;
 import acl.siot.opencvwpc20191007noc.BusEvent;
@@ -79,6 +82,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST;
 import static cn.pedant.SweetAlert.SweetAlertDialog.BUTTON_CONFIRM;
 
 /**
@@ -232,8 +236,8 @@ public class VMSAdminSettingFragment extends Fragment {
 //                        VMSEdgeCache.getInstance().setVms_host_port(server_port.getText().toString());
 //                        VMSEdgeCache.getInstance().setVms_host_is_ssl(server_is_ssl.isChecked());
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_host(trd_hostname.getText().toString());
-                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_port(trd_port.getText().toString());
-                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_enable_ssl(trd_is_ssl.isChecked());
+//                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_port(trd_port.getText().toString());
+//                        VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_enable_ssl(trd_is_ssl.isChecked());
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_account(trd_account.getText().toString());
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(trd_password.getText().toString());
                         break;
@@ -312,8 +316,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         server_is_ssl = view.findViewById(R.id.server_isssl);
 
                         trd_hostname = view.findViewById(R.id.trd_hostname);
-                        trd_port = view.findViewById(R.id.trd_port);
-                        trd_is_ssl = view.findViewById(R.id.trd_is_ssl);
+//                        trd_port = view.findViewById(R.id.trd_port);
+//                        trd_is_ssl = view.findViewById(R.id.trd_is_ssl);
                         trd_account = view.findViewById(R.id.trd_account);
                         trd_password = view.findViewById(R.id.trd_password);
 
@@ -322,8 +326,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         server_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_host_is_ssl());
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
-                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+//                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
+//                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
 
@@ -393,6 +397,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         adapter.setDropDownViewResource(R.layout.vms_spinner_drpodown_item);
                         deviceModeSpinner.setAdapter(adapter);
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
+                        deviceModeSpinner.setEnabled(isVmsConnected);
 
                         cardReaderCheckBox = view.findViewById(R.id.cardReaderCheckBox);
 
@@ -540,8 +545,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         server_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_host_is_ssl());
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
-                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+//                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
+//                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
                         break;
@@ -549,6 +554,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         uuid.setText(VMSEdgeCache.getInstance().getVmsKioskUuid());
                         deviceName.setText(VMSEdgeCache.getInstance().getVmsKioskDeviceName());
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
+                        deviceModeSpinner.setEnabled(isVmsConnected);
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setEnabled(isThermometerServerConnected);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
@@ -952,8 +958,8 @@ public class VMSAdminSettingFragment extends Fragment {
                         server_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_host_is_ssl());
 
                         trd_hostname.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_host());
-                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
-                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
+//                        trd_port.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_port());
+//                        trd_is_ssl.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable_ssl());
                         trd_account.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_account());
                         trd_password.setText(VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_password());
                         break;
@@ -961,6 +967,7 @@ public class VMSAdminSettingFragment extends Fragment {
                         uuid.setText(VMSEdgeCache.getInstance().getVmsKioskUuid());
                         deviceName.setText(VMSEdgeCache.getInstance().getVmsKioskDeviceName());
                         deviceModeSpinner.setSelection(VMSEdgeCache.getInstance().getVms_kiosk_mode());
+                        deviceModeSpinner.setEnabled(isVmsConnected);
                         optionOptical.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? true : false);
                         optionThermal.setEnabled(isThermometerServerConnected);
                         optionThermal.setChecked(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? false : true);
@@ -1025,14 +1032,13 @@ public class VMSAdminSettingFragment extends Fragment {
                 } else {
                     if (listFile[i].getName().endsWith(txtPattern) && listFile[i].getName().contains(DeviceUtils.getAndroidID())){
                         log_array.add(listFile[i].getName());
-                        mLog.d(TAG, listFile[i].getName());
+                        mLog.d(TAG, "name:> " + listFile[i].getName() + ", file Size:> " + listFile[i].length());
                         //Do what ever u want
                     }
                 }
             }
         }
     }
-
 
     private void readFile(String logFile) {
         logView.setText(" *** " + logFile + " *** ");
@@ -1051,7 +1057,7 @@ public class VMSAdminSettingFragment extends Fragment {
                 do {
                     line = buffreader.readLine();
                     // do something with the line
-                    mLog.d(TAG, line);
+//                    mLog.d(TAG, line);
                     logView.append("\n\n" + line);
                 } while (line != null);
             }

@@ -1,6 +1,7 @@
 package acl.siot.opencvwpc20191007noc.api;
 
 
+import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
@@ -30,6 +31,7 @@ import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
 import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
+import androidx.annotation.RequiresApi;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.MediaType;
@@ -41,8 +43,6 @@ import okhttp3.Response;
 import okhttp3.Route;
 
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
-import static acl.siot.opencvwpc20191007noc.App.staticFRSSessionID;
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_LOGIN_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
 import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
@@ -108,21 +108,22 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
+            try {
 //            mIRequestInterface.showLoading();
-            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-            mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-            JSONObject jsonObjRaw = new JSONObject(mData);
-            String json = null;
-            try {
-                json = jsonObjRaw.toString(4);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
-            RequestBody body = RequestBody.create(JSON, json);
+                final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+                mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+                JSONObject jsonObjRaw = new JSONObject(mData);
+                String json = null;
+                try {
+                    json = jsonObjRaw.toString(4);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
+                RequestBody body = RequestBody.create(JSON, json);
 
-            try {
-            Request request = new Request.Builder()
+
+                Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
 //                    .header("Content-signUpEventType", "application/json")
@@ -200,19 +201,20 @@ public class OKHttpAgent {
 
         @Override
         public void run() {
-            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-            mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-            JSONObject jsonObjRaw = new JSONObject(mData);
-            String json = null;
             try {
-                json = jsonObjRaw.toString(4);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            mLog.d(TAG, "PostTPEThread@" + this.hashCode() + ", request= " + json);
-            RequestBody body = RequestBody.create(JSON, json);
+                final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+                mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+                JSONObject jsonObjRaw = new JSONObject(mData);
+                String json = null;
+                try {
+                    json = jsonObjRaw.toString(4);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                mLog.d(TAG, "PostTPEThread@" + this.hashCode() + ", request= " + json);
+                RequestBody body = RequestBody.create(JSON, json);
 
-            try {
+
                 Request request = new Request.Builder()
                         .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -301,7 +303,8 @@ public class OKHttpAgent {
                         .setType(MultipartBody.FORM)
                         .addFormDataPart("uploadFile", file.getName(),
                                 RequestBody.create(MediaType.parse("text/plain"), file))
-                        .addFormDataPart("deviceUUID", VMSEdgeCache.getInstance().getVmsKioskUuid())
+                        .addFormDataPart("kioskUUID", VMSEdgeCache.getInstance().getVmsKioskUuid())
+                        .addFormDataPart("fileSize", String.valueOf(file.length()))
                         .build();
                 Request request = new Request.Builder().url(mainURL).post(formBody).build();
                 Response response = mClient.newCall(request).execute();
@@ -478,6 +481,7 @@ public class OKHttpAgent {
             getCode = requestCode;
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
             final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
@@ -539,10 +543,12 @@ public class OKHttpAgent {
         public GetFRSThread() {
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
 //            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
-            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
+//            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
+            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + "staticFRSSessionID" + "&page_size=1000&skip_pages=0";
             mLog.d(TAG, "get FRS persons request= " + mainURL);
             try {
             Request request = new Request.Builder()
@@ -591,7 +597,7 @@ public class OKHttpAgent {
                 staticPersonsEmployeeNoArray.add(personInfo.getString("employeeno"));
             }
             isGetStaticPersonsEmployeeNoArray = true;
-            AppBus.getInstance().post(new BusEvent("login success", APP_CODE_FRS_LOGIN_SUCCESS));
+//            AppBus.getInstance().post(new BusEvent("login success", APP_CODE_FRS_LOGIN_SUCCESS));
 //            mLog.i(TAG, "staticPersonsEmployeeNoArray length= " + staticPersonsEmployeeNoArray.size());
             try {
 //                mIRequestInterface.onRequestDBUpdateSuccess(jsonObj.toString());

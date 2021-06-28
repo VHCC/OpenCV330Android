@@ -109,7 +109,7 @@ public class VMSEdgeCache {
     public static final String SHARE_VMS_EDGE_INFO_KIOSK_DEFAULT_TEMPLATE_UUID =
             "share_vms_edge_info_kiosk_default_template_uuid";
 
-    private Boolean vms_kiosk_third_event_party_enable = false; // default false
+    private Boolean vms_kiosk_third_event_party_enable = true; // default false
     public static final String SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_ENABLE =
             "share_vms_edge_info_kiosk_third_event_party_enable";
 
@@ -288,7 +288,7 @@ public class VMSEdgeCache {
 
     public String getVms_kiosk_avalo_temp_unit() {
         Map<String, ?> map = sp.getAll();
-        return ((String) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_AVALO_TEMP_UNIT));
+        return ((String) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_AVALO_TEMP_UNIT) == null ? "C" : (String) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_AVALO_TEMP_UNIT));
     }
 
     public void setVms_kiosk_avalo_temp_unit(String vms_kiosk_avalo_temp_unit) {
@@ -299,7 +299,7 @@ public class VMSEdgeCache {
 
     public Boolean getVms_kiosk_is_enable_temp() {
         Map<String, ?> map = sp.getAll();
-        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_TEMP) == null ? false : (Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_TEMP));
+        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_TEMP) == null ? true : (Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_TEMP));
     }
 
     public void setVms_kiosk_is_enable_temp(Boolean vms_kiosk_is_enable_temp) {
@@ -310,7 +310,7 @@ public class VMSEdgeCache {
 
     public Boolean getVms_kiosk_is_enable_mask() {
         Map<String, ?> map = sp.getAll();
-        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_MASK) == null ? false : (Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_MASK));
+        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_MASK) == null ? true : (Boolean) map.get(SHARE_VMS_EDGE_INFO_VMS_KIOSK_IS_ENABLE_MASK));
     }
 
     public void setVms_kiosk_is_enable_mask(Boolean vms_kiosk_is_enable_mask) {
@@ -344,7 +344,7 @@ public class VMSEdgeCache {
 
     public Boolean getVms_kiosk_third_event_party_enable() {
         Map<String, ?> map = sp.getAll();
-        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_ENABLE) == null ? false : (Boolean) map.get(SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_ENABLE));
+        return ((Boolean) map.get(SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_ENABLE) == null ? true : (Boolean) map.get(SHARE_VMS_EDGE_INFO_KIOSK_THIRD_EVENT_PARTY_ENABLE));
     }
 
     public void setVms_kiosk_third_event_party_enable(Boolean vms_kiosk_third_event_party_enable) {

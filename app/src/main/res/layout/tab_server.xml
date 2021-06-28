@@ -261,6 +261,7 @@
 
                     <!-- DATA    -->
                     <LinearLayout
+                        android:visibility="gone"
                         android:paddingTop="15dp"
                         android:weightSum="3"
                         android:orientation="horizontal"
@@ -294,6 +295,7 @@
 
                     <!-- DATA    -->
                     <LinearLayout
+                        android:visibility="gone"
                         android:paddingTop="15dp"
                         android:weightSum="3"
                         android:orientation="horizontal"

@@ -506,7 +506,8 @@ public abstract class CameraBridgeViewBase extends SurfaceView implements Surfac
 //        return new Size(1920, 1080);
         switch (SystemPropertiesProxy.get("ro.product.model")) {
             case "usc_130_160":
-                return new Size(1600, 1200);
+//                return new Size(1600, 1200);
+                return new Size(800, 600);
             case "UTC-115G":
                 return new Size(1920, 1080);
             case "HIT-507":
