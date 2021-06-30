@@ -679,7 +679,7 @@ public class VFRDetect20210303Fragment extends Fragment {
         }
     }
 
-    
+
     // 處理 avalo websocket data
     // 連到 avalo 才有資料
     private BleHandler mHandler = new BleHandler(getContext());
@@ -1257,14 +1257,6 @@ public class VFRDetect20210303Fragment extends Fragment {
             thermalConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
 
         if (!isThermometerServerConnected) {
-            if (null != c && !c.isOpen()) {
-                connectAvaloThermalSocket();
-            }
-            if (null != c) {
-                c.close();
-            }
-        }
-        if (!isThermometerServerConnected) {
             person_temp_static = 0.0f;
         }
     }
@@ -1338,6 +1330,17 @@ public class VFRDetect20210303Fragment extends Fragment {
                     if (tick_count % 5 == 1) { // 0.3 * 5 = 1.5s
                         if (!isFullDetectProcessDone) {
                             canStartToDetectGate = true;
+                        }
+                    }
+
+                    if (tick_count % 10 == 5) {
+                        if (!isThermometerServerConnected) {
+                            if (null != c && !c.isOpen()) {
+                                connectAvaloThermalSocket();
+                            }
+                            if (null != c) {
+                                c.close();
+                            }
                         }
                     }
 

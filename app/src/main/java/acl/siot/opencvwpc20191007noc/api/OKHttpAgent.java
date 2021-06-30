@@ -516,12 +516,12 @@ public class OKHttpAgent {
                 } catch (IOException e) {
                     e.printStackTrace();
                     isThermometerServerConnected = false;
-                    mLog.e(TAG, "e= " + e.getMessage());
+                    mLog.e(TAG, "GetThread, e= " + e.getMessage());
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     isThermometerServerConnected = false;
-                    mLog.e(TAG, "e= " + e.getMessage());
+                    mLog.e(TAG, "GetThread, e= " + e.getMessage());
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 }
             }
