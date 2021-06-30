@@ -17,6 +17,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.blankj.utilcode.util.ProcessUtils;
+
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.dbHelper.DBAdapter;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
@@ -480,6 +482,8 @@ public class VMSMainActivity extends AppCompatActivity {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (System.currentTimeMillis() - firstTime < 3000) {
                 finish();
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
                 return true;
             } else {
                 firstTime = System.currentTimeMillis();
@@ -518,9 +522,16 @@ public class VMSMainActivity extends AppCompatActivity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onDestroy() {
+        mLog.d(TAG, " * onDestroy");
         stopUSBService();
+        App.threadObject.setRunning(false);
+        AppBus.getInstance().unregister(this);
+        finish();
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(1);
         super.onDestroy();
     }
 

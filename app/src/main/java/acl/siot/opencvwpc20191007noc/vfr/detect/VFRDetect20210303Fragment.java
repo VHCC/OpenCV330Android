@@ -89,6 +89,8 @@ import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_TPE;
@@ -562,6 +564,9 @@ public class VFRDetect20210303Fragment extends Fragment {
 //            staticDetectMaskSwitch = true;
             lazyLoad();
             connectAvaloThermalSocket();
+        } else {
+            threadObject.setRunning(false);
+            reCheckHandler.removeCallbacks(mFragmentRunnable);
         }
     }
 
@@ -853,6 +858,8 @@ public class VFRDetect20210303Fragment extends Fragment {
             openCvCameraView.disableView();
         }
         stopDetectThread();
+        threadObject.setRunning(false);
+        reCheckHandler.removeCallbacks(mFragmentRunnable);
     }
 
     @Override
@@ -864,6 +871,8 @@ public class VFRDetect20210303Fragment extends Fragment {
     @Override
     public void onDestroy() {
         AppBus.getInstance().unregister(this);
+        threadObject.setRunning(false);
+        reCheckHandler.removeCallbacks(mFragmentRunnable);
         super.onDestroy();
     }
 
@@ -1235,6 +1244,14 @@ public class VFRDetect20210303Fragment extends Fragment {
             case APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS:
                 mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS");
                 break;
+            case APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS:
+                onPause();
+                break;
+            case APP_CODE_VMS_KIOSK_DEVICE_SYNC:
+                if(getUserVisibleHint()) {
+                    onResume();
+                }
+                break;
         }
         if (null != thermalConnectStatus)
             thermalConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
@@ -1279,6 +1296,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
     private void goToAdminSettingPage() {
         stopCameraFunction();
+        threadObject.setRunning(false);
         onFragmentInteractionListener.onClickAdminSetting();
     }
 

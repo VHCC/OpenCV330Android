@@ -1,20 +1,20 @@
 package acl.siot.opencvwpc20191007noc.vfr.home;
 
+import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.blankj.utilcode.util.AppUtils;
+import com.chaos.view.PinView;
 
 import org.json.JSONArray;
 
@@ -27,14 +27,13 @@ import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
-import acl.siot.opencvwpc20191007noc.vms.VmsKioskHB;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
-import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_HB;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_SYNC_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS;
 
 /**
  * Created by IChen.Chu on 2020/05/13
@@ -90,11 +89,9 @@ public class VFRHomeFragment extends Fragment {
         if (getArguments() != null) {
             mDelay = getArguments().getLong(ARG_HOME_DELAY, ARG_HOME_DELAY_2000_MS);
         }
+        mLog.d(TAG, VMSEdgeCache.getInstance().showInfoAll());
         // register event Bus
         AppBus.getInstance().register(this);
-
-
-        mLog.d(TAG, VMSEdgeCache.getInstance().showInfoAll());
     }
 
     @Nullable
@@ -108,11 +105,13 @@ public class VFRHomeFragment extends Fragment {
 
     private void initViewsFeature() {
         appVersion.setText("v" + AppUtils.getAppVersionName());
-        AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
     }
 
     @Override
     public void onResume() {
+        // register event Bus
+//        AppBus.getInstance().register(this);
+        AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
         super.onResume();
 //        mHandler.postDelayed(mFragmentRunnable, mDelay);
     }
@@ -121,6 +120,14 @@ public class VFRHomeFragment extends Fragment {
     public void onStop() {
         super.onStop();
         mHandler.removeCallbacks(mFragmentRunnable);
+        AppBus.getInstance().unregister(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        mLog.d(TAG, " * onDestroy");
+        AppBus.getInstance().unregister(this);
+        super.onDestroy();
     }
 
     // -------------------------------------------
@@ -158,16 +165,14 @@ public class VFRHomeFragment extends Fragment {
                 syncDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE)
                         .setTitleText("Loading...")
                         .setContentText("Sync VMS Data!");
-                syncDialog.show();
                 syncDialog.setCancelable(true);
+                syncDialog.show();
                 syncDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialogInterface) {
                         mHandler.postDelayed(mFragmentRunnable, 100L);
                     }
                 });
-//                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
-//                        Settings.Secure.ANDROID_ID);
 
                 VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
                 try {
@@ -177,12 +182,13 @@ public class VFRHomeFragment extends Fragment {
                 }
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_SYNC_SUCCESS:
+                if (atDialog_kiosk_inactive != null && atDialog_kiosk_inactive.isShowing()) {
+                    atDialog_kiosk_inactive.dismiss();
+                }
                 mHandler.postDelayed(mFragmentRunnable, mDelay);
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL:
-
                 VMSEdgeCache.getInstance().setVms_kiosk_mode(0);
-
                 syncDialog.changeAlertType(SweetAlertDialog.WARNING_TYPE);
                 syncDialog.setTitleText("Warn");
                 syncDialog.setContentText("Device isn't connect to VMS yet");
@@ -194,7 +200,28 @@ public class VFRHomeFragment extends Fragment {
                     }
                 });
                 break;
+            case APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS:
+                mLog.d(TAG, "APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS");
+                if (syncDialog != null && syncDialog.isShowing()) {
+                    syncDialog.dismiss();
+                }
+                if (atDialog_kiosk_inactive != null && atDialog_kiosk_inactive.isShowing()) {
+                    return;
+                }
+
+                LayoutInflater inflater_change_connect = getLayoutInflater();
+                myView_alertDialog = inflater_change_connect.inflate(R.layout.dialog_kiosk_inactive_content, null);
+
+                builder = new AlertDialog.Builder(getContext());
+                builder.setView(myView_alertDialog);
+                atDialog_kiosk_inactive = builder.create();
+                atDialog_kiosk_inactive.setCancelable(false);
+                atDialog_kiosk_inactive.show();
+                break;
         }
     }
 
+    private AlertDialog atDialog_kiosk_inactive;
+    AlertDialog.Builder builder;
+    View myView_alertDialog;
 }

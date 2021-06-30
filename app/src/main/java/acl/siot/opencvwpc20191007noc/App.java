@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.DeviceUtils;
 
+import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
 import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import androidx.annotation.NonNull;
@@ -98,6 +99,8 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_RFID_DETECT_DONE;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_STATUS_INACTIVE;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
@@ -177,6 +180,7 @@ public class App extends Application {
 //        mLog.d(TAG, "isExpire:> " + TRAIL_IS_EXPIRE);
 //        if (TRAIL_IS_EXPIRE)
 //            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
+        threadObject.setRunning(true);
     }
 
     // vms backend connect Status
@@ -201,12 +205,14 @@ public class App extends Application {
             if (isRFIDFunctionOn) {
 //                detectSerialNumber = result.toString();
 //                mLog.d(TAG, "detectSerialNumber:> " + detectSerialNumber);
-                MessageTools.showToast(getApplicationContext(), result.toString());
                 if (App.vmsPersonSyncMapSerial.containsKey(result.toString().trim())) {
+                    MessageTools.showToast(getApplicationContext(), result.toString());
                     uploadPersonData = App.vmsPersonSyncMapSerial.get(result.toString().trim());
                     mLog.d(TAG, "rfid Person:> " + uploadPersonData);
+                    AppBus.getInstance().post(new BusEvent(result.toString(), APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
+                } else {
+                    MessageTools.showToast(getApplicationContext(), result.toString() + " 此卡號無效");
                 }
-                AppBus.getInstance().post(new BusEvent(result.toString(), APP_CODE_VMS_KIOSK_RFID_DETECT_DONE));
             }
         }
 
@@ -243,14 +249,14 @@ public class App extends Application {
         }
     }
 
+
     @Override
     public void onTerminate() {
-        mLog.i(TAG, "========== app ShutDown ==========");
-
+        mLog.i(TAG, "========== app onTerminate ==========");
         if (appThread.isAlive()) {
             appThread.interrupt();
         }
-
+        AppBus.getInstance().unregister(this);
         super.onTerminate();
     }
 
@@ -294,6 +300,19 @@ public class App extends Application {
         }
     }
 
+    static final ThreadObject threadObject = new ThreadObject();
+
+    static class ThreadObject extends Object {
+        boolean isRunning = true;
+
+        public boolean isRunning() {
+            return isRunning;
+        }
+
+        public void setRunning(boolean running) {
+            isRunning = running;
+        }
+    }
 
     // Thread
     private Thread appThread;
@@ -306,7 +325,7 @@ public class App extends Application {
             long tick_count = 0;
             mLog.d(TAG, "task_minimum_tick_time_msec= " + (task_minimum_tick_time_msec));
 
-            while (true) {
+            while (threadObject.isRunning()) {
                 try {
                     long start_time_tick = System.currentTimeMillis();
 
@@ -437,17 +456,20 @@ public class App extends Application {
                     try {
                         isVmsConnected = true;
                         JSONObject kioskDeviceInfoResp = new JSONObject(response);
+//                        mLog.d(TAG, kioskDeviceInfoResp.toString());
                         JSONObject kioskDevice = kioskDeviceInfoResp.getJSONObject("kioskDeviceInfo");
                         JSONObject visitorTemplate = kioskDeviceInfoResp.getJSONObject("visitorTemplate");
                         JSONObject nonVisitorTemplate = kioskDeviceInfoResp.getJSONObject("nonVisitorTemplate");
                         JSONArray vmsRealNamePersons = kioskDeviceInfoResp.getJSONArray("realNamePersons");
-                        mLog.d(TAG, "vmsRealNamePersons len:> " + vmsRealNamePersons.length());
-
-                        for (int index = 0; index < vmsRealNamePersons.length(); index++) {
-                            JSONObject vmsPersonItem = (JSONObject) vmsRealNamePersons.get(index);
-                            vmsPersonSyncMapUUID.put(vmsPersonItem.get("vmsPersonUUID").toString(), vmsPersonItem);
-                            vmsPersonSyncMapSerial.put(vmsPersonItem.get("vmsPersonSerial").toString(), vmsPersonItem);
+                        if (null != vmsRealNamePersons) {
+                            mLog.d(TAG, "vmsRealNamePersons len:> " + vmsRealNamePersons.length());
+                            for (int index = 0; index < vmsRealNamePersons.length(); index++) {
+                                JSONObject vmsPersonItem = (JSONObject) vmsRealNamePersons.get(index);
+                                vmsPersonSyncMapUUID.put(vmsPersonItem.get("vmsPersonUUID").toString(), vmsPersonItem);
+                                vmsPersonSyncMapSerial.put(vmsPersonItem.get("vmsPersonSerial").toString(), vmsPersonItem);
+                            }
                         }
+
                         // sync to device
                         VMSEdgeCache.getInstance().setVmsKioskUuid(kioskDevice.getString("uuid"));
                         VMSEdgeCache.getInstance().setVmsKioskDeviceName(kioskDevice.getString("deviceName"));
@@ -475,15 +497,21 @@ public class App extends Application {
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_account(kioskDevice.getString("tEPAccount"));
                         VMSEdgeCache.getInstance().setVms_kiosk_third_event_party_password(kioskDevice.getString("tEPPassword"));
 
-                        mLog.d(TAG, " VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable:> " +  VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable());
-
                         VMSEdgeCache.getInstance().setVms_kiosk_settingPassword(kioskDevice.getString("settingPassword"));
 
+                        int status = kioskDevice.getInt("status");
+                        mLog.d(TAG, "status:> " + status);
+                        if (status == 2) {
+                            AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_STATUS_INACTIVE)); // 設備停用
+                            return;
+                        }
+
                         LogWriter.storeLogToFile(",SYNC-SERVER-SUCCESS," + new Date().getTime() / 1000);
+                        AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_SYNC_SUCCESS));
                     } catch (JSONException e) {
+                        mLog.e(TAG, "e:> " + e.toString());
                         e.printStackTrace();
                     }
-                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_SYNC_SUCCESS));
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_HB:
                     try {
@@ -570,7 +598,7 @@ public class App extends Application {
 
         @Override
         public void onRequestFail(String errorResult) {
-            mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
+//            mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult);
         }
 
         @Override
@@ -589,6 +617,11 @@ public class App extends Application {
                 case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS:
                     AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL));
                     break;
+                case APP_CODE_VMS_KIOSK_DEVICE_HB:
+                    if (errorResult.equals("DEVICE_INACTIVE")) {
+                        AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_STATUS_INACTIVE));
+                    }
+                    break;
             }
         }
     }
@@ -597,6 +630,10 @@ public class App extends Application {
         switch (event.getEventType()) {
             case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS:
                 mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS");
+                break;
+            case APP_CODE_VMS_KIOSK_STATUS_INACTIVE:
+                AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS));
+//                MessageTools.showLongToast(getBaseContext(), "此設備已經停用");
                 break;
         }
     }

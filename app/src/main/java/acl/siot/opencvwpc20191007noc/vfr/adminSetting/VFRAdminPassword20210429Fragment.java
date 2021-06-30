@@ -87,6 +87,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
+        // register event Bus
         AppBus.getInstance().register(this);
     }
 
@@ -219,6 +220,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
     @Override
     public void onDestroy() {
         mLog.d(TAG, " * onDestroy");
+        AppBus.getInstance().unregister(this);
         super.onDestroy();
     }
 

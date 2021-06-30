@@ -131,6 +131,7 @@ public class VMSAdminSettingFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
+        // register event Bus
         AppBus.getInstance().register(this);
     }
 
@@ -157,6 +158,33 @@ public class VMSAdminSettingFragment extends Fragment {
         time_right = rootView.findViewById(R.id.time_right);
 
         thermoConnectStatus = rootView.findViewById(R.id.thermoConnectStatus);
+    }
+
+    @Override
+    public void onResume() {
+        mLog.d(TAG, " * onResume");
+        // register event Bus
+//        AppBus.getInstance().register(this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        mLog.d(TAG, " * onPause");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        mLog.d(TAG, " * onStop");
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        mLog.d(TAG, " * onDestroy");
+        AppBus.getInstance().unregister(this);
+        super.onDestroy();
     }
 
     final int TAB_SERVER = 0;
@@ -804,33 +832,6 @@ public class VMSAdminSettingFragment extends Fragment {
                 LayoutInflater inflater = LayoutInflater.from(getContext());
                 LinearLayout linearLayout = (LinearLayout) inflater.inflate(R.layout.connect_pin_code, null);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
-
-//                final CodeInput cInput_2 = (CodeInput) linearLayout.findViewById(R.id.pairing);
-//
-//                saDialog_connect_server = new SweetAlertDialog(getContext(), SweetAlertDialog.NORMAL_TYPE);
-//                saDialog_connect_server.setTitleText("Please Enter Paring Code")
-//                        .setCustomView(linearLayout)
-//                        .setConfirmButton("Connect", new SweetAlertDialog.OnSweetClickListener() {
-//                            @Override
-//                            public void onClick(SweetAlertDialog sweetAlertDialog) {
-//                                saDialog_connect_server.changeAlertType(SweetAlertDialog.PROGRESS_TYPE);
-//                                saDialog_connect_server.setCancelable(false);
-//                                String results = "";
-//                                for (int i = 0; i < cInput.getCode().length; i++) {
-//                                    results += String.valueOf(cInput.getCode()[i]);
-//                                }
-//                                mLog.d(TAG, "paring code:> " + results);
-//                                String android_id = Settings.Secure.getString(getContext().getContentResolver(),
-//                                        Settings.Secure.ANDROID_ID);
-//                                VmsKioskConnect mMap = new VmsKioskConnect(results, VMSEdgeCache.getInstance().getVmsKioskDeviceName(), android_id);
-//                                try {
-//                                    OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CONNECT);
-//                                } catch (IOException e) {
-//                                    e.printStackTrace();
-//                                }
-//                            }
-//                        })
-//                        .show();
 
                 break;
             case SHOW_DIALOG_DISCONNECT:
