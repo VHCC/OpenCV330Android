@@ -31,6 +31,7 @@ import studio.carbonylgroup.textfieldboxes.TextFieldBoxes;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
+import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 
 /**
  * Created by IChen.Chu on 2020/05/25
@@ -247,7 +248,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
                 break;
         }
         if (null != thermoConnectStatus)
-            thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
+            thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
     }
 
 }

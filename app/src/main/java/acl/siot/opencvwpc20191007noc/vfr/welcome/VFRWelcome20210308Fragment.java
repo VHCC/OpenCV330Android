@@ -49,6 +49,7 @@ import acl.siot.opencvwpc20191007noc.vms.VmsUpload_TPE;
 
 import static acl.siot.opencvwpc20191007noc.App.VFR_HEART_BEATS;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
+import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
@@ -460,7 +461,6 @@ public class VFRWelcome20210308Fragment extends Fragment {
                 time_right.setText(s_2);
                 break;
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
-                thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
                 break;
             case APP_CODE_VMS_SERVER_UPLOAD_SUCCESS:
                 readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
@@ -470,6 +470,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
                 isStartScanBarCode = false;
                 break;
         }
+        thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
     }
 
     private Bitmap getBitmap(int drawableRes) {

@@ -1019,7 +1019,7 @@ public class VMSAdminSettingFragment extends Fragment {
                 break;
         }
         if (null != thermoConnectStatus) {
-            thermoConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
+            thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
         }
     }
 

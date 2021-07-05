@@ -456,7 +456,7 @@ public class App extends Application {
                     try {
                         isVmsConnected = true;
                         JSONObject kioskDeviceInfoResp = new JSONObject(response);
-//                        mLog.d(TAG, kioskDeviceInfoResp.toString());
+                        mLog.d(TAG, kioskDeviceInfoResp.toString());
                         JSONObject kioskDevice = kioskDeviceInfoResp.getJSONObject("kioskDeviceInfo");
                         JSONObject visitorTemplate = kioskDeviceInfoResp.getJSONObject("visitorTemplate");
                         JSONObject nonVisitorTemplate = kioskDeviceInfoResp.getJSONObject("nonVisitorTemplate");
@@ -620,9 +620,12 @@ public class App extends Application {
                 case APP_CODE_VMS_KIOSK_DEVICE_HB:
                     if (errorResult.equals("DEVICE_INACTIVE")) {
                         AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_STATUS_INACTIVE));
+                    } else {
+                        isVmsConnected = false;
                     }
                     break;
             }
+
         }
     }
 
@@ -667,7 +670,6 @@ public class App extends Application {
     public static final int VFR_HEART_BEATS = 6001;
     public static final int TIME_TICK = 7001;
 
-
     private ArrayList<String> fileNameList;
     private ArrayList<Long> fileSizeList;
     private void walkDir(File dir) {
@@ -694,4 +696,5 @@ public class App extends Application {
             }
         }
     }
+
 }

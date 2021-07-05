@@ -823,6 +823,15 @@ public class VFRDetect20210303Fragment extends Fragment {
                             startRecheckProcess();
 //                            AppBus.getInstance().post(new BusEvent("", SHOW_NO_VMS_SERVER_QRCODE));
                         }
+
+                        if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+                            try {
+                                uploadDataTPE();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
                         LogWriter.storeLogToFile("," + detectLog + "," + new Date().getTime() / 1000);
 
                         if (!isDetectValidate) {
@@ -1254,7 +1263,7 @@ public class VFRDetect20210303Fragment extends Fragment {
                 break;
         }
         if (null != thermalConnectStatus)
-            thermalConnectStatus.setImageDrawable(isThermometerServerConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
+            thermalConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
 
         if (!isThermometerServerConnected) {
             person_temp_static = 0.0f;
