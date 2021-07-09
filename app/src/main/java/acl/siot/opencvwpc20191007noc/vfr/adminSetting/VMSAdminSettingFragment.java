@@ -1,6 +1,7 @@
 package acl.siot.opencvwpc20191007noc.vfr.adminSetting;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -125,21 +127,45 @@ public class VMSAdminSettingFragment extends Fragment {
         return fragment;
     }
 
+    /**
+     * @param isVisibleToUser true if this fragment's UI is currently visible to the user (default),
+     *                        false if it is not.
+     */
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        mLog.d(TAG, "isVisibleToUser= " + isVisibleToUser);
+        if (isVisibleToUser) {
+            rootView.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(rootView.getWindowToken(), 0);
+                }
+            },100);
+        }
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreate");
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
+
         }
         // register event Bus
         AppBus.getInstance().register(this);
     }
 
+    private View rootView;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreateView");
-        View rootView = inflater.inflate(R.layout.vms_fragment_admin_setting, container, false);
+        rootView = inflater.inflate(R.layout.vms_fragment_admin_setting, container, false);
 
         initViewIDs(rootView);
         initViewsFeature();
@@ -300,7 +326,7 @@ public class VMSAdminSettingFragment extends Fragment {
 //                        mLog.d(TAG, "screenTimeout:> " + screenTimeout.getText().toString());
 //                        mLog.d(TAG, " > 180? " + (Integer.valueOf(screenTimeout.getText().toString()) > 180));
 //                        mLog.d(TAG, " < 30 ? " + (Integer.valueOf(screenTimeout.getText().toString()) < 10));
-                        if ((Integer.valueOf(screenTimeout.getText().toString()) < 10) || (Integer.valueOf(screenTimeout.getText().toString()) > 180)) {
+                        if ((Integer.valueOf(screenTimeout.getText().toString()) < 3) || (Integer.valueOf(screenTimeout.getText().toString()) > 180)) {
                             MessageTools.showLongToast(getContext(), "screenTimeOut out of limit.");
                             return;
                         }

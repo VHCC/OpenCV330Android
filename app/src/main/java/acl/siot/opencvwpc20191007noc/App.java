@@ -27,7 +27,8 @@ import android.widget.Toast;
 
 import com.blankj.utilcode.util.DeviceUtils;
 
-import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.PostConfig.PostConfig;
+import acl.siot.opencvwpc20191007noc.thc11001huApi.firmware14181.Firmware14181Temp;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
 import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import androidx.annotation.NonNull;
@@ -73,6 +74,9 @@ import acl.siot.opencvwpc20191007noc.vms.VmsKioskApplyUpdate;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskHB;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_CONFIG;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_TEMP;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_GET_FACE_ORIGINAL_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_FRS_MODIFY_PERSON_INFO;
@@ -80,6 +84,9 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_LOG_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK_FAIL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL;
@@ -195,6 +202,7 @@ public class App extends Application {
 
     public static boolean isFRServerConnected = true; //Deprecated 2021/01/15
     public static boolean isThermometerServerConnected = false;
+    public static boolean isAvaloFirmwareOver14181 = false;
 
 //    public static String detectSerialNumber = "00000000";
 
@@ -288,7 +296,7 @@ public class App extends Application {
             if (inputDevice.getVendorId() == 7851 && inputDevice.getProductId() == 7427) {
                 mLog.d(TAG, " === BarCode Reader is Connected === ");
 //                mLog.d(TAG,"inputDevice:> " + inputDevice);
-                mLog.d(TAG,"getVendorId:> " + inputDevice.getVendorId() + ", getProductId:> " + inputDevice.getProductId());
+//                mLog.d(TAG,"getVendorId:> " + inputDevice.getVendorId() + ", getProductId:> " + inputDevice.getProductId());
                 isBarCodeReaderConnectedCheck = true;
                 isBarCodeReaderCanEdit = true;
             }
@@ -334,8 +342,29 @@ public class App extends Application {
                     }
 
                     if (tick_count % 1 == 0) {
-                        HashMap<String, String> mMap = new GetTemp();
-                        OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                        if (isThermometerServerConnected) {
+                            if (isAvaloFirmwareOver14181) {
+                                HashMap<String, String> mMap = new Firmware14181Temp();
+                                OKHttpAgent.getInstance().postAvaloTempRequest(mMap, APP_CODE_AVALO_THERMAL_POST_TEMP);
+                            } else {
+                                HashMap<String, String> mMap = new GetTemp();
+                                OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                            }
+                        }
+                    }
+
+                    if (tick_count % 20 == 2) {
+                        if (!isAvaloFirmwareOver14181) {
+                            HashMap<String, String> mMap = new PostConfig();
+                            OKHttpAgent.getInstance().postAvaloConfigRequest(mMap, APP_CODE_AVALO_THERMAL_POST_CONFIG);
+                        }
+                    }
+
+                    if (tick_count % 5 == 2) {
+                        if (isAvaloFirmwareOver14181) {
+                            HashMap<String, String> mMap = new GetTemp();
+                            OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
+                        }
                     }
 
                     if (tick_count % 20 == 10) {
@@ -412,7 +441,9 @@ public class App extends Application {
                     break;
                 case APP_CODE_THC_1101_HU_GET_TEMP:
                     isThermometerServerConnected = true;
-                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
+                    if (!isAvaloFirmwareOver14181) {
+                        AppBus.getInstance().post(new BusEvent(response, APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS));
+                    }
                     break;
                 case APP_CODE_FRS_MODIFY_PERSON_INFO:
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS));
@@ -460,11 +491,11 @@ public class App extends Application {
                         JSONObject kioskDevice = kioskDeviceInfoResp.getJSONObject("kioskDeviceInfo");
                         JSONObject visitorTemplate = kioskDeviceInfoResp.getJSONObject("visitorTemplate");
                         JSONObject nonVisitorTemplate = kioskDeviceInfoResp.getJSONObject("nonVisitorTemplate");
-                        JSONArray vmsRealNamePersons = kioskDeviceInfoResp.getJSONArray("realNamePersons");
-                        if (null != vmsRealNamePersons) {
-                            mLog.d(TAG, "vmsRealNamePersons len:> " + vmsRealNamePersons.length());
-                            for (int index = 0; index < vmsRealNamePersons.length(); index++) {
-                                JSONObject vmsPersonItem = (JSONObject) vmsRealNamePersons.get(index);
+                        JSONArray allVmsPersons = kioskDeviceInfoResp.getJSONArray("allVmsPerson");
+                        if (null != allVmsPersons) {
+                            mLog.d(TAG, "allVmsPersons len:> " + allVmsPersons.length());
+                            for (int index = 0; index < allVmsPersons.length(); index++) {
+                                JSONObject vmsPersonItem = (JSONObject) allVmsPersons.get(index);
                                 vmsPersonSyncMapUUID.put(vmsPersonItem.get("vmsPersonUUID").toString(), vmsPersonItem);
                                 vmsPersonSyncMapSerial.put(vmsPersonItem.get("vmsPersonSerial").toString(), vmsPersonItem);
                             }
@@ -500,7 +531,7 @@ public class App extends Application {
                         VMSEdgeCache.getInstance().setVms_kiosk_settingPassword(kioskDevice.getString("settingPassword"));
 
                         int status = kioskDevice.getInt("status");
-                        mLog.d(TAG, "status:> " + status);
+//                        mLog.d(TAG, "status:> " + status);
                         if (status == 2) {
                             AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_STATUS_INACTIVE)); // 設備停用
                             return;
@@ -514,6 +545,7 @@ public class App extends Application {
                     }
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_HB:
+                    isVmsConnected = true;
                     try {
                         JSONObject kioskDeviceHBResp = new JSONObject(response);
                         JSONObject kioskDeviceHB = kioskDeviceHBResp.getJSONObject("vmsKioskDeviceHB");
@@ -545,7 +577,6 @@ public class App extends Application {
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE:
                     AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS));
-                    AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
                     VmsKioskSync mMap = new VmsKioskSync(VMSEdgeCache.getInstance().getVmsKioskUuid());
                     try {
                         OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_SYNC);
@@ -593,6 +624,35 @@ public class App extends Application {
                     }
                     AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS));
                     break;
+                case APP_CODE_VMS_AUTH_TIME_CHECK:
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS));
+                    break;
+                case APP_CODE_AVALO_THERMAL_POST_CONFIG:
+                    isThermometerServerConnected = true;
+                    if (response != null) {
+                        try {
+                            JSONObject avaloConfig = new JSONObject(response);
+                            String firmwareVersion = avaloConfig.getString("firmware_version");
+                            mLog.d(TAG, " [Avalo] firmwareVersion:> " + firmwareVersion);
+                            switch (firmwareVersion) {
+                                case "ADV_1.4.18.1":
+                                    isAvaloFirmwareOver14181 = true;
+                                    break;
+                                default:
+//                                    isAvaloFirmwareOver14181 = false;
+                                    break;
+                            }
+                        } catch (JSONException e) {
+                            mLog.e(TAG, "JSONException, err:> " + e);
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                case APP_CODE_AVALO_THERMAL_POST_TEMP:
+                    mLog.d(TAG, "APP_CODE_AVALO_THERMAL_POST_TEMP:> " + response);
+//                    isThermometerServerConnected = true;
+                    AppBus.getInstance().post(new BusEvent(response, APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS));
+                    break;
             }
         }
 
@@ -607,6 +667,8 @@ public class App extends Application {
             switch (requestCode) {
                 case APP_CODE_THC_1101_HU_GET_TEMP:
                     isThermometerServerConnected = false;
+//                    isAvaloFirmwareOver14181 = false;
+                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_SYNC:
                     AppBus.getInstance().post(new BusEvent("APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL", APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL));
@@ -618,12 +680,25 @@ public class App extends Application {
                     AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL));
                     break;
                 case APP_CODE_VMS_KIOSK_DEVICE_HB:
-                    if (errorResult.equals("DEVICE_INACTIVE")) {
+                    if (errorResult == null ) {
+                        isVmsConnected = false;
+                    } else if (errorResult.equals("DEVICE_INACTIVE")) {
                         AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_STATUS_INACTIVE));
                     } else {
                         isVmsConnected = false;
                     }
                     break;
+                case APP_CODE_VMS_AUTH_TIME_CHECK:
+                    AppBus.getInstance().post(new BusEvent("out of admission time", APP_CODE_VMS_AUTH_TIME_CHECK_FAIL));
+                    break;
+                case APP_CODE_AVALO_THERMAL_POST_CONFIG:
+                    if (null != errorResult && errorResult.contains("to connect")) {
+                        isThermometerServerConnected = false;
+//                        isAvaloFirmwareOver14181 = false;
+                        VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
+                    }
+                    break;
+
             }
 
         }
@@ -656,6 +731,7 @@ public class App extends Application {
                 }
                 break;
             case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE:
+                AppBus.getInstance().post(new BusEvent("sync vms Data", APP_CODE_VMS_KIOSK_DEVICE_SYNC));
                 VmsKioskApplyUpdate mMap_apply = new VmsKioskApplyUpdate(VMSEdgeCache.getInstance().getVmsKioskUuid());
                 try {
                     OKHttpAgent.getInstance().postRequest(mMap_apply, APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE);

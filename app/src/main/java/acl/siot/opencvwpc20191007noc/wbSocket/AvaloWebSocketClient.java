@@ -109,7 +109,7 @@ public class AvaloWebSocketClient extends WebSocketClient {
             }
             float tmp = ByteBuffer.wrap(bytes1).order(ByteOrder.LITTLE_ENDIAN).getFloat();
             tmps[index] = rgbGet(tmp);
-            mLog.d(TAG, "tmp= " + tmp + ", " +tmps[index].toString());
+//            mLog.d(TAG, "tmp= " + tmp + ", " +tmps[index].toString());
             int qqq = 4 * index;
 //            if (qqq > 3000) {
 //                mLog.d(TAG, qqq + "");
@@ -121,7 +121,7 @@ public class AvaloWebSocketClient extends WebSocketClient {
             bytesResult[4 * index + 2] = (byte)tmps[index].b;
             bytesResult[4 * index + 3] = (byte)tmps[index].max;
         }
-        mLog.d(TAG, "done");
+//        mLog.d(TAG, "done");
         avaloListener.onMessage(bytesResult);
     }
 

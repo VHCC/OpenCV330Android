@@ -10,6 +10,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import acl.siot.opencvwpc20191007noc.util.LogWriter;
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -85,6 +87,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreate");
+        if (isDebugRecordMode) LogWriter.storeLogToDebugFile(" * onCreate");
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
         }
@@ -125,6 +128,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (VMSEdgeCache.getInstance().getVms_kiosk_settingPassword().equals(passwordInput.toString())) {
+//                    extended_edit_text.requestFocus();
                     onFragmentInteractionListener.clickConfirmPWD();
                 } else {
                     text_field_boxes.setLabelText("");
@@ -164,7 +168,28 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
                 passwordInput = theNewText;
             }
         });
+
+        thermoConnectStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+//                MessageTools.showLongToast(getContext(), "v " + AppUtils.getAppVersionName());
+                clickTimes ++;
+                if (clickTimes > 5) {
+                    if (!isDebugRecordMode)
+                        LogWriter.storeLogToDebugFile(" ===== Start Records Debug Logs ===== ");
+                    isDebugRecordMode = true;
+                    MessageTools.showLongToast(getContext(), "已開啟Debug 紀錄模式，" + " v " + AppUtils.getAppVersionName());
+                } else {
+                    MessageTools.showLongToast(getContext(), "再 " + (6-clickTimes) + " 次，開啟Debug 紀錄模式，"+" v " + AppUtils.getAppVersionName());
+                }
+
+            }
+        });
     }
+
+    int clickTimes = 0;
+
+    public static boolean isDebugRecordMode = false;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {

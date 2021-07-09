@@ -2,6 +2,8 @@ package acl.siot.opencvwpc20191007noc.util;
 
 import android.util.Log;
 
+import static acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPassword20210429Fragment.isDebugRecordMode;
+
 public class MLog {
 
     // General Field
@@ -25,8 +27,12 @@ public class MLog {
     }
 
     public void d(String tag, String msg) {
+
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.d(LOG_PREFIX +tag, msg);}
+        if (enableLocalLog) {
+            if (isDebugRecordMode) LogWriter.storeLogToDebugFile("DEBUG, ["+tag + "], " + msg);
+            Log.d(LOG_PREFIX +tag, msg);
+        }
     }
 
     public void i(String tag, String msg) {
@@ -41,7 +47,10 @@ public class MLog {
 
     public void e(String tag, String msg) {
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.e(LOG_PREFIX +tag, msg);}
+        if (enableLocalLog) {
+            if (isDebugRecordMode) LogWriter.storeLogToDebugFile("ERROR, ["+tag + "], " + msg);
+            Log.e(LOG_PREFIX +tag, msg);
+        }
     }
 
     public void e(String tag, String msg, Throwable tr) {

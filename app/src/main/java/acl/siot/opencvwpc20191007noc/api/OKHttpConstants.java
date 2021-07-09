@@ -37,6 +37,12 @@ public class OKHttpConstants {
         public static final int APP_CODE_THC_1101_HU_GET_TEMP = 11000;
         public static final int APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS = 110001;
 
+        public static final int APP_CODE_AVALO_THERMAL_POST_CONFIG = 12000;
+        public static final int APP_CODE_AVALO_THERMAL_POST_CONFIG_SUCCESS = 120001;
+
+        public static final int APP_CODE_AVALO_THERMAL_POST_TEMP = 13000;
+        public static final int APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS = 130001;
+
         public static final int APP_CODE_FRS_MODIFY_PERSON_INFO = 10004;
         public static final int APP_CODE_FRS_MODIFY_PERSON_INFO_SUCCESS = 100041;
 
@@ -76,6 +82,12 @@ public class OKHttpConstants {
 
         public static final int APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST = 20010;
         public static final int APP_CODE_VMS_KIOSK_DEVICE_UPDATE_FILE_LOG_LIST_SUCCESS = 200101;
+
+        public static final int APP_CODE_VMS_AUTH_TIME_CHECK = 20015;
+        public static final int APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS = 200151;
+        public static final int APP_CODE_VMS_AUTH_TIME_CHECK_FAIL = 200159;
+
+
 
         public static final int APP_CODE_VMS_KIOSK_RFID_DETECT_DONE = 30001;
 

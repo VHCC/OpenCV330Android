@@ -86,6 +86,7 @@ import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL_SUCCESS;
@@ -166,7 +167,7 @@ public class VFRDetect20210303Fragment extends Fragment {
     private ImageView thermal_view; // 熱區圖
     private NumberFormat tempDetectFormatter = new DecimalFormat("#00.0");
     private float person_temp_static = 0.0f;
-    private final float TEMP_BASIC_THRESHOLD = 32.0f;
+    private final float TEMP_BASIC_THRESHOLD = 30.0f;
 
     // Listener
     private OnFragmentInteractionListener onFragmentInteractionListener;
@@ -661,14 +662,18 @@ public class VFRDetect20210303Fragment extends Fragment {
                 c.setListener(new AvaloWebSocketClient.avaloListener() {
                     @Override
                     public void onMessage(byte[] bytesResult) {
+//                        mLog.d(TAG, " *** start ***");
                         Bitmap bitmap = Bitmap.createBitmap(32, 24, Bitmap.Config.ARGB_8888);
                         ByteBuffer buffer = ByteBuffer.wrap(bytesResult);
 
                         bitmap.copyPixelsFromBuffer(buffer);
 
                         Message msg = new Message();
-                        msg.obj = bitmap;
+//                        msg.obj = bitmap;
+//                        msg.obj = bitmap;
+                        thermalBitmap_detect = bitmap;
                         mHandler.sendMessage(msg);
+//                        mLog.d(TAG, " *** end *** ");
                         return;
                     }
                 });
@@ -678,6 +683,8 @@ public class VFRDetect20210303Fragment extends Fragment {
             c.connect();
         }
     }
+
+    static Bitmap thermalBitmap_detect = null;
 
 
     // 處理 avalo websocket data
@@ -701,8 +708,10 @@ public class VFRDetect20210303Fragment extends Fragment {
 
             if (isFullDetectProcessDone) return; // 偵測完成後 不動作
 
-            thermal_view.setImageBitmap((Bitmap) msg.obj); // preview
-            thermalBitmap = (Bitmap) msg.obj; // results
+//            thermal_view.setImageBitmap((Bitmap) msg.obj); // preview
+            thermal_view.setImageBitmap((Bitmap) thermalBitmap_detect); // preview
+//            thermalBitmap = (Bitmap) msg.obj; // results
+            thermalBitmap = (Bitmap) thermalBitmap_detect; // results
 
             String detectLog = "";
 
@@ -1111,6 +1120,11 @@ public class VFRDetect20210303Fragment extends Fragment {
                     e.printStackTrace();
                 }
                 break;
+            case APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS:
+                String response = event.getMessage();
+                mLog.d(TAG, "response:> " + response + ", isThermometerServerConnected:> " + isThermometerServerConnected);
+                person_temp_static = (float) Float.parseFloat(response);
+                break;
             case MASK_DETECT:
                 // *** CORE MASK DETECT PROCESS ***
                 try {
@@ -1351,6 +1365,11 @@ public class VFRDetect20210303Fragment extends Fragment {
                                 c.close();
                             }
                         }
+                    }
+
+                    if (tick_count % 2 == 1) {
+                        Message msg = new Message();
+                        mHandler.sendMessage(msg);
                     }
 
                     if (tick_count % 3 == 0) { // 0.3 * 3 = 0.9s，運算一次口罩偵測

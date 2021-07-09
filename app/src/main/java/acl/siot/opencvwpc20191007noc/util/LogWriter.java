@@ -40,7 +40,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 
 public class LogWriter {
 
-    private static final MLog mLog = new MLog(true);
+    private static final MLog mLog = new MLog(false);
     private static final String TAG = "LogWriter";
 
     static public void storeLogToFile(String writeData) {
@@ -56,18 +56,27 @@ public class LogWriter {
             mLog.i(TAG, "logfile url= " + logfile.getAbsolutePath());
 
             FileWriter fw;
-            //logfile over 4 MB will copy to backup file (4 MB = 4194304  Byte)
-//            if (logfile.length() > 5 * 1024 * 1024) {
-//                fw = new FileWriter(logFilePath);
-//            } else {
             fw = new FileWriter(logFilePath, true);
-//            }
 
-//            uploadFile(logfile.getAbsolutePath());
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write("[" + getCurrentTimeStamp() + "] " + writeData + ", " + DeviceUtils.getAndroidID());
+            bw.newLine();
+            bw.close();
+        } catch (IOException e) {
+            mLog.e(TAG, String.format("PID[%d]:  %s", android.os.Process.myPid(), e.getMessage()));
+        }
+    }
 
+    static public void storeLogToDebugFile(String writeData) {
+        try {
+            mLog.i(TAG, String.format("PID[%d]:  %s", android.os.Process.myPid(), writeData));
 
+            String logFilePath = getDebugLogFilePath();
 
-//            upload("http://192.168.1.105:7080/api/v2/vmsKioskDevice/uploadDeviceLogFile", logfile);
+            File logfile = new File(logFilePath);
+
+            FileWriter fw;
+            fw = new FileWriter(logFilePath, true);
 
             BufferedWriter bw = new BufferedWriter(fw);
             bw.write("[" + getCurrentTimeStamp() + "] " + writeData + ", " + DeviceUtils.getAndroidID());
@@ -105,7 +114,27 @@ public class LogWriter {
                 logfile.createNewFile();
             }
         }
+        return logFilePath;
+    }
 
+    static private String getDebugLogFilePath() throws IOException {
+        int index_log = 0;
+        String logFilePath = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator
+                + toDayLogFileName() + "_DEBUG_Log_" + String.valueOf(index_log)+"_" + DeviceUtils.getAndroidID() + ".txt";
+        File logfile = new File(logFilePath);
+        if (!logfile.exists()) {
+            logfile.createNewFile();
+        } else {
+            while (logfile.exists() && logfile.length() >= 5 * 1024 * 1024) {
+                index_log += 1;
+                logFilePath = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator
+                        + toDayLogFileName() + "_DEBUG_Log_" + String.valueOf(index_log) + ".txt";
+                logfile = new File(logFilePath);
+            }
+            if (!logfile.exists()) {
+                logfile.createNewFile();
+            }
+        }
         return logFilePath;
     }
 

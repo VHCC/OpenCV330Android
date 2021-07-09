@@ -5,7 +5,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,9 +22,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509TrustManager;
 
-import acl.siot.opencvwpc20191007noc.AppBus;
-import acl.siot.opencvwpc20191007noc.BusEvent;
-import acl.siot.opencvwpc20191007noc.cache.VFREdgeCache;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.NullHostNameVerifier;
@@ -43,9 +39,6 @@ import okhttp3.Response;
 import okhttp3.Route;
 
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
-import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsArray;
-import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.staticPersonsEmployeeNoArray;
-import static acl.siot.opencvwpc20191007noc.vfr.home.VFRHomeFragment.isGetStaticPersonsEmployeeNoArray;
 
 
 public class OKHttpAgent {
@@ -67,6 +60,8 @@ public class OKHttpAgent {
 //    private final OkHttpClient mClient = new OkHttpClient();
     private OkHttpClient mClient;
     private OkHttpClient mClient_getTemp;
+    private OkHttpClient mClient_postTemp;
+    private OkHttpClient mClient_postConfig;
     private OkHttpClient mClient_TPE;
     private IRequestInterface mIRequestInterface;
     OkHttpClient.Builder mBuilder;
@@ -88,6 +83,8 @@ public class OKHttpAgent {
         mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
         mClient = mBuilder.build();
         mClient_getTemp = mBuilder.build();
+        mClient_postTemp = mBuilder.build();
+        mClient_postConfig = mBuilder.build();
     }
 
     public static OKHttpAgent getInstance() {
@@ -99,9 +96,7 @@ public class OKHttpAgent {
 
 
     protected class PostThread extends Thread {
-
         private HashMap mData;
-
         private int postCode;
 
         public PostThread(HashMap data, int requestCode) {
@@ -112,7 +107,6 @@ public class OKHttpAgent {
         @Override
         public void run() {
             try {
-//            mIRequestInterface.showLoading();
                 final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
                 mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
                 JSONObject jsonObjRaw = new JSONObject(mData);
@@ -125,7 +119,6 @@ public class OKHttpAgent {
                 mLog.d(TAG, "PostThread@" + this.hashCode() + ", request= " + json);
                 RequestBody body = RequestBody.create(JSON, json);
 
-
                 Request request = new Request.Builder()
                     .url(mainURL)
 //                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
@@ -135,33 +128,34 @@ public class OKHttpAgent {
                     .build();
                 Response response = mClient.newCall(request).execute();
                 String result = response.body().string();
+                mLog.d(TAG, "[POST] result:> " + result);
                 JSONObject jsonObj = new JSONObject(result);
-//                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
                     case 200: {
-                        handleResult(jsonObj, postCode);
+                        response.close();
+                        handlePostResult(jsonObj, postCode);
                     } break;
                     default: {
-                        handleResult(jsonObj, postCode);
+                        handlePostResult(jsonObj, postCode);
                     } break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "IOException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             } catch (JSONException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "JSONException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             } catch (Exception e){
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "Exception, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             }
         }
 
-        private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
-//            System.out.println(jsonObj.toString());
+        private void handlePostResult(JSONObject jsonObj, int postCode) throws JSONException {
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
@@ -172,7 +166,7 @@ public class OKHttpAgent {
                 try {
                     if (jsonObj.toString().contains("code")) {
                         int errorCode = jsonObj.getInt("code");
-                        mLog.w(TAG, "errorCode= " + errorCode);
+//                        mLog.w(TAG, "errorCode= " + errorCode);
                         switch (errorCode) {
                             case 0:
                                 mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
@@ -192,9 +186,7 @@ public class OKHttpAgent {
     }
 
     protected class PostTPEThread extends Thread {
-
         private HashMap mData;
-
         private int postCodeTPE;
 
         public PostTPEThread(HashMap data, int requestCode) {
@@ -230,30 +222,31 @@ public class OKHttpAgent {
 //                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
                     case 200: {
-                        handleResult(jsonObj, postCodeTPE);
+                        response.close();
+                        handlePostTPEResult(jsonObj, postCodeTPE);
                         break;
                     }
                     default: {
-                        handleResult(jsonObj, postCodeTPE);
+                        response.close();
+                        handlePostTPEResult(jsonObj, postCodeTPE);
                     }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "IOException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
             } catch (JSONException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "JSONException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
             } catch (Exception e){
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "Exception, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCodeTPE);
             }
         }
 
-        private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
-//            System.out.println(jsonObj.toString());
+        private void handlePostTPEResult(JSONObject jsonObj, int postCode) throws JSONException {
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
@@ -283,9 +276,7 @@ public class OKHttpAgent {
     }
 
     protected class PostUploadFileThread extends Thread {
-
         private HashMap mData;
-
         private int postCode;
 
         public PostUploadFileThread(HashMap data, int requestCode) {
@@ -316,25 +307,26 @@ public class OKHttpAgent {
 //                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
                     case 200: {
+                        response.close();
                         handleResult(jsonObj, postCode);
                     } break;
                     default: {
+                        response.close();
                         handleResult(jsonObj, postCode);
                     } break;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "IOException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             } catch (JSONException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
+                mLog.e(TAG, "JSONException, e= " + e.getMessage());
                 mIRequestInterface.onRequestFail(e.getMessage(), postCode);
             }
         }
 
         private void handleResult(JSONObject jsonObj, int postCode) throws JSONException {
-//            System.out.println(jsonObj.toString());
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
@@ -364,97 +356,18 @@ public class OKHttpAgent {
         }
     }
 
-    protected class PostFRSThread extends Thread {
-        private HashMap mData;
+    private final Object mSyncObject_AvaloSocket = new Object();
 
-        private int postCode;
-
-        public PostFRSThread(HashMap data, int requestCode) {
-            mData = data;
-            postCode = requestCode;
-        }
-
-        @Override
-        public void run() {
-//            mIRequestInterface.showLoading();
-            final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-            mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-            JSONObject jsonObjRaw = new JSONObject(mData);
-            String json = null;
-            try {
-                json = jsonObjRaw.toString(4);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", request= " + json);
-            RequestBody body = RequestBody.create(JSON, json);
-            try {
-            Request request = new Request.Builder()
-                    .url(mainURL)
-//                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
-//                    .header("Content-signUpEventType", "application/json")
-                    .header("Content-Type", "application/json")
-                    .post(body)
-                    .build();
-                Response response = mClient.newCall(request).execute();
-                String result = response.body().string();
-                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
-                switch(response.code()) {
-                    case 200: {
-                        JSONObject jsonObj = new JSONObject(result);
-                        handleFRSResult(jsonObj, postCode);
-                        break;
-                    }
-                    default: {
-                        mIRequestInterface.onRequestFail(result, postCode);
-//                        handleFRSResult(jsonObj, postCode);
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
-                if (mIRequestInterface != null) {
-                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
-                mLog.e(TAG, "e= " + e.getMessage());
-//                mIRequestInterface.onRequestFail(e.getMessage());
-                if (mIRequestInterface != null) {
-                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
-                }
-            }
-        }
-
-        private void handleFRSResult(JSONObject jsonObj, int postCode) throws JSONException {
-            writeToFile(jsonObj.toString());
-//            if (AppSetting.isEngineering()) {
-            if (false) {
-                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
-            } else {
-                mLog.d(TAG, "PostFRSThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
-                try {
-                    mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    protected class PostAvaloThread extends Thread {
+    protected class PostAvaloWebSocketThread extends Thread {
         private boolean switchFlag;
-        private final Object mSyncObject = new Object();
 
-        public PostAvaloThread(boolean flag) {
+        public PostAvaloWebSocketThread(boolean flag) {
             switchFlag = flag;
         }
 
         @Override
         public void run() {
-            synchronized (mSyncObject){
-                //            final String mainURL = "http://192.168.4.1/websocket.json";
+            synchronized (mSyncObject_AvaloSocket){
                 final String mainURL = "http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host() + "/websocket.json";
                 mLog.d(TAG, "PostAvaloThread@" + this.hashCode());
                 String bodyString = switchFlag ? "websocket,1" : "websocket,0";
@@ -466,19 +379,19 @@ public class OKHttpAgent {
                             .post(body)
                             .build();
                     Response response = mClient.newCall(request).execute();
-                    String result = response.body().string();
-                    mLog.d(TAG, "PostAvaloThread@" + this.hashCode() + ", response.code()= " + response.code());
+                    mLog.d(TAG, "PostAvaloWebSocketThread@" + this.hashCode() + ", response.code()= " + response.code());
                 } catch (IOException e) {
                     e.printStackTrace();
-                    mLog.e(TAG, "e= " + e.getMessage());
+                    mLog.e(TAG, "PostAvaloThread@" + this.hashCode() + ", IOException, e= " + e.getMessage());
                 }
             }
         }
     }
 
+    private final Object mSyncObject_GetTemp = new Object();
+
     protected class GetThread extends Thread {
         private HashMap mData;
-        private final Object mSyncObject = new Object();
 
         private int getCode;
 
@@ -490,9 +403,9 @@ public class OKHttpAgent {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            synchronized (mSyncObject){
+            synchronized (mSyncObject_GetTemp){
                 final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-                mLog.d(TAG, "get request= " + mainURL);
+                mLog.d(TAG, "request [GET]:> " + mainURL);
                 try {
                     Request request = new Request.Builder()
                             .url(mainURL)
@@ -503,32 +416,40 @@ public class OKHttpAgent {
                             .build();
                     Response response = mClient_getTemp.newCall(request).execute();
                     String result = response.body().string();
+                    mLog.d(TAG, " - result:> " + result);
                     JSONObject jsonObj = new JSONObject(result);
-//                mLog.d(TAG, "PostThread@" + this.hashCode() + ", response.code()= " + response.code());
+//                mLog.d(TAG, "GetThread@" + this.hashCode() + ", response.code()= " + response.code());
                     switch(response.code()) {
                         case 200:
-                            handleResult(jsonObj, getCode);
+                            response.close();
+                            getHandleResult(jsonObj, getCode);
                             break;
                         default:
-                            handleResult(jsonObj, getCode);
+                            response.close();
+                            getHandleResult(jsonObj, getCode);
                             break;
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    isThermometerServerConnected = false;
-                    mLog.e(TAG, "GetThread, e= " + e.getMessage());
+                    if (null != e && e.toString().contains("to connect")) {
+                        isThermometerServerConnected = false;
+                    }
+                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
+                    mLog.e(TAG, "GetThread@" + this.hashCode() + ", IOException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    isThermometerServerConnected = false;
-                    mLog.e(TAG, "GetThread, e= " + e.getMessage());
+                    if (null != e && e.toString().contains("to connect")) {
+                        isThermometerServerConnected = false;
+                    }
+                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
+                    mLog.e(TAG, "GetThread@" + this.hashCode() + ", JSONException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 }
             }
         }
 
-        private void handleResult(JSONObject jsonObj, int getCode) throws JSONException {
-//            System.out.println(jsonObj.toString());
+        private void getHandleResult(JSONObject jsonObj, int getCode) throws JSONException {
             writeToFile(jsonObj.toString());
 //            if (AppSetting.isEngineering()) {
             if (false) {
@@ -546,79 +467,203 @@ public class OKHttpAgent {
         }
     }
 
-    // Get info Thread
-    protected class GetFRSThread extends Thread {
-        public GetFRSThread() {
+    protected class PostAvaloConfigThread extends Thread {
+        private HashMap mData;
+        private int postCode;
+
+        public PostAvaloConfigThread(HashMap data, int requestCode) {
+            mData = data;
+            postCode = requestCode;
         }
 
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-//            final String mainURL = FRS_SERVER_URL + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
-//            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + staticFRSSessionID + "&page_size=1000&skip_pages=0";
-            final String mainURL = "http://" + VFREdgeCache.getInstance().getIpAddress() + "/persons?sessionId=" + "staticFRSSessionID" + "&page_size=1000&skip_pages=0";
-            mLog.d(TAG, "get FRS persons request= " + mainURL);
             try {
-            Request request = new Request.Builder()
-                    .url(mainURL)
-//                    .header("Authorize", "Bearer 986da599d73c73d49becf33ca6d88c9f0ce23add.d399ad2193c10895916e3b46a8082e94")
-//                    .header("Content-signUpEventType", "application/json")
-//                    .header("Content-Type", "application/json")
-                    .get()
-                    .build();
-                Response response = mClient.newCall(request).execute();
+                final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+                mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+                JSONObject jsonObjRaw = new JSONObject(mData);
+                String json = jsonObjRaw.toString(0);
+                mLog.d(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", request= " + json);
+                RequestBody body = RequestBody.create(JSON, "");
+
+                Request request = new Request.Builder()
+                        .url(mainURL)
+                        .header("Content-Type", "application/json")
+                        .post(body)
+                        .build();
+                Response response = mClient_postConfig.newCall(request).execute();
                 String result = response.body().string();
+                mLog.d(TAG, "[POST] result:> " + result);
                 JSONObject jsonObj = new JSONObject(result);
+                mLog.d(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", response.code()= " + response.code());
                 switch(response.code()) {
                     case 200: {
-                        handleGetResult(jsonObj);
+                        response.close();
+                        handleAvaloPostResult(jsonObj, postCode);
                         break;
                     }
-                    default:
-                        handleGetResult(jsonObj);
+                    default: {
+                        mIRequestInterface.onRequestFail(result, postCode);
                         break;
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "IOException= " + e.getMessage());
-//                RxBus.getInstance().send(Login.RXBUS_EVENT.DB_UPDATE_REQUEST_TIMEOUT);
+                mLog.e(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", IOException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
+                if (mIRequestInterface != null) {
+                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
-                mLog.e(TAG, "JSONException= " + e.getMessage());
-//                RxBus.getInstance().send(Login.RXBUS_EVENT.DB_UPDATE_REQUEST_TIMEOUT);
+                mLog.e(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", JSONException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
+                if (mIRequestInterface != null) {
+                    mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                }
             }
         }
 
-        private void handleGetResult(JSONObject jsonObj) throws JSONException {
-//            mLog.w(TAG, "response= " + jsonObj);
-            JSONObject personLists = (JSONObject) jsonObj.get("person_list");
-            mLog.w(TAG, "total= " + personLists.get("total"));
-            mLog.w(TAG, "total_pages= " + personLists.get("total_pages"));
-            mLog.w(TAG, "page_index= " + personLists.get("page_index"));
-            mLog.w(TAG, "page_size= " + personLists.get("page_size"));
-            mLog.w(TAG, "size= " + personLists.get("size"));
-            staticPersonsArray = (JSONArray) personLists.get("persons");
-//            mLog.w(TAG, "personsArray= " + staticPersonsArray);
-            for (int index=0; index < staticPersonsArray.length(); index ++) {
-                JSONObject person = (JSONObject) staticPersonsArray.get(index);
-                JSONObject personInfo = (JSONObject) person.get("person_info");
-                staticPersonsEmployeeNoArray.add(personInfo.getString("employeeno"));
-            }
-            isGetStaticPersonsEmployeeNoArray = true;
-//            AppBus.getInstance().post(new BusEvent("login success", APP_CODE_FRS_LOGIN_SUCCESS));
-//            mLog.i(TAG, "staticPersonsEmployeeNoArray length= " + staticPersonsEmployeeNoArray.size());
-            try {
-//                mIRequestInterface.onRequestDBUpdateSuccess(jsonObj.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
+        private void handleAvaloPostResult(JSONObject jsonObj, int postCode) throws JSONException {
+            writeToFile(jsonObj.toString());
+//            if (AppSetting.isEngineering()) {
+            if (false) {
+                mIRequestInterface.onRequestSuccess(jsonObj.get(OKHttpConstants.ResponseKey.DATA).toString(), postCode);
+            } else {
+                mLog.d(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", response= " + jsonObj.toString(4));
+                try {
+                    mIRequestInterface.onRequestSuccess(jsonObj.toString(), postCode);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
+    private final Object mSyncObject_PostAvaloTempThread = new Object();
+    private static boolean canPostTemp = true;
+
+    protected class PostAvaloTempThread extends Thread {
+        private HashMap mData;
+        private int postCode;
+
+
+        public PostAvaloTempThread(HashMap data, int requestCode) {
+            mData = data;
+            postCode = requestCode;
+        }
+
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        @Override
+        public void run() {
+            synchronized (mSyncObject_PostAvaloTempThread){
+                canPostTemp = false;
+                try {
+                    final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
+//                    mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
+                    JSONObject jsonObjRaw = new JSONObject(mData);
+                    String json = jsonObjRaw.toString(0);
+//                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", request= " + json);
+                    RequestBody body = RequestBody.create(JSON, "");
+
+                    Request request = new Request.Builder()
+                            .url(mainURL)
+                            .header("Content-Type", "application/json")
+                            .post(body)
+                            .build();
+                    Response response = mClient_postTemp.newCall(request).execute();
+                    String result = response.body().string();
+                mLog.d(TAG, "[POST] result:> " + result);
+//                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response.code()= " + response.code());
+                    if (null == result) {
+                        return;
+                    }
+                    if (result.trim().equals("")) {
+                        return;
+                    }
+                    if (result.length() > 5) {
+                        return;
+                    }
+                    switch(response.code()) {
+                        case 200: {
+                            response.close();
+                            handleAvaloPostTempResult(result, postCode);
+                            break;
+                        }
+                        default: {
+                            mIRequestInterface.onRequestFail(result, postCode);
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    mLog.e(TAG, "PostAvaloConfigThread@" + this.hashCode() + ", IOException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
+                    if (mIRequestInterface != null) {
+                        mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    mLog.e(TAG, "PostAvaloConfigThread@" + this.hashCode()  + ", JSONException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
+                    if (mIRequestInterface != null) {
+                        mIRequestInterface.onRequestFail(e.getMessage(), postCode);
+                    }
+                } finally {
+                    canPostTemp = true;
+
+                }
+            }
+        }
+
+        private void handleAvaloPostTempResult(String result, int postCode) throws JSONException {
+            writeToFile(result.toString());
+//            if (AppSetting.isEngineering()) {
+            if (false) {
+                mIRequestInterface.onRequestSuccess(result, postCode);
+            } else {
+                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response= " + result);
+                try {
+                    mIRequestInterface.onRequestSuccess(result.toString(), postCode);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    // =============== Request Interface ============
+
     public synchronized void postRequest(HashMap mData, int requestCode) throws IOException {
-//        mLog.d(TAG, "request post= " + mData.toString());
+        mLog.d(TAG, "request [POST]:> " + mData.toString());
         PostThread postThread = new PostThread(mData, requestCode);
         postThread.start();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public synchronized void postAvaloTempRequest(HashMap mData, int requestCode) throws IOException {
+        PostAvaloTempThread postAvaloTempThread = new PostAvaloTempThread(mData, requestCode);
+        postAvaloTempThread.start();
+    }
+    public synchronized void postAvaloConfigRequest(HashMap mData, int requestCode) throws IOException {
+        if (true) {
+            mLog.d(TAG, "request [POST]:> " + mData.toString());
+            PostAvaloConfigThread postAvaloConfigThread = new PostAvaloConfigThread(mData, requestCode);
+            postAvaloConfigThread.start();
+        }
+    }
+
+    public synchronized void postUploadFileRequest(HashMap mData, int requestCode) throws IOException {
+        PostUploadFileThread postUploadFileThread = new PostUploadFileThread(mData, requestCode);
+        postUploadFileThread.start();
+    }
+
+    public synchronized void postAvaloWebsocket(boolean flag) throws IOException {
+        PostAvaloWebSocketThread avaloThread = new PostAvaloWebSocketThread(flag);
+        avaloThread.start();
+    }
+
+    public synchronized void getRequest(HashMap mData, int requestCode) throws IOException {
+        GetThread getThread = new GetThread(mData, requestCode);
+        getThread.start();
     }
 
     public synchronized void postTPERequest(HashMap mData, int requestCode) throws IOException {
@@ -649,33 +694,6 @@ public class OKHttpAgent {
         postTPEThread.start();
     }
 
-    public synchronized void postUploadFileRequest(HashMap mData, int requestCode) throws IOException {
-//        mLog.d(TAG, "request post= " + mData.toString());
-        PostUploadFileThread postUploadFileThread = new PostUploadFileThread(mData, requestCode);
-        postUploadFileThread.start();
-    }
-
-    public synchronized void postFRSRequest(HashMap mData, int requestCode) throws IOException {
-        PostFRSThread postFRSThread = new PostFRSThread(mData, requestCode);
-        postFRSThread.start();
-    }
-
-    public synchronized void postAvaloWebsocket(boolean flag) throws IOException {
-        PostAvaloThread avaloThread = new PostAvaloThread(flag);
-        avaloThread.start();
-    }
-
-    public synchronized void getFRSRequest() throws IOException {
-        GetFRSThread getFRSThread = new GetFRSThread();
-        getFRSThread.start();
-    }
-
-    public synchronized void getRequest(HashMap mData, int requestCode) throws IOException {
-        GetThread getThread = new GetThread(mData, requestCode);
-        getThread.start();
-    }
-
-
     public interface IRequestInterface {
         void onRequestSuccess(String result, int requestCode);
 
@@ -694,7 +712,6 @@ public class OKHttpAgent {
         final File path = Environment.getExternalStoragePublicDirectory(
                                 //Environment.DIRECTORY_PICTURES
                                 Environment.DIRECTORY_DOWNLOADS);
-
         // Make sure the path directory exists.
         if (!path.exists()) {
             // Make it, if it doesn't exit
@@ -702,7 +719,6 @@ public class OKHttpAgent {
         }
 
         final File file = new File(path, "log.txt");
-
         // Save your stream, don't forget to flush() it before closing it.
 
         try {

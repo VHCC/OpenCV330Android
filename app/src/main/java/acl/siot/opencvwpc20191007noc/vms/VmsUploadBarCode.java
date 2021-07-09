@@ -47,7 +47,8 @@ public class VmsUploadBarCode extends HashMap<Object, Object> {
         super.put(API_KEY_DEVICEUUID, VMSEdgeCache.getInstance().getVmsKioskUuid());
         super.put(API_KEY_UPLOADDEVICENAME, VMSEdgeCache.getInstance().getVmsKioskDeviceName());
         super.put(API_KEY_AVALO_DEVICE_GROUP, "");
-        super.put(API_KEY_AVALO_MODE,  "RealName".toLowerCase());
+//        super.put(API_KEY_AVALO_MODE,  "RealName".toLowerCase());
+        super.put(API_KEY_AVALO_MODE,  uploadPersonData.getBoolean("isRealName") ? "RealName".toLowerCase() : "Normal".toLowerCase());
         super.put(API_KEY_AVALO_INTERFACE, "barcode".toLowerCase());
 //        super.put(API_KEY_AVALO_SNAPSHOT, "data:image/jpeg;base64," + encoded);
         super.put(API_KEY_AVALO_STATUS, "authorized");
@@ -55,7 +56,8 @@ public class VmsUploadBarCode extends HashMap<Object, Object> {
         super.put(API_KEY_MAPPINGPERSONUUID, uploadPersonData.getString("vmsPersonUUID"));
         super.put(API_KEY_AVALO_SERIAL, uploadPersonData.getString("vmsPersonSerial"));
         super.put(API_KEY_AVALO_NAME, uploadPersonData.getString("vmsPersonName"));
-        super.put(API_KEY_AVALO_VISITOR, false);
+//        super.put(API_KEY_AVALO_VISITOR, false);
+        super.put(API_KEY_AVALO_VISITOR, !uploadPersonData.getBoolean("isRealName"));
         super.put(API_KEY_AVALO_EMAIL, uploadPersonData.getString("vmsPersonEmail"));
         super.put(API_KEY_AVALO_DEPARTMENT, "");
         super.put(API_KEY_AVALO_TEMPERATURE, Float.valueOf(-1));

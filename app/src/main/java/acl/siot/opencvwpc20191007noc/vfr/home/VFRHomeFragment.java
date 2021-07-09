@@ -120,7 +120,7 @@ public class VFRHomeFragment extends Fragment {
     public void onStop() {
         super.onStop();
         mHandler.removeCallbacks(mFragmentRunnable);
-        AppBus.getInstance().unregister(this);
+//        AppBus.getInstance().unregister(this);
     }
 
     @Override
@@ -162,6 +162,7 @@ public class VFRHomeFragment extends Fragment {
     public void onEventMainThread(BusEvent event) {
         switch (event.getEventType()) {
             case APP_CODE_VMS_KIOSK_DEVICE_SYNC:
+                mLog.d(TAG, "APP_CODE_VMS_KIOSK_DEVICE_SYNC");
                 syncDialog = new SweetAlertDialog(getContext(), SweetAlertDialog.PROGRESS_TYPE)
                         .setTitleText("Loading...")
                         .setContentText("Sync VMS Data!");

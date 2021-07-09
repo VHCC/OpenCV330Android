@@ -20,6 +20,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import acl.siot.opencvwpc20191007noc.util.MessageTools;
+import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
+import acl.siot.opencvwpc20191007noc.vms.VmsKioskAuthTimeCheck;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -40,18 +43,16 @@ import acl.siot.opencvwpc20191007noc.R;
 import acl.siot.opencvwpc20191007noc.api.OKHttpAgent;
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.util.MLog;
-import acl.siot.opencvwpc20191007noc.util.MessageTools;
-import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
-import acl.siot.opencvwpc20191007noc.vms.VmsUpload;
 import acl.siot.opencvwpc20191007noc.vms.VmsUploadBarCode;
 import acl.siot.opencvwpc20191007noc.vms.VmsUploadBarCode_TPE;
-import acl.siot.opencvwpc20191007noc.vms.VmsUpload_TPE;
 
 import static acl.siot.opencvwpc20191007noc.App.VFR_HEART_BEATS;
-import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK_FAIL;
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_TPE;
@@ -137,6 +138,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
         mRootView.addView(mainView);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -144,7 +146,6 @@ public class VFRWelcome20210308Fragment extends Fragment {
         mainView = inflater.inflate(R.layout.vfr_fragment_welcome_20210308, null);
         initViewIDs(mainView);
         initViewsFeature();
-
         return mainView;
     }
 
@@ -172,11 +173,11 @@ public class VFRWelcome20210308Fragment extends Fragment {
         thermoConnectStatus = mainView.findViewById(R.id.thermoConnectStatus);
         hereBtn = mainView.findViewById(R.id.hereBtn);
         adminHomeBtn = mainView.findViewById(R.id.adminHomeBtn);
-
     }
 
-    String[] scannedInput;
+    private String[] scannedInput;
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private void initViewsFeature() {
         Date d = new Date();
         CharSequence s_1 = android.text.format.DateFormat.format("yyyy-MM-dd", d.getTime());
@@ -196,6 +197,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
+                reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
                 lazyLoad();
             }
         });
@@ -204,26 +206,27 @@ public class VFRWelcome20210308Fragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onClick(View v) {
-                mLog.d(TAG, "rfidBtn onclick");
-                mainEdit.requestFocus();
-                mainEdit.setInputType(InputType.TYPE_NULL);
+                return;
+//                mLog.d(TAG, "rfidBtn onclick");
+//                mainEdit.requestFocus();
+//                mainEdit.setInputType(InputType.TYPE_NULL);
 
-                App.isRFIDFunctionOn = true;
-                App.isBarCodeFunctionOn = false;
+//                App.isRFIDFunctionOn = true;
+//                App.isBarCodeFunctionOn = false;
 
-                adminHomeBtn.setVisibility(View.VISIBLE);
-                frameWelcomeTxt.setVisibility(View.INVISIBLE);
-
-                frameRFID.setVisibility(View.INVISIBLE);
-                if (null != frameBarCode) {
-                    frameBarCode.setVisibility(View.INVISIBLE);
-                }
-
-                frameMain.setVisibility(View.VISIBLE);
-                mainBtn.setImageBitmap(getBitmap(R.drawable.ic_rfid_btn));
-                mainTxtMid.setText("RFID");
-                mainTxt.setText("RFID");
-                frameHere.setVisibility(View.VISIBLE);
+//                adminHomeBtn.setVisibility(View.VISIBLE);
+//                frameWelcomeTxt.setVisibility(View.INVISIBLE);
+//
+//                frameRFID.setVisibility(View.INVISIBLE);
+//                if (null != frameBarCode) {
+//                    frameBarCode.setVisibility(View.INVISIBLE);
+//                }
+//
+//                frameMain.setVisibility(View.VISIBLE);
+//                mainBtn.setImageBitmap(getBitmap(R.drawable.ic_rfid_btn));
+//                mainTxtMid.setText("RFID");
+//                mainTxt.setText("RFID");
+//                frameHere.setVisibility(View.VISIBLE);
             }
         });
 
@@ -237,51 +240,33 @@ public class VFRWelcome20210308Fragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 if (charSequence.toString().trim().isEmpty()) return;
-                isStartScanBarCode = true;
+                if (!canStartScanBarCodeFlag) {
+                    mainEdit.setText("");
+                    return;
+                }
+                isQRCodeCorrect = false;
                 readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
                 readBarcodeHandler.postDelayed(mReadBarCodeFragmentRunnable, 2 * 1000);
-
                 scannedInput = charSequence.toString().split(",");
 //                if (scannedInput.length == 7) {
 //                    if (scannedInput[6].trim().length() == 8) {
-//                        mLog.d(TAG, "CARD ID:> " + scannedInput[6].trim());
+//                        mLog.d(TAG, "Serial ID:> " + scannedInput[6].trim());
 //                    }
 //                }
                 if (scannedInput.length == 8) {
                     if (scannedInput[7].trim().length() == 24) {
-                        mLog.d(TAG, "personUUID:> " + scannedInput[7].trim());
-                        mLog.d(TAG, "vmsPersonSyncMap:> " + App.vmsPersonSyncMapUUID.size());
-                        if (App.vmsPersonSyncMapUUID.containsKey( scannedInput[7].trim())) {
-                            uploadPersonData = App.vmsPersonSyncMapUUID.get(scannedInput[7].trim());
-                            mLog.d(TAG, "barCodeScanned Person:> " + uploadPersonData);
-                            VmsUploadBarCode mMap = null;
-                            try {
-                                mMap = new VmsUploadBarCode(uploadPersonData);
-                                OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
-                            } catch (JSONException | IOException e) {
-                                e.printStackTrace();
-                            }
-
-                            if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
-                                try {
-                                    VmsUploadBarCode_TPE mMap_TPE = new VmsUploadBarCode_TPE(uploadPersonData);
-                                    OKHttpAgent.getInstance().postTPERequest(mMap_TPE, APP_CODE_VMS_SERVER_UPLOAD_TPE);
-                                } catch (JSONException | IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else {
-                            readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
-                            setViewLayout(R.layout.vfr_fragment_welcome_20210308_fail_check_in);
-                            initViewIDs(mainView);
-                            initViewsFeature();
-                            isStartScanBarCode = false;
+//                        mLog.d(TAG, "scannedInput:> " + charSequence.toString());
+                        try {
+                            mLog.d(TAG, " end Time:> " + scannedInput[5]);
+                            VmsKioskAuthTimeCheck mMap_timeCheck = null;
+                            mMap_timeCheck = new VmsKioskAuthTimeCheck(scannedInput[5]);
+                            OKHttpAgent.getInstance().postRequest(mMap_timeCheck, APP_CODE_VMS_AUTH_TIME_CHECK);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
-//                if (App.isBarCodeFunctionOn) {
-//                    MessageTools.showToast(getContext(), charSequence.toString());
-//                }
+                return;
             }
 
             @Override
@@ -296,9 +281,11 @@ public class VFRWelcome20210308Fragment extends Fragment {
 ////                onFragmentInteractionListener.clickToDetectPage();
 //            }
 //        });
+        thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
     }
 
-    private boolean isStartScanBarCode = false;
+    private boolean canStartScanBarCodeFlag = false;
+    private boolean isQRCodeCorrect = false;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -320,8 +307,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
         super.setUserVisibleHint(isVisibleToUser);
         mLog.d(TAG, "isVisibleToUser= " + isVisibleToUser);
         if (isVisibleToUser) {
-            mLog.d(TAG, "barCode:> " + VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner());
-            mLog.d(TAG, "card reader:> " + VMSEdgeCache.getInstance().getVms_kiosk_device_input_card_reader());
+            mLog.d(TAG, " - barCode:> " + VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner());
+            mLog.d(TAG, " - card reader:> " + VMSEdgeCache.getInstance().getVms_kiosk_device_input_card_reader());
             lazyLoad();
         } else {
         }
@@ -330,42 +317,48 @@ public class VFRWelcome20210308Fragment extends Fragment {
     // -------------- Lazy Load --------------
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void lazyLoad() {
-        mLog.d(TAG, "lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
+        mLog.d(TAG, " - lazyLoad(), getUserVisibleHint()= " + getUserVisibleHint());
+
         if (getUserVisibleHint()) {
         }
 
-        App.isRFIDFunctionOn = false;
+        App.isRFIDFunctionOn = true;
         App.isBarCodeFunctionOn = false;
+        canStartScanBarCodeFlag = false;
 
         if (VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner() && VMSEdgeCache.getInstance().getVms_kiosk_device_input_card_reader()) {
-
+            //TODO
         } else if (VMSEdgeCache.getInstance().getVms_kiosk_device_input_bar_code_scanner()) {
+            canStartScanBarCodeFlag = true; // 20210709 modified
+
             setViewLayout(R.layout.vfr_fragment_welcome_20210308_barcode_only);
             frameBarCode = mainView.findViewById(R.id.frameBarCode);
             barCodeBtn = mainView.findViewById(R.id.barCodeBtn);
             barCodeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    mLog.d(TAG, "frameRFID onclick");
-                    mainEdit.requestFocus();
-                    mainEdit.setInputType(InputType.TYPE_NULL);
+                    return;
+//                    mLog.d(TAG, " * barCodeBtn onclick");
+//                    canStartScanBarCodeFlag = true;
+//                    mainEdit.requestFocus();
+//                    mainEdit.setInputType(InputType.TYPE_NULL);
 
-                    App.isRFIDFunctionOn = false;
-                    App.isBarCodeFunctionOn = true;
+//                    App.isRFIDFunctionOn = false;
+//                    App.isBarCodeFunctionOn = true;
 
-                    adminHomeBtn.setVisibility(View.VISIBLE);
-                    frameWelcomeTxt.setVisibility(View.VISIBLE);
-                    msg_big.setText("Please scan the qrCode to login");
-
-                    frameRFID.setVisibility(View.INVISIBLE);
-                    frameBarCode.setVisibility(View.INVISIBLE);
-
-                    frameMain.setVisibility(View.VISIBLE);
-                    mainBtn.setImageBitmap(getBitmap(R.drawable.ic_barcode));
-                    mainTxtMid.setText("");
-                    mainTxt.setText("BARCODE");
-
-                    frameHere.setVisibility(View.GONE);
+//                    adminHomeBtn.setVisibility(View.VISIBLE);
+//                    frameWelcomeTxt.setVisibility(View.VISIBLE);
+//                    msg_big.setText("Please scan the qrCode to login");
+//
+//                    frameRFID.setVisibility(View.INVISIBLE);
+//                    frameBarCode.setVisibility(View.INVISIBLE);
+//
+//                    frameMain.setVisibility(View.VISIBLE);
+//                    mainBtn.setImageBitmap(getBitmap(R.drawable.ic_barcode));
+//                    mainTxtMid.setText("");
+//                    mainTxt.setText("BARCODE");
+//
+//                    frameHere.setVisibility(View.GONE);
                 }
             });
         } else if (VMSEdgeCache.getInstance().getVms_kiosk_device_input_card_reader()) {
@@ -463,14 +456,67 @@ public class VFRWelcome20210308Fragment extends Fragment {
             case APP_CODE_THC_1101_HU_GET_TEMP_SUCCESS:
                 break;
             case APP_CODE_VMS_SERVER_UPLOAD_SUCCESS:
+                canStartScanBarCodeFlag = false;
                 readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
                 setViewLayout(R.layout.vfr_fragment_welcome_20210308_success_check_in);
                 initViewIDs(mainView);
                 initViewsFeature();
-                isStartScanBarCode = false;
+                mainEdit.requestFocus();
+                mainEdit.setInputType(InputType.TYPE_NULL);
+
+                reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
+                reCheckHandler.postDelayed(mFragmentRecheckRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
+
+                break;
+            case APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS:
+                mLog.d(TAG, "APP_CODE_VMS_AUTH_TIME_CHECK_SUCCESS");
+
+                mLog.d(TAG, "personUUID:> " + scannedInput[7].trim());
+                mLog.d(TAG, "vmsPersonSyncMap:> " + App.vmsPersonSyncMapUUID.size());
+                if (App.vmsPersonSyncMapUUID.containsKey( scannedInput[7].trim())) {
+                    isQRCodeCorrect = true;
+                    App.isRFIDFunctionOn = false; // 20210709
+                    App.isBarCodeFunctionOn = true; // 20210709
+                    uploadPersonData = App.vmsPersonSyncMapUUID.get(scannedInput[7].trim());
+                    mLog.d(TAG, "barCodeScanned Person:> " + uploadPersonData);
+                    VmsUploadBarCode mMap = null;
+                    try {
+                        mMap = new VmsUploadBarCode(uploadPersonData);
+                        OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_SERVER_UPLOAD);
+                    } catch (JSONException | IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (VMSEdgeCache.getInstance().getVms_kiosk_third_event_party_enable()) {
+                        try {
+                            VmsUploadBarCode_TPE mMap_TPE = new VmsUploadBarCode_TPE(uploadPersonData);
+                            OKHttpAgent.getInstance().postTPERequest(mMap_TPE, APP_CODE_VMS_SERVER_UPLOAD_TPE);
+                        } catch (JSONException | IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } else {
+                    isQRCodeCorrect = false;
+                    MessageTools.showToast(getContext(), "[" + scannedInput[7].trim() + "] not Exist in vms DB");
+                }
+                break;
+            case APP_CODE_VMS_AUTH_TIME_CHECK_FAIL:
+                canStartScanBarCodeFlag = false;
+                readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
+                setViewLayout(R.layout.vfr_fragment_welcome_20210308_fail_check_in);
+                initViewIDs(mainView);
+                initViewsFeature();
+                mainEdit.requestFocus();
+                mainEdit.setInputType(InputType.TYPE_NULL);
+
+                reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
+                reCheckHandler.postDelayed(mFragmentRecheckRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
+
+//                msg_big.setText("Admission time is Expired!");
                 break;
         }
-        thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
+        if (null != thermoConnectStatus)
+            thermoConnectStatus.setImageDrawable(isVmsConnected ? getContext().getDrawable(R.drawable.ic_connect_20210303) : getContext().getDrawable(R.drawable.ic_disconnect_20210303));
     }
 
     private Bitmap getBitmap(int drawableRes) {
@@ -517,16 +563,43 @@ public class VFRWelcome20210308Fragment extends Fragment {
 
     private class ReadBarCodeFragmentRunnable implements Runnable {
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            if (!isStartScanBarCode) return;
-            mLog.d(TAG, "QQQQ");
-            if (scannedInput.length != 8) {
+            if (!canStartScanBarCodeFlag) return;
+            mLog.d(TAG, " --- Check QRCode Process --- isQRCodeCorrect:> " + isQRCodeCorrect);
+            if (!isQRCodeCorrect) {
+                canStartScanBarCodeFlag = false;
                 readBarcodeHandler.removeCallbacks(mReadBarCodeFragmentRunnable);
                 setViewLayout(R.layout.vfr_fragment_welcome_20210308_fail_check_in);
                 initViewIDs(mainView);
                 initViewsFeature();
+                mainEdit.requestFocus();
+                mainEdit.setInputType(InputType.TYPE_NULL);
+
+                reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
+                reCheckHandler.postDelayed(mFragmentRecheckRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
             }
+        }
+    }
+
+
+    // Handler
+    private Handler reCheckHandler = new RecheckHandler();
+    private Runnable mFragmentRecheckRunnable = new FragmentRecheckRunnable();
+
+    // -------------------------------------------
+    private class RecheckHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+        }
+    }
+
+    private class FragmentRecheckRunnable implements Runnable {
+        @Override
+        public void run() {
+            adminHomeBtn.callOnClick();
         }
     }
 
