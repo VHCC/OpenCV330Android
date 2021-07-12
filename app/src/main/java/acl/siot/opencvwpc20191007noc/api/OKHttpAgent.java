@@ -433,16 +433,17 @@ public class OKHttpAgent {
                     e.printStackTrace();
                     if (null != e && e.toString().contains("to connect")) {
                         isThermometerServerConnected = false;
+                        VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
                     }
-                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
+
                     mLog.e(TAG, "GetThread@" + this.hashCode() + ", IOException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 } catch (JSONException e) {
                     e.printStackTrace();
                     if (null != e && e.toString().contains("to connect")) {
                         isThermometerServerConnected = false;
+                        VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
                     }
-                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
                     mLog.e(TAG, "GetThread@" + this.hashCode() + ", JSONException, e= " + e.getMessage() + ", isThermometerServerConnected:> " + isThermometerServerConnected);
 //                mIRequestInterface.onRequestFail(e.getMessage(), getCode);
                 }
