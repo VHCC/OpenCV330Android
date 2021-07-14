@@ -512,7 +512,7 @@ public class VFRWelcome20210308Fragment extends Fragment {
                 reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
                 reCheckHandler.postDelayed(mFragmentRecheckRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
 
-//                msg_big.setText("Admission time is Expired!");
+                msg_big.setText("QR Code Expired");
                 break;
         }
         if (null != thermoConnectStatus)
@@ -579,6 +579,8 @@ public class VFRWelcome20210308Fragment extends Fragment {
 
                 reCheckHandler.removeCallbacks(mFragmentRecheckRunnable);
                 reCheckHandler.postDelayed(mFragmentRecheckRunnable, VMSEdgeCache.getInstance().getVms_kiosk_screen_timeout() * 1000);
+
+                msg_big.setText("QR Code Format Error !!");
             }
         }
     }

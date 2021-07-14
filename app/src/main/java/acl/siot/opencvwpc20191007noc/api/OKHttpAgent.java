@@ -81,6 +81,8 @@ public class OKHttpAgent {
         mBuilder.sslSocketFactory(ssLContext.getSocketFactory());
         mBuilder.hostnameVerifier(new NullHostNameVerifier());
         mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
+        mBuilder.readTimeout(7000, TimeUnit.MILLISECONDS);
+        mBuilder.writeTimeout(7000, TimeUnit.MILLISECONDS);
         mClient = mBuilder.build();
         mClient_getTemp = mBuilder.build();
         mClient_postTemp = mBuilder.build();

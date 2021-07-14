@@ -23,7 +23,10 @@ public class MLog {
 
     public void v(String tag, String msg) {
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.v(LOG_PREFIX + tag, msg);}
+        if (enableLocalLog) {
+            if (isDebugRecordMode) LogWriter.storeLogToDebugFile("VERBOSE, ["+tag + "], " + msg);
+            Log.v(LOG_PREFIX + tag, msg);
+        }
     }
 
     public void d(String tag, String msg) {
@@ -37,12 +40,18 @@ public class MLog {
 
     public void i(String tag, String msg) {
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.i(LOG_PREFIX +tag, msg);}
+        if (enableLocalLog) {
+            if (isDebugRecordMode) LogWriter.storeLogToDebugFile("INFO, ["+tag + "], " + msg);
+            Log.i(LOG_PREFIX +tag, msg);
+        }
     }
 
     public void w(String tag, String msg) {
         if (!ENABLE_GLOBAL_LOG) { return;}
-        if (enableLocalLog) { Log.w(LOG_PREFIX +tag, msg);}
+        if (enableLocalLog) {
+            if (isDebugRecordMode) LogWriter.storeLogToDebugFile("WARN, ["+tag + "], " + msg);
+            Log.w(LOG_PREFIX +tag, msg);
+        }
     }
 
     public void e(String tag, String msg) {

@@ -587,6 +587,7 @@ public class VFRDetect20210303Fragment extends Fragment {
 
             faceCapture.setVisibility(View.INVISIBLE);
             tempUnit.setVisibility(View.INVISIBLE);
+            confirmBtn.setVisibility(View.INVISIBLE);
             reCheckBtn.setVisibility(View.INVISIBLE);
             scan_png.setVisibility(View.INVISIBLE);
 
@@ -721,6 +722,16 @@ public class VFRDetect20210303Fragment extends Fragment {
                 thermalDetect_bg.setImageBitmap(getBitmap(R.drawable.ic_temp_detect));
                 maskDetectResults.setImageBitmap(getBitmap(R.drawable.ic_mask_detect));
             } else {
+                if (isVmsConnected && null == uploadPersonData) {
+                    try {
+                        CheckVmsPersonSerial mMap = new CheckVmsPersonSerial("00000000");
+                        OKHttpAgent.getInstance().postRequest(mMap, APP_CODE_VMS_KIOSK_DEVICE_CHECK_PERSON_SERIAL);
+                    } catch (Exception e) {
+                        e.getStackTrace();
+                    }
+                    return;
+                }
+
                 mLog.d(TAG, "origin temp:> " + person_temp_static + ", compensation:> " + VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation());
                 person_temp_static = person_temp_static + VMSEdgeCache.getInstance().getVms_kiosk_avalo_temp_compensation();
                 boolean tempValidate = person_temp_static > VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp();

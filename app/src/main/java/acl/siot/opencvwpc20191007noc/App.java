@@ -664,43 +664,46 @@ public class App extends Application {
         @Override
         public void onRequestFail(String errorResult, int requestCode) {
             mLog.d(TAG, "onRequestFail(), errorResult= " + errorResult + ", requestCode= " + requestCode);
-            switch (requestCode) {
-                case APP_CODE_THC_1101_HU_GET_TEMP:
-                    isThermometerServerConnected = false;
-//                    isAvaloFirmwareOver14181 = false;
-                    VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
-                    break;
-                case APP_CODE_VMS_KIOSK_DEVICE_SYNC:
-                    AppBus.getInstance().post(new BusEvent("APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL", APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL));
-                    break;
-                case APP_CODE_VMS_KIOSK_DEVICE_CONNECT:
-                    AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL));
-                    break;
-                case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS:
-                    AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL));
-                    break;
-                case APP_CODE_VMS_KIOSK_DEVICE_HB:
-                    if (errorResult == null ) {
-                        isVmsConnected = false;
-                    } else if (errorResult.equals("DEVICE_INACTIVE")) {
-                        AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_STATUS_INACTIVE));
-                    } else {
-                        isVmsConnected = false;
-                    }
-                    break;
-                case APP_CODE_VMS_AUTH_TIME_CHECK:
-                    AppBus.getInstance().post(new BusEvent("out of admission time", APP_CODE_VMS_AUTH_TIME_CHECK_FAIL));
-                    break;
-                case APP_CODE_AVALO_THERMAL_POST_CONFIG:
-                    if (null != errorResult && errorResult.contains("to connect")) {
+            try {
+                switch (requestCode) {
+                    case APP_CODE_THC_1101_HU_GET_TEMP:
                         isThermometerServerConnected = false;
-//                        isAvaloFirmwareOver14181 = false;
+//                    isAvaloFirmwareOver14181 = false;
                         VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
-                    }
-                    break;
-
+                        break;
+                    case APP_CODE_VMS_KIOSK_DEVICE_SYNC:
+                        AppBus.getInstance().post(new BusEvent("APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL", APP_CODE_VMS_KIOSK_DEVICE_SYNC_FAIL));
+                        break;
+                    case APP_CODE_VMS_KIOSK_DEVICE_CONNECT:
+                        AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_CONNECT_FAIL));
+                        break;
+                    case APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS:
+                        AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_DEVICE_TRY_CONNECT_VMS_FAIL));
+                        break;
+                    case APP_CODE_VMS_KIOSK_DEVICE_HB:
+                        if (errorResult == null ) {
+                            isVmsConnected = false;
+                        } else if (errorResult.equals("DEVICE_INACTIVE")) {
+                            AppBus.getInstance().post(new BusEvent(errorResult, APP_CODE_VMS_KIOSK_STATUS_INACTIVE));
+                        } else {
+                            isVmsConnected = false;
+                        }
+                        break;
+                    case APP_CODE_VMS_AUTH_TIME_CHECK:
+                        AppBus.getInstance().post(new BusEvent("out of admission time", APP_CODE_VMS_AUTH_TIME_CHECK_FAIL));
+                        break;
+                    case APP_CODE_AVALO_THERMAL_POST_CONFIG:
+                        if (null != errorResult && errorResult.contains("to connect")) {
+                            isThermometerServerConnected = false;
+//                        isAvaloFirmwareOver14181 = false;
+                            VMSEdgeCache.getInstance().setVms_kiosk_video_type(0);
+                        }
+                        break;
+                }
+            } catch (Exception e) {
+                mLog.e(TAG, "requestCode:> " + requestCode + ", error:> " + e.toString());
+                e.getStackTrace();
             }
-
         }
     }
 
