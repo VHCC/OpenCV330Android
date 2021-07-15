@@ -12,6 +12,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -21,7 +22,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
-import acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskAuthTimeCheck;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,10 +31,13 @@ import androidx.fragment.app.Fragment;
 import com.blankj.utilcode.util.AppUtils;
 
 import org.json.JSONException;
+import org.opencv.core.Rect;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Date;
+
+import com.seeta.*;
 
 import acl.siot.opencvwpc20191007noc.App;
 import acl.siot.opencvwpc20191007noc.AppBus;
@@ -61,7 +64,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
  * Created by IChen.Chu on 2021/03/08
  * A fragment to show welcome page.
  */
-public class VFRWelcome20210308Fragment extends Fragment {
+public class VFRWelcome20210308Fragment extends Fragment  {
 
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());

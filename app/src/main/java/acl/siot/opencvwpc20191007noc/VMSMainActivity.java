@@ -1,11 +1,12 @@
 package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
-import android.content.Intent;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
@@ -17,12 +18,14 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.blankj.utilcode.util.ProcessUtils;
+import java.io.File;
 
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.dbHelper.DBAdapter;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
+import com.seeta.*;
+import acl.siot.opencvwpc20191007noc.util.FileUtils;
 import acl.siot.opencvwpc20191007noc.util.MLog;
 import acl.siot.opencvwpc20191007noc.util.MessageTools;
 import acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPassword20210429Fragment;
@@ -94,6 +97,7 @@ public class VMSMainActivity extends AppCompatActivity {
 //        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
 //        LocaleUtils.updateConfig(this);
 //        startUSBService();
+        copyModel();
     }
 
 //    private void startUSBService() {
@@ -246,6 +250,7 @@ public class VMSMainActivity extends AppCompatActivity {
                 break;
 
                 case PAGE_WELCOME: {
+//                    VFRWelcome20210308Fragment vfrWelcomeFragment = VFRWelcome20210308Fragment.newInstance();
                     VFRWelcome20210308Fragment vfrWelcomeFragment = VFRWelcome20210308Fragment.newInstance();
                     vfrWelcomeFragment.setOnFragmentInteractionListener(vfrWelcomePageInteractionListener);
                     fragment = vfrWelcomeFragment;
@@ -258,6 +263,7 @@ public class VMSMainActivity extends AppCompatActivity {
                     VFRDetect20210303Fragment vfrDetectFragment = VFRDetect20210303Fragment.newInstance();
                     vfrDetectFragment.setOnFragmentInteractionListener(vfrDetect20210303PageInteractionListener);
                     fragment = vfrDetectFragment;
+                    new PresenterImpl(vfrDetectFragment);
                 }
                 break;
 
@@ -337,6 +343,7 @@ public class VMSMainActivity extends AppCompatActivity {
                     if (lastPosition == PAGE_DETECT) {
 //                        ((DashboardMainFragment)fragments[PAGE_DASHBOARD]).userLogOutSucceed();
                     }
+
 //                    ((DashboardMainFragment)fragments[PAGE_DASHBOARD]).userLoginSucceed();
                     break;
                 case PAGE_DETECT:
@@ -533,6 +540,66 @@ public class VMSMainActivity extends AppCompatActivity {
         android.os.Process.killProcess(android.os.Process.myPid());
         System.exit(1);
         super.onDestroy();
+    }
+
+    public static String MODELPATH;
+
+    public void copyModel() {
+        //加入模型缓存
+        String fdModel = "face_detector.csta";
+        String pdModel = "face_landmarker_pts5.csta";
+        String fasModel1 = "fas_first.csta";
+        String fasModel2 = "fas_second.csta";
+        String mdModel = "mask_detector.csta";
+
+        File cacheDir = this.getExternalCacheDirectory(this, null);
+        String modelPath = cacheDir.getAbsolutePath();
+        mLog.d(TAG, "" + modelPath);
+        MODELPATH = modelPath;
+        mLog.d(TAG, "MODELPATH:> " + MODELPATH);
+
+        if (!isExists(modelPath, fdModel)) {
+            File fdFile = new File(cacheDir + "/" + fdModel);
+            FileUtils.copyFromAsset(this, fdModel, fdFile, false);
+        }
+        if (!isExists(modelPath, pdModel)) {
+            File pdFile = new File(cacheDir + "/" + pdModel);
+            FileUtils.copyFromAsset(this, pdModel, pdFile, false);
+        }
+        if (!isExists(modelPath, fasModel1)) {
+            File fasFile1 = new File(cacheDir + "/" + fasModel1);
+            FileUtils.copyFromAsset(this, fasModel1, fasFile1, false);
+        }
+        if (!isExists(modelPath, fasModel2)) {
+            File fasFile2 = new File(cacheDir + "/" + fasModel2);
+            FileUtils.copyFromAsset(this, fasModel2, fasFile2, false);
+        }
+        if (!isExists(modelPath, mdModel)) {
+            File mdFile = new File(cacheDir + "/" + mdModel);
+            mLog.d(TAG, "mdFile:> " + mdFile.getAbsolutePath());
+            FileUtils.copyFromAsset(this, mdModel, mdFile, false);
+        }
+    }
+
+    public File getExternalCacheDirectory(Context context, String type) {
+        File appCacheDir = null;
+        if (TextUtils.isEmpty(type)) {
+            appCacheDir = context.getExternalCacheDir();// /sdcard/data/data/app_package_name/cache
+        } else {
+            appCacheDir = new File(context.getFilesDir(), type);// /data/data/app_package_name/files/type
+        }
+
+        if (!appCacheDir.exists() && !appCacheDir.mkdirs()) {
+            mLog.e("getInternalDirectory", "getInternalDirectory fail ,the reason is make directory fail !");
+        }
+        return appCacheDir;
+    }
+
+    public boolean isExists(String path, String modelName) {
+        File file = new File(path + "/" + modelName);
+        if (file.exists()) return true;
+
+        return false;
     }
 
 }

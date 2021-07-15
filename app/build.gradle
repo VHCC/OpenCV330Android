@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 28
+    buildToolsVersion '26.0.2'
     flavorDimensions "version"
 
     defaultConfig {
@@ -16,9 +17,18 @@ android {
             applicationId "acl.siot.opencvwpc20191007noc"
             versionCode 16
             versionName "1.0.8"
+            ndk {
+                abiFilters 'armeabi-v7a'
+            }
         }
     }
 
+    sourceSets {
+        main {
+//            jniLibs.srcDirs = ["src/main/jniLibs"]
+            jniLibs.srcDirs = ['libs', "src/main/jniLibs"]
+        }
+    }
 
     buildTypes {
         release {
@@ -53,18 +63,18 @@ android {
             }
         }
     }
+
     aaptOptions {
         noCompress "tflite"
     }
 
-    sourceSets { main { jni.srcDirs = ['src/main/jni', 'src/main/jni/'] } }
 }
 
 // import DownloadModels task
 project.ext.ASSET_DIR = projectDir.toString() + '/src/main/assets'
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar','*.so'], dir: 'libs')
     //noinspection GradleCompatible
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
