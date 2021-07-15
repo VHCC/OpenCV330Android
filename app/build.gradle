@@ -2,22 +2,55 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 28
+    flavorDimensions "version"
+
     defaultConfig {
-        applicationId "acl.siot.opencvwpc20191007noc"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 14
-        versionName "1.0.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    productFlavors {
+        Advantech_VMS_Kiosk {
+            dimension "version"
+            applicationId "acl.siot.opencvwpc20191007noc"
+            versionCode 16
+            versionName "1.0.8"
+        }
+    }
+
+
     buildTypes {
         release {
             buildConfigField "Boolean", "DEBUG_MODE", "true"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            android.applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    def formattedDate = new Date().format('yyyyMMdd', TimeZone.getTimeZone("UTC"))
+                    def builtType = variant.buildType.name
+                    def versionName = variant.versionName
+                    def versionCode = variant.versionCode
+                    def flavor = variant.flavorName
+                    outputFileName = "${flavor}_v${versionName}_${versionCode}.apk"
+                }
+            }
         }
         debug {
             buildConfigField "Boolean", "DEBUG_MODE", "false"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            android.applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    def formattedDate = new Date().format('yyyyMMdd', TimeZone.getTimeZone("UTC"))
+                    def builtType = variant.buildType.name
+                    def versionName = variant.versionName
+                    def versionCode = variant.versionCode
+                    def flavor = variant.flavorName
+//                    outputFileName = "app-${flavor}-${builtType}-v${versionName}-${versionCode}.apk"
+                    outputFileName = "${flavor}_v${versionName}_${formattedDate}.apk"
+                }
+            }
         }
     }
     aaptOptions {
