@@ -70,15 +70,15 @@
             android:name=".DetectActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
 
-        <service
-            android:name=".USBDetectService"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.wisepaas.storesenseagent.action.START_USB_SERVICE" />
-                <action android:name="com.wisepaas.storesenseagent.action.STOP_USB_SERVICE" />
-            </intent-filter>
-        </service>
+<!--        <service-->
+<!--            android:name=".USBDetectService"-->
+<!--            android:enabled="true"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="com.wisepaas.storesenseagent.action.START_USB_SERVICE" />-->
+<!--                <action android:name="com.wisepaas.storesenseagent.action.STOP_USB_SERVICE" />-->
+<!--            </intent-filter>-->
+<!--        </service>-->
 
 <!--        <receiver-->
 <!--            android:name=".USBBroadcastReceiver"-->

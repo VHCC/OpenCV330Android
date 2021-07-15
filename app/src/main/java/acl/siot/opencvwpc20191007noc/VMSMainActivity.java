@@ -93,24 +93,24 @@ public class VMSMainActivity extends AppCompatActivity {
 //        mDBAdapter.setDataVersion(String.valueOf(DB_VERSION));
 //        AppBus.getInstance().post(new BusEvent("add data", DB_CODE_INSERT_DETECT_INFO));
 //        LocaleUtils.updateConfig(this);
-        startUSBService();
+//        startUSBService();
     }
 
-    private void startUSBService() {
-        mLog.i(TAG, "startUSBService...");
-        Intent startIntent = new Intent();
-        startIntent.setClass(this, USBDetectService.class);
-        startIntent.setAction("com.wisepaas.storesenseagent.action.START_USB_SERVICE");
-        startService(startIntent);
-    }
+//    private void startUSBService() {
+//        mLog.i(TAG, "startUSBService...");
+//        Intent startIntent = new Intent();
+//        startIntent.setClass(this, USBDetectService.class);
+//        startIntent.setAction("com.wisepaas.storesenseagent.action.START_USB_SERVICE");
+//        startService(startIntent);
+//    }
 
-    private void stopUSBService() {
-        mLog.i(TAG, "stopUSBService...");
-        Intent startIntent = new Intent();
-        startIntent.setClass(this, USBDetectService.class);
-        startIntent.setAction("com.wisepaas.storesenseagent.action.STOP_USB_SERVICE");
-        startService(startIntent);
-    }
+//    private void stopUSBService() {
+//        mLog.i(TAG, "stopUSBService...");
+//        Intent startIntent = new Intent();
+//        startIntent.setClass(this, USBDetectService.class);
+//        startIntent.setAction("com.wisepaas.storesenseagent.action.STOP_USB_SERVICE");
+//        startService(startIntent);
+//    }
 
     String usbStateChangeAction = "android.hardware.usb.action.USB_STATE";
 
@@ -526,7 +526,7 @@ public class VMSMainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         mLog.d(TAG, " * onDestroy");
-        stopUSBService();
+//        stopUSBService();
         App.threadObject.setRunning(false);
         AppBus.getInstance().unregister(this);
         finish();

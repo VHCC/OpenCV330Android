@@ -95,6 +95,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_TPE;
+import static acl.siot.opencvwpc20191007noc.vfr.adminSetting.VFRAdminPassword20210429Fragment.isDebugRecordMode;
 
 /**
  * Created by IChen.Chu on 2021/03/03
@@ -1014,12 +1015,15 @@ public class VFRDetect20210303Fragment extends Fragment {
             }
             MatOfRect faces = new MatOfRect();
             if (classifier != null) {
-                classifier.detectMultiScale(mGray, faces, 1.1, 2, 0,
+                classifier.detectMultiScale(mGray, faces, 1.05, 2, 0,
                         new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
                 Rect[] facesArray = faces.toArray();
                 Scalar faceRectColor = new Scalar(0, 255, 0, 255);
                 Scalar faceRectColor_no_detect = new Scalar(0, 255, 255, 255);
                 Rect theLargeFace = null;
+                if (isDebugRecordMode) {
+                    mLog.d(TAG, "facesArray length:> " + facesArray.length);
+                }
                 for (Rect faceRect : facesArray) {
                     if (null != theLargeFace && faceRect.area() > theLargeFace.area()) {
                         theLargeFace = faceRect;
@@ -1030,12 +1034,14 @@ public class VFRDetect20210303Fragment extends Fragment {
                 }
                 // tl : top-left
                 // br : bottom-right
-                if (theLargeFace != null) {
-//                    mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+                if (null != theLargeFace) {
+                    if (isDebugRecordMode) {
+                        mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+                    }
                 }
                 try {
                     // 選擇畫面中最大的臉做運算
-                    if (theLargeFace != null && theLargeFace.width > FACE_THRESHOLD && theLargeFace.height > FACE_THRESHOLD && theLargeFace.area() > faceArea) {
+                    if (null != theLargeFace && theLargeFace.width > FACE_THRESHOLD && theLargeFace.height > FACE_THRESHOLD && theLargeFace.area() > faceArea) {
                         faceArea = theLargeFace.area() * 0.85d;
 
                         AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
@@ -1043,9 +1049,11 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                         final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
 
-//                        Imgproc.rectangle(mRgba, theLargeFace.tl(), theLargeFace.br(), faceRectColor, 3);
-//                        Imgproc.putText(mRgba, "width:> " + theLargeFace.width + ", height:> " + theLargeFace.height, theLargeFace.tl(), Core.TYPE_MARKER, 2.0, new Scalar(0,255,0), 2);
-//                        Imgproc.putText(mRgba, "size:> " + FACE_THRESHOLD , theLargeFace.br() , Core.TYPE_MARKER, 2.0, new Scalar(0,0,255), 2);
+                        if (isDebugRecordMode) {
+                            Imgproc.rectangle(mRgba, theLargeFace.tl(), theLargeFace.br(), faceRectColor, 3);
+                            Imgproc.putText(mRgba, "width:> " + theLargeFace.width + ", height:> " + theLargeFace.height, theLargeFace.tl(), Core.TYPE_MARKER, 2.0, new Scalar(0,255,0), 2);
+                            Imgproc.putText(mRgba, "size:> " + FACE_THRESHOLD , theLargeFace.br() , Core.TYPE_MARKER, 2.0, new Scalar(0,0,255), 2);
+                        }
 
                         Utils.matToBitmap(mRgba, bitmap);
                         Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, theLargeFace.x, theLargeFace.y, theLargeFace.width, theLargeFace.height);
@@ -1054,7 +1062,9 @@ public class VFRDetect20210303Fragment extends Fragment {
                             maskProcessBitmapClone = faceImageBitmap; // 得到運算的臉
                         }
                     } else {
-//                        mLog.d(TAG, "NO OVER FACE_THRESHOLD" + FACE_THRESHOLD + ", * width= " + faceRect.width + ", height= " + faceRect.height);
+                        if (isDebugRecordMode) {
+                            mLog.d(TAG, "NO OVER FACE_THRESHOLD:> " + FACE_THRESHOLD + ", noDetectCount:> " + noDetectCount);
+                        }
                         noDetectCount++;
                     }
                 } catch (Exception e) {
@@ -1159,7 +1169,11 @@ public class VFRDetect20210303Fragment extends Fragment {
                     if (!canStartToDetectGate) return;
 
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
-                    if (results != null && results.getConfidence() > 0.94) {
+                    if (results != null ) {
+                        if (results.getConfidence() < 0.5) {
+                            mLog.d(TAG, "results.getConfidence():> " + results.getConfidence());
+                            return;
+                        }
                         maskResults = results.getClasses();
                         detectResult = results;
                         switch (results.getClasses()) {
@@ -1356,7 +1370,9 @@ public class VFRDetect20210303Fragment extends Fragment {
                 try {
                     long start_time_tick = System.currentTimeMillis();
                     if (tick_count % period == 0) {
-//                            mLog.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
+                        if (isDebugRecordMode) {
+                            mLog.d(TAG, "preview frames= " + ((float) preview_frames / period) + ", fps= " + ((float) fps / period));
+                        }
                         preview_frames = 0;
                         fps = 0;
                     }
