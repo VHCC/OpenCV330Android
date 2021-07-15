@@ -107,6 +107,8 @@ public class VFRDetect20210303Fragment extends Fragment {
     private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
+    public static final float detect_confidence = 0.65f;
+
     // Constants
     static final int FACE_THRESHOLD = 100;
     static final int FACE_THRESHOLD_COUNT = 9;
@@ -1170,7 +1172,10 @@ public class VFRDetect20210303Fragment extends Fragment {
 
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
                     if (results != null ) {
-                        if (results.getConfidence() < 0.5) {
+                        if (isDebugRecordMode) {
+                            MessageTools.showLongToast(getContext(), "score:> " + results.getConfidence() );
+                        }
+                        if (results.getConfidence() < detect_confidence) {
                             mLog.d(TAG, "results.getConfidence():> " + results.getConfidence());
                             return;
                         }
