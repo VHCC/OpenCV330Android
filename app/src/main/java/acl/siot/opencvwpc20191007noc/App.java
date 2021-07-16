@@ -74,6 +74,7 @@ import acl.siot.opencvwpc20191007noc.vms.VmsKioskApplyUpdate;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskHB;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
 
+import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CAMERA_NOT_GRANTED;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_CONFIG;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_TEMP;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS;
@@ -322,6 +323,8 @@ public class App extends Application {
         }
     }
 
+    public static boolean isCameraUnavailable = false;
+
     // Thread
     private Thread appThread;
     private Runnable appRunnable = new Runnable() {
@@ -351,6 +354,7 @@ public class App extends Application {
                                 OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                             }
                         }
+
                     }
 
                     if (tick_count % 20 == 2) {
@@ -375,8 +379,11 @@ public class App extends Application {
                         AppBus.getInstance().post(new BusEvent("time tick", TIME_TICK));
                     }
 
-                    if (tick_count % 10 == 0) {
+                    if (tick_count % 10 == 1) {
                         checkUsbDeviceStatus();
+                        if (isCameraUnavailable) {
+                            AppBus.getInstance().post(new BusEvent("", APP_CAMERA_NOT_GRANTED));
+                        }
                     }
 
 //                    if (tick_count % 10 == 0) {
@@ -741,6 +748,9 @@ public class App extends Application {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                break;
+            case APP_CAMERA_NOT_GRANTED:
+                MessageTools.showLongToast(getApplicationContext(), "After Granted Access Camera, Please Restart App");
                 break;
         }
     }

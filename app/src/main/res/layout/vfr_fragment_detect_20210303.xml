@@ -19,7 +19,7 @@
             android:layout_height="match_parent" />
 
         <acl.siot.opencvwpc20191007noc.camera.CameraPreview2
-            android:rotation="-90"
+            android:rotation="0"
             android:id="@+id/camera_preview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

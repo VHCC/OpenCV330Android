@@ -94,7 +94,7 @@ public class OKHttpConstants {
         public static final int APP_CODE_VMS_KIOSK_STATUS_INACTIVE = 99001;
         public static final int APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS = 99002;
 
-
+        public static final int APP_CAMERA_NOT_GRANTED = 54654;
 
         public static final int APP_CODE_LOG_UPLOAD = 40001;
         public static final int APP_CODE_LOG_UPLOAD_SUCCESS = 400011;

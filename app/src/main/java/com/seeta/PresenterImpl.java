@@ -71,7 +71,9 @@ public class PresenterImpl implements VerificationContract.Presenter {
     private static int HEIGHT = CAMERA_PREVIEW_WIDTH;
     public static class TrackingInfo {
         public Mat matBgr;
+        public Mat matBgr_AICS;
         public Mat matGray;
+        public Mat matGray_AICS;
         public SeetaRect faceInfo = new SeetaRect();
         public Rect faceRect = new Rect();
         public long birthTime;
@@ -139,15 +141,13 @@ public class PresenterImpl implements VerificationContract.Presenter {
 
         @Override
         public void handleMessage(Message msg) {
-
             final TrackingInfo trackingInfo = (TrackingInfo) msg.obj;
-
 
 //            trackingInfo.matBgr.create(new Size(WIDTH, HEIGHT), CvType.CV_8UC4);
             //當前Mat與Bitmap轉換，只支援ARGB_8888和RGB_565
             Bitmap bitmap = Bitmap.createBitmap(trackingInfo.matBgr.width(), trackingInfo.matBgr.height(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(trackingInfo.matBgr, bitmap,true);//新增透明度
 
+            Utils.matToBitmap(trackingInfo.matBgr, bitmap,true);//新增透明度
             trackingInfo.matBgr.get(0, 0, imageData.data);
             mLog.d("seetatech", "faceDetector.Detect start");
             SeetaRect[] faces = faceDetector.Detect(imageData);
@@ -185,7 +185,25 @@ public class PresenterImpl implements VerificationContract.Presenter {
                 mLog.d("seetatech", "faceRect.height:> " + faces[maxIndex].height);
                 trackingInfo.lastProccessTime = System.currentTimeMillis();
                 mView.drawFaceRect(trackingInfo.faceRect);
-//                mView.drawTestMat(bitmap);
+
+                Bitmap bitmapUI = Bitmap.createBitmap(trackingInfo.matBgr_AICS.width(),
+                        trackingInfo.matBgr_AICS.height(), Bitmap.Config.RGB_565);
+                Utils.matToBitmap(trackingInfo.matBgr_AICS, bitmapUI);
+
+                int x_pad = 50;
+                int y_pad = 50;
+
+                try {
+                    Bitmap faceImageBitmap = Bitmap.createBitmap(bitmapUI,
+                            trackingInfo.faceRect.x - x_pad,
+                            trackingInfo.faceRect.y - y_pad,
+                            trackingInfo.faceRect.width + x_pad + x_pad,
+                            trackingInfo.faceRect.height + y_pad + y_pad);
+                    mView.drawTestMat(faceImageBitmap);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 mFasHandler.removeMessages(0);
                 mFasHandler.obtainMessage(0, trackingInfo).sendToTarget();
 
@@ -280,24 +298,34 @@ public class PresenterImpl implements VerificationContract.Presenter {
     private Mat matNv21 = new Mat(CAMERA_PREVIEW_HEIGHT + CAMERA_PREVIEW_HEIGHT / 2,
             AppConfig.CAMERA_PREVIEW_WIDTH, CvType.CV_8UC1);
 
+    private Mat matNv21_AICS = new Mat(CAMERA_PREVIEW_HEIGHT + CAMERA_PREVIEW_HEIGHT / 2,
+            AppConfig.CAMERA_PREVIEW_WIDTH, CvType.CV_8UC1);
+
     @Override
     public void detect(byte[] data, int width, int height, int rotation) {
         TrackingInfo trackingInfo = new TrackingInfo();
 
 //        Log.d(TAG, "data:> " + data.length + ", matNv21.size:> " + matNv21.size());
         matNv21.put(0, 0, data);
+        matNv21_AICS.put(0, 0, data);
 //        trackingInfo.matBgr = new Mat(640, 720, CV_8UC3);
 //        trackingInfo.matBgr = new Mat(640, 480, CV_8UC3);
         trackingInfo.matBgr = new Mat();
+        trackingInfo.matBgr_AICS = new Mat();
         trackingInfo.matGray = new Mat();
+        trackingInfo.matGray_AICS = new Mat();
 
         Imgproc.cvtColor(matNv21, trackingInfo.matBgr, Imgproc.COLOR_YUV2BGR_NV21);
+        Imgproc.cvtColor(matNv21_AICS, trackingInfo.matBgr_AICS, Imgproc.COLOR_YUV2RGBA_NV21, 4);
         Core.transpose(trackingInfo.matBgr, trackingInfo.matBgr);
+        Core.transpose(trackingInfo.matBgr_AICS, trackingInfo.matBgr_AICS);
 //        Log.d(TAG, "CachedStatusAndImage.frontCamera:> " + CachedStatusAndImage.frontCamera);
         if (CachedStatusAndImage.frontCamera) {//如果是前向摄像头
             Core.flip(trackingInfo.matBgr, trackingInfo.matBgr, 0);
             Core.flip(trackingInfo.matBgr, trackingInfo.matBgr, 1);
 
+            Core.flip(trackingInfo.matBgr_AICS, trackingInfo.matBgr_AICS, 0);
+            Core.flip(trackingInfo.matBgr_AICS, trackingInfo.matBgr_AICS, 1);
 
 //            double ratio =  trackingInfo.matBgr.height() / (double) trackingInfo.matBgr.width();
 //
@@ -312,16 +340,19 @@ public class PresenterImpl implements VerificationContract.Presenter {
 //            Log.d(TAG, "trackingInfo.matBgr:> " + trackingInfo.matBgr.size());
 //            Core.flip(trackingInfo.matBgr.t(), trackingInfo.matBgr, 0); //mRgba.t() is the transpose
             Core.flip(trackingInfo.matBgr.t(), trackingInfo.matBgr, 0); //mRgba.t() is the transpose
+            Core.flip(trackingInfo.matBgr_AICS.t(), trackingInfo.matBgr_AICS, 0); //mRgba.t() is the transpose
 //            Log.d(TAG, "after t, trackingInfo.matBgr:> " + trackingInfo.matBgr.size());
 //            # rotate 90º clockwise
 //            Core.flip(trackingInfo.matBgr.t(), trackingInfo.matBgr, 1);
         } else {//如果是后置摄像头
             Core.flip(trackingInfo.matBgr, trackingInfo.matBgr, 1);
+            Core.flip(trackingInfo.matBgr_AICS, trackingInfo.matBgr_AICS, 1);
         }
 
 //        saveImgage(trackingInfo.matBgr.clone());//保存图像
 
         Imgproc.cvtColor(trackingInfo.matBgr, trackingInfo.matGray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.cvtColor(trackingInfo.matBgr_AICS, trackingInfo.matGray_AICS, Imgproc.COLOR_BGR2GRAY);
 
         trackingInfo.birthTime = System.currentTimeMillis();
         trackingInfo.lastProccessTime = System.currentTimeMillis();

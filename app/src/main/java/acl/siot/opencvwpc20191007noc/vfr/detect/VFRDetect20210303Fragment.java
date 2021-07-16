@@ -3,6 +3,7 @@ package acl.siot.opencvwpc20191007noc.vfr.detect;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -97,6 +98,7 @@ import acl.siot.opencvwpc20191007noc.vms.VmsUpload_TPE;
 import acl.siot.opencvwpc20191007noc.wbSocket.AvaloWebSocketClient;
 
 import static acl.siot.opencvwpc20191007noc.App.TIME_TICK;
+import static acl.siot.opencvwpc20191007noc.App.isCameraUnavailable;
 import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 import static acl.siot.opencvwpc20191007noc.App.isVmsConnected;
 import static acl.siot.opencvwpc20191007noc.App.uploadPersonData;
@@ -247,6 +249,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
         anchors = AnchorUtil.getInstance().generateAnchors();
 
         mFaceRectPaint = new Paint();
+        mFaceRectPaint.setTextSize(18f);
         mFaceRectPaint.setColor(Color.argb(150, 0, 255, 0));
         mFaceRectPaint.setStrokeWidth(3);
         mFaceRectPaint.setStyle(Paint.Style.STROKE);
@@ -368,7 +371,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
 
     // Upload data to vms backend
     private void uploadData() throws JSONException {
-        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
+        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
@@ -450,7 +453,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     }
 
     private void uploadDataTPE() throws JSONException {
-        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap;
+        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
@@ -997,6 +1000,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     int noDetectCount = 0;
 
     private Bitmap maskProcessBitmap;
+    private Bitmap maskProcessBitmapShowOn;
     private Bitmap maskProcessBitmapClone;
     private Bitmap thermalBitmap;
     private int maskResults = 2;
@@ -1027,6 +1031,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
 
         @Override
         public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
+            mLog.d(TAG, "onCameraFrame");
             preview_frames++;
             mRgba = inputFrame.rgba();
 
@@ -1041,97 +1046,82 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                 Core.flip(mGray, mGray, -1);
             }
 
+            float mRelativeFaceSize = 0.1f;
+            if (mAbsoluteFaceSize == 0) {
+                int height = mGray.rows();
+                if (Math.round(height * mRelativeFaceSize) > 0) {
+                    mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
+                }
+            }
+            MatOfRect faces = new MatOfRect();
+            if (classifier != null) {
+                classifier.detectMultiScale(mGray, faces, 1.05, 2, 0,
+                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
+                Rect[] facesArray = faces.toArray();
+                Scalar faceRectColor = new Scalar(0, 255, 0, 255);
+                Scalar faceRectColor_no_detect = new Scalar(0, 255, 255, 255);
+                Rect theLargeFace = null;
+                if (isDebugRecordMode) {
+                    mLog.d(TAG, "facesArray length:> " + facesArray.length);
+                }
+                for (Rect faceRect : facesArray) {
+                    if (null != theLargeFace && faceRect.area() > theLargeFace.area()) {
+                        theLargeFace = faceRect;
+                    }
+                    if (null == theLargeFace) {
+                        theLargeFace = faceRect;
+                    }
+                }
+                // tl : top-left
+                // br : bottom-right
+                if (null != theLargeFace) {
+                    if (isDebugRecordMode) {
+                        mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+                    }
+                }
+                try {
+                    // 選擇畫面中最大的臉做運算
+                    if (null != theLargeFace && theLargeFace.width > FACE_THRESHOLD && theLargeFace.height > FACE_THRESHOLD && theLargeFace.area() > faceArea) {
+                        faceArea = theLargeFace.area() * 0.85d;
 
-            Bitmap image = Bitmap.createBitmap(mRgba.cols(),
-                    mRgba.rows(), Bitmap.Config.RGB_565);
+                        AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
+                        noDetectCount = 0;
 
-            Utils.matToBitmap(mRgba, image);
+                        final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
 
-            Bitmap bitmap = (Bitmap) image;
-            bitmap = Bitmap.createScaledBitmap(bitmap, 600, 450, false);
+                        if (isDebugRecordMode) {
+                            Imgproc.rectangle(mRgba, theLargeFace.tl(), theLargeFace.br(), faceRectColor, 3);
+                            Imgproc.putText(mRgba, "width:> " + theLargeFace.width + ", height:> " + theLargeFace.height, theLargeFace.tl(), Core.TYPE_MARKER, 2.0, new Scalar(0,255,0), 2);
+                            Imgproc.putText(mRgba, "size:> " + FACE_THRESHOLD , theLargeFace.br() , Core.TYPE_MARKER, 2.0, new Scalar(0,0,255), 2);
+                        }
 
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-            byte[] byteArray = byteArrayOutputStream.toByteArray();
+                        Utils.matToBitmap(mRgba, bitmap);
+                        Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, theLargeFace.x, theLargeFace.y, theLargeFace.width, theLargeFace.height);
+                        if (faceImageBitmap != null) {
+                            maskProcessBitmap = faceImageBitmap;
+                            maskProcessBitmapClone = faceImageBitmap; // 得到運算的臉
+                        }
+                    } else {
+                        if (isDebugRecordMode) {
+                            mLog.d(TAG, "NO OVER FACE_THRESHOLD:> " + FACE_THRESHOLD + ", noDetectCount:> " + noDetectCount);
+                        }
+                        noDetectCount++;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-            mPresenter.detect(byteArray, 600, 600, 0);
+                if (facesArray.length == 0) { //畫面中沒有臉
+                    noDetectCount++;
+                }
 
-//            float mRelativeFaceSize = 0.1f;
-//            if (mAbsoluteFaceSize == 0) {
-//                int height = mGray.rows();
-//                if (Math.round(height * mRelativeFaceSize) > 0) {
-//                    mAbsoluteFaceSize = Math.round(height * mRelativeFaceSize);
-//                }
-//            }
-//            MatOfRect faces = new MatOfRect();
-//            if (classifier != null) {
-//                classifier.detectMultiScale(mGray, faces, 1.05, 2, 0,
-//                        new Size(mAbsoluteFaceSize, mAbsoluteFaceSize), new Size());
-//                Rect[] facesArray = faces.toArray();
-//                Scalar faceRectColor = new Scalar(0, 255, 0, 255);
-//                Scalar faceRectColor_no_detect = new Scalar(0, 255, 255, 255);
-//                Rect theLargeFace = null;
-//                if (isDebugRecordMode) {
-//                    mLog.d(TAG, "facesArray length:> " + facesArray.length);
-//                }
-//                for (Rect faceRect : facesArray) {
-//                    if (null != theLargeFace && faceRect.area() > theLargeFace.area()) {
-//                        theLargeFace = faceRect;
-//                    }
-//                    if (null == theLargeFace) {
-//                        theLargeFace = faceRect;
-//                    }
-//                }
-//                // tl : top-left
-//                // br : bottom-right
-//                if (null != theLargeFace) {
-//                    if (isDebugRecordMode) {
-//                        mLog.d(TAG, "theLargeFace.width:> " + theLargeFace.width + ", theLargeFace.height:> " + theLargeFace.height + ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
-//                    }
-//                }
-//                try {
-//                    // 選擇畫面中最大的臉做運算
-//                    if (null != theLargeFace && theLargeFace.width > FACE_THRESHOLD && theLargeFace.height > FACE_THRESHOLD && theLargeFace.area() > faceArea) {
-//                        faceArea = theLargeFace.area() * 0.85d;
-//
-//                        AppBus.getInstance().post(new BusEvent("hide overlay", OVER_LAY_GREEN));
-//                        noDetectCount = 0;
-//
-//                        final Bitmap bitmap = Bitmap.createBitmap(mRgba.cols(), mRgba.rows(), Bitmap.Config.RGB_565);
-//
-//                        if (isDebugRecordMode) {
-//                            Imgproc.rectangle(mRgba, theLargeFace.tl(), theLargeFace.br(), faceRectColor, 3);
-//                            Imgproc.putText(mRgba, "width:> " + theLargeFace.width + ", height:> " + theLargeFace.height, theLargeFace.tl(), Core.TYPE_MARKER, 2.0, new Scalar(0,255,0), 2);
-//                            Imgproc.putText(mRgba, "size:> " + FACE_THRESHOLD , theLargeFace.br() , Core.TYPE_MARKER, 2.0, new Scalar(0,0,255), 2);
-//                        }
-//
-//                        Utils.matToBitmap(mRgba, bitmap);
-//                        Bitmap faceImageBitmap = Bitmap.createBitmap(bitmap, theLargeFace.x, theLargeFace.y, theLargeFace.width, theLargeFace.height);
-//                        if (faceImageBitmap != null) {
-//                            maskProcessBitmap = faceImageBitmap;
-//                            maskProcessBitmapClone = faceImageBitmap; // 得到運算的臉
-//                        }
-//                    } else {
-//                        if (isDebugRecordMode) {
-//                            mLog.d(TAG, "NO OVER FACE_THRESHOLD:> " + FACE_THRESHOLD + ", noDetectCount:> " + noDetectCount);
-//                        }
-//                        noDetectCount++;
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//
-//                if (facesArray.length == 0) { //畫面中沒有臉
-//                    noDetectCount++;
-//                }
-//
-//                if (noDetectCount > FACE_THRESHOLD_COUNT) { // 多少frame後，顯示藍色框框
-//                    AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
-//                    faceArea = 0.0d;
-//                    maskProcessBitmap = null; // 清空cache
-//                }
-//                fps++;
-//            }
+                if (noDetectCount > FACE_THRESHOLD_COUNT) { // 多少frame後，顯示藍色框框
+                    AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
+                    faceArea = 0.0d;
+                    maskProcessBitmap = null; // 清空cache
+                }
+                fps++;
+            }
             return mRgba;
         }
     }
@@ -1168,7 +1158,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
             case DETECT_DONE_SHOW_SNAPSHOT:
                 detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
-                faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapClone : thermalBitmap);
+                faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap);
                 if (isVmsConnected) {
                     confirmBtn.setVisibility(View.INVISIBLE);
                     reCheckBtn.setVisibility(View.VISIBLE);
@@ -1200,6 +1190,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                 // *** CORE MASK DETECT PROCESS ***
                 try {
                     if (maskProcessBitmap == null) return;
+                    isStartAnalysisMask = true;
                     Matrix frameToCropTransform;
                     Matrix cropToFrameTransform;
 
@@ -1207,7 +1198,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
 
                     frameToCropTransform =
                             ImageUtils.getTransformationMatrix(
-                                    maskProcessBitmapClone.getWidth(), maskProcessBitmapClone.getHeight(),
+                                    maskProcessBitmap.getWidth(), maskProcessBitmap.getHeight(),
                                     260, 260,
                                     0, false);
 
@@ -1215,7 +1206,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                     frameToCropTransform.invert(cropToFrameTransform);
 
                     final Canvas canvas = new Canvas(croppedBitmap);
-                    canvas.drawBitmap(maskProcessBitmapClone, frameToCropTransform, null);
+                    canvas.drawBitmap(maskProcessBitmap, frameToCropTransform, null);
                     if (!canStartToDetectGate) return;
 
                     ObjectDetectInfo results = detector.recognizeObject(croppedBitmap);
@@ -1224,6 +1215,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                             mLog.d(TAG, "results.getConfidence():> " + results.getConfidence());
                             return;
                         }
+                        maskProcessBitmapShowOn = maskProcessBitmap;
                         maskResults = results.getClasses();
                         detectResult = results;
                         switch (results.getClasses()) {
@@ -1274,6 +1266,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                     canShowTempFlag = false;
                     mLog.e(TAG, "MASK_DETECT, e:> " + e);
                     e.printStackTrace();
+                } finally {
+                    isStartAnalysisMask = false;
                 }
                 break;
             case APP_CODE_VMS_SERVER_UPLOAD_SUCCESS:
@@ -1510,8 +1504,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     private float mPreviewScaleX = 1.0f;
     private float mPreviewScaleY = 1.0f;
 
-    private int padx = 0;
-    private int pady = 0;
+    private int padx = 30;
+    private int pady = -20;
 
     private CameraCallbacks mCameraCallbacks = new CameraCallbacks() {
 
@@ -1526,12 +1520,14 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
             }
 
 //            Log.d(TAG, "data.length.:> " + data.length);
-            Log.d(TAG, "mPreviewScaleX:> " + mPreviewScaleX + ", mPreviewScaleY:> " + mPreviewScaleY);
+//            Log.d(TAG, "mPreviewScaleX:> " + mPreviewScaleX + ", mPreviewScaleY:> " + mPreviewScaleY);
+            preview_frames++;
             mPresenter.detect(data, mPreviewSize.width, mPreviewSize.height, mCameraPreview.getCameraRotation());
         }
 
         @Override
         public void onCameraUnavailable(int errorCode) {
+            isCameraUnavailable = true;
             mLog.e(TAG, "camera unavailable, reason=%d " + errorCode);
         }
     };
@@ -1545,28 +1541,63 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
         if (canvas == null) {
             return;
         }
+        fps++;
         canvas.drawColor(0, PorterDuff.Mode.CLEAR);
 
+        if (isFullDetectProcessDone) {
+            mOverlapHolder.unlockCanvasAndPost(canvas);
+            AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
+            return;
+        }
         if (faceRect != null) {
-            faceRect.x *= mPreviewScaleX;
-            faceRect.y *= mPreviewScaleY;
-            faceRect.width *= mPreviewScaleX;
-            faceRect.height *= mPreviewScaleY;
+//            faceRect.x *= mPreviewScaleX;
+//            faceRect.y *= mPreviewScaleY;
+//            faceRect.width *= mPreviewScaleX;
+//            faceRect.height *= mPreviewScaleY;
 
             focusRect.left = faceRect.x - padx;
             focusRect.right = faceRect.x + faceRect.width - padx;
             focusRect.top = faceRect.y + pady;
             focusRect.bottom = faceRect.y + faceRect.height + pady;
-//            Log.d(TAG, "faceRect.x:> " + faceRect.x + ", faceRect.y:> " + faceRect.y + ", faceRect.width:> " + faceRect.width + ", faceRect.height:> " + faceRect.height +
-//                    ", mPreviewScaleX:> " + mPreviewScaleX + ", mPreviewScaleY:> " + mPreviewScaleY);
-            canvas.drawRect(focusRect, mFaceRectPaint);
+
+            int face_width = faceRect.width;
+            int face_height = faceRect.height;
+
+            if (faceRect.width < FACE_THRESHOLD || faceRect.height < faceRect.width) {
+                mLog.d(TAG, "face_width:> " + faceRect.width + ", face_height:> " + faceRect.height +
+                        ", FACE_THRESHOLD:> " + FACE_THRESHOLD);
+                mOverlapHolder.unlockCanvasAndPost(canvas);
+                return;
+            }
+            if (isDebugRecordMode) {
+                mLog.d(TAG, "face_width:> " + faceRect.width + ", face_height:> " + faceRect.height);
+//                Log.d(TAG, "faceRect.x:> " + faceRect.x +
+//                        ", faceRect.y:> " + faceRect.y +
+//                        ", faceRect.width:> " + faceRect.width +
+//                        ", faceRect.height:> " + faceRect.height +
+//                        ", mPreviewScaleX:> " + mPreviewScaleX +
+//                        ", mPreviewScaleY:> " + mPreviewScaleY);
+                canvas.drawRect(focusRect, mFaceRectPaint);
+                canvas.drawText("face_width:> " + faceRect.width + ", face_height:> " + faceRect.height
+                        , faceRect.x, faceRect.y, mFaceRectPaint);
+            }
+            AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_GREEN));
+        } else {
+            noDetectCount++;
+//            mLog.d(TAG, " *** NO FACE *** ");
+            if (noDetectCount > FACE_THRESHOLD_COUNT) { // 多少frame後，顯示藍色框框
+                AppBus.getInstance().post(new BusEvent("show overlay", OVER_LAY_BLUE));
+                maskProcessBitmap = null; // 清空cache
+            }
         }
         mOverlapHolder.unlockCanvasAndPost(canvas);
     }
 
     @Override
     public void drawTestMat(Bitmap src) {
-
+        if (!isStartAnalysisMask) {
+            maskProcessBitmap = src;
+        }
     }
 
     @Override
@@ -1594,4 +1625,5 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
         this.mPresenter = presenter;
     }
 
+    private boolean isStartAnalysisMask = false;
 }

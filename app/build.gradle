@@ -15,8 +15,8 @@ android {
         Advantech_VMS_Kiosk {
             dimension "version"
             applicationId "acl.siot.opencvwpc20191007noc"
-            versionCode 16
-            versionName "1.0.8"
+            versionCode 17
+            versionName "1.0.8_seeta"
             ndk {
                 abiFilters 'armeabi-v7a'
             }
