@@ -30,6 +30,7 @@ import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import androidx.annotation.RequiresApi;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
+import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -42,7 +43,7 @@ import static acl.siot.opencvwpc20191007noc.App.isThermometerServerConnected;
 
 
 public class OKHttpAgent {
-    private static final MLog mLog = new MLog(false);
+    private static final MLog mLog = new MLog(true);
     private final String TAG = getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
 
     /**
@@ -65,11 +66,13 @@ public class OKHttpAgent {
     private OkHttpClient mClient_TPE;
     private IRequestInterface mIRequestInterface;
     OkHttpClient.Builder mBuilder;
+    OkHttpClient.Builder mBuilder_post;
     SSLContext ssLContext = null;
 
     private OKHttpAgent() {
         mLog.d(TAG, " *** OKHttpAgent *** ");
         mBuilder = new OkHttpClient.Builder();
+        mBuilder_post = new OkHttpClient.Builder();
         try {
             ssLContext = SSLContext.getInstance("TLS");
             ssLContext.init(null, new X509TrustManager[]{new NullX509TrustManager()}, new SecureRandom());
@@ -83,9 +86,16 @@ public class OKHttpAgent {
         mBuilder.connectTimeout(5000, TimeUnit.MILLISECONDS);
         mBuilder.readTimeout(7000, TimeUnit.MILLISECONDS);
         mBuilder.writeTimeout(7000, TimeUnit.MILLISECONDS);
+
+        mBuilder_post.sslSocketFactory(ssLContext.getSocketFactory());
+        mBuilder_post.hostnameVerifier(new NullHostNameVerifier());
+        mBuilder_post.connectTimeout(5000, TimeUnit.MILLISECONDS);
+        mBuilder_post.readTimeout(7000, TimeUnit.MILLISECONDS);
+        mBuilder_post.writeTimeout(7000, TimeUnit.MILLISECONDS);
+
         mClient = mBuilder.build();
         mClient_getTemp = mBuilder.build();
-        mClient_postTemp = mBuilder.build();
+        mClient_postTemp = mBuilder_post.build();
         mClient_postConfig = mBuilder.build();
     }
 
@@ -558,25 +568,30 @@ public class OKHttpAgent {
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
         public void run() {
-            synchronized (mSyncObject_PostAvaloTempThread){
                 canPostTemp = false;
+                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", canPostTemp:> " + canPostTemp);
                 try {
                     final String mainURL = mData.get(OKHttpConstants.APP_KEY_HTTPS_URL).toString();
-//                    mData.remove(OKHttpConstants.APP_KEY_HTTPS_URL);
-                    JSONObject jsonObjRaw = new JSONObject(mData);
-                    String json = jsonObjRaw.toString(0);
-//                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", request= " + json);
-                    RequestBody body = RequestBody.create(JSON, "");
+//                    JSONObject jsonObjRaw = new JSONObject(mData);
+//                    RequestBody body = RequestBody.create(JSON, "");
+
+                    RequestBody formBody = new FormBody.Builder()
+                            .build();
 
                     Request request = new Request.Builder()
                             .url(mainURL)
-                            .header("Content-Type", "application/json")
-                            .post(body)
+                            .post(formBody)
                             .build();
                     Response response = mClient_postTemp.newCall(request).execute();
                     String result = response.body().string();
-                mLog.d(TAG, "[POST] result:> " + result);
-//                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response.code()= " + response.code());
+//                mLog.d(TAG, "[POST] result:> " + result);
+//                    if(response.isSuccessful()){
+//                        return ;
+//                    }else {
+//                        return ;
+//                    }
+                    mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response.code()= " + response.code()
+                            + ", [POST] result:> " + result + ", response.isSuccessful():> " + response.isSuccessful());
                     if (null == result) {
                         return;
                     }
@@ -610,10 +625,9 @@ public class OKHttpAgent {
                         mIRequestInterface.onRequestFail(e.getMessage(), postCode);
                     }
                 } finally {
+                    mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode());
                     canPostTemp = true;
-
                 }
-            }
         }
 
         private void handleAvaloPostTempResult(String result, int postCode) throws JSONException {
@@ -622,7 +636,7 @@ public class OKHttpAgent {
             if (false) {
                 mIRequestInterface.onRequestSuccess(result, postCode);
             } else {
-                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response= " + result);
+//                mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response= " + result);
                 try {
                     mIRequestInterface.onRequestSuccess(result.toString(), postCode);
                 } catch (Exception e) {
@@ -641,10 +655,13 @@ public class OKHttpAgent {
         postThread.start();
     }
 
+    PostAvaloTempThread postAvaloTempThread;
     @RequiresApi(api = Build.VERSION_CODES.N)
     public synchronized void postAvaloTempRequest(HashMap mData, int requestCode) throws IOException {
-        PostAvaloTempThread postAvaloTempThread = new PostAvaloTempThread(mData, requestCode);
-        postAvaloTempThread.start();
+        if (canPostTemp) {
+            postAvaloTempThread = new PostAvaloTempThread(mData, requestCode);
+            postAvaloTempThread.start();
+        }
     }
     public synchronized void postAvaloConfigRequest(HashMap mData, int requestCode) throws IOException {
         if (true) {

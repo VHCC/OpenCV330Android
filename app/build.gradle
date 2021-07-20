@@ -7,6 +7,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 28
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -15,8 +16,8 @@ android {
         Advantech_VMS_Kiosk {
             dimension "version"
             applicationId "acl.siot.opencvwpc20191007noc"
-            versionCode 17
-            versionName "1.0.8_seeta"
+            versionCode 19
+            versionName "1.0.10"
             ndk {
                 abiFilters 'armeabi-v7a'
             }
@@ -47,7 +48,7 @@ android {
             }
         }
         debug {
-            buildConfigField "Boolean", "DEBUG_MODE", "false"
+            buildConfigField "Boolean", "DEBUG_MODE", "true"
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
@@ -66,6 +67,18 @@ android {
 
     aaptOptions {
         noCompress "tflite"
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+        exclude("META-INF/*.kotlin_module")
     }
 
 }
@@ -104,6 +117,9 @@ dependencies {
     implementation 'com.github.HITGIF:TextFieldBoxes:1.4.5'
     implementation 'com.github.kenglxn.QRGen:android:2.6.0'
     implementation 'com.chaos.view:pinview:1.4.4'
+    implementation 'com.github.potterhsu:Pinger:v1.1'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.1'
+    implementation 'org.apache.httpcomponents:httpclient:4.5'
 
 
 }

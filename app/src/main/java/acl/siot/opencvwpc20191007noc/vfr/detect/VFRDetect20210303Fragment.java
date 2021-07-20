@@ -161,7 +161,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     private boolean isDetectValidate = false; // 結果合格與否
 
     //    public static boolean staticDetectMaskSwitch = false; // 控制 每次偵測與每次偵測之間間隔
-    private boolean canShowTempFlag = false; // 顯示溫度與否。規格為：確認完成臉部後，才顯示溫度
+    public static boolean canShowTempFlag = false; // 顯示溫度與否。規格為：確認完成臉部後，才顯示溫度
 
     // View
     private OverLayLinearLayout circleOverlay;
@@ -371,70 +371,71 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
 
     // Upload data to vms backend
     private void uploadData() throws JSONException {
-        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-        String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-
-        boolean isVisitor = false;
-
-        // Interface including: rfid, barcode, card
-        String interfaceMethod = "";
-
-        // mode including: normal, realname, invitation, event
-        String dataUploadMode = "Normal";
-
-        switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
-            case 0:
-                isVisitor = true;
-                interfaceMethod = "";
-                dataUploadMode = "Normal";
-                break;
-            case 1:
-                isVisitor = false;
-                if (App.isRFIDFunctionOn) {
-                    interfaceMethod = "rfid";
-                } else if (App.isBarCodeFunctionOn) {
-                    interfaceMethod = "barcode";
-                }
-                dataUploadMode = "RealName";
-                break;
-        }
-
-        boolean isWearMask = false;
-
-        switch (maskResults) {
-            case 0: // wear mask
-                isWearMask = true;
-                break;
-            case 1: // no wear mask
-                isWearMask = false;
-                break;
-        }
-
-        // status including: Filling-out, Exception
-        // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
-        String status = "Filling-out".toLowerCase();
-        String exception = "";
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
-            if (!isWearMask) {
-                exception = "No-Wear-Mask".toLowerCase();
-                status = "Exception".toLowerCase();
-            }
-        }
-
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-            if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
-                    VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
-                exception = "High-Fever".toLowerCase();
-                status = "Exception".toLowerCase();
-            }
-        }
-
         try {
+            Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+            String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+            boolean isVisitor = false;
+
+            // Interface including: rfid, barcode, card
+            String interfaceMethod = "";
+
+            // mode including: normal, realname, invitation, event
+            String dataUploadMode = "Normal";
+
+            switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+                case 0:
+                    isVisitor = true;
+                    interfaceMethod = "";
+                    dataUploadMode = "Normal";
+                    break;
+                case 1:
+                    isVisitor = false;
+                    if (App.isRFIDFunctionOn) {
+                        interfaceMethod = "rfid";
+                    } else if (App.isBarCodeFunctionOn) {
+                        interfaceMethod = "barcode";
+                    }
+                    dataUploadMode = "RealName";
+                    break;
+            }
+
+            boolean isWearMask = false;
+
+            switch (maskResults) {
+                case 0: // wear mask
+                    isWearMask = true;
+                    break;
+                case 1: // no wear mask
+                    isWearMask = false;
+                    break;
+            }
+
+            // status including: Filling-out, Exception
+            // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
+            String status = "Filling-out".toLowerCase();
+            String exception = "";
+            if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+                if (!isWearMask) {
+                    exception = "No-Wear-Mask".toLowerCase();
+                    status = "Exception".toLowerCase();
+                }
+            }
+
+            if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
+                        VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
+                    exception = "High-Fever".toLowerCase();
+                    status = "Exception".toLowerCase();
+                }
+            }
+
+
             mLog.d(TAG, "uploadPersonData:> " + uploadPersonData);
             VmsUpload mMap = new VmsUpload(encoded,
                     isWearMask,
@@ -453,70 +454,71 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     }
 
     private void uploadDataTPE() throws JSONException {
-        Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
-
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-        String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-
-        boolean isVisitor = false;
-
-        // Interface including: rfid, barcode, card
-        String interfaceMethod = "";
-
-        // mode including: normal, realname, invitation, event
-        String dataUploadMode = "Normal";
-
-        switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
-            case 0:
-                isVisitor = true;
-                interfaceMethod = "";
-                dataUploadMode = "Normal";
-                break;
-            case 1:
-                isVisitor = false;
-                if (App.isRFIDFunctionOn) {
-                    interfaceMethod = "rfid";
-                } else if (App.isBarCodeFunctionOn) {
-                    interfaceMethod = "barcode";
-                }
-                dataUploadMode = "RealName";
-                break;
-        }
-
-        boolean isWearMask = false;
-
-        switch (maskResults) {
-            case 0: // wear mask
-                isWearMask = true;
-                break;
-            case 1: // no wear mask
-                isWearMask = false;
-                break;
-        }
-
-        // status including: Filling-out, Exception
-        // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
-        String status = "Filling-out".toLowerCase();
-        String exception = "";
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
-            if (!isWearMask) {
-                exception = "No-Wear-Mask".toLowerCase();
-                status = "Exception".toLowerCase();
-            }
-        }
-
-        if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
-            if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
-                    VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
-                exception = "High-Fever".toLowerCase();
-                status = "Exception".toLowerCase();
-            }
-        }
-
         try {
+            Bitmap uploadTargetBitmap = VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap;
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            uploadTargetBitmap.compress(Bitmap.CompressFormat.JPEG, 20, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+            String encoded = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+
+            boolean isVisitor = false;
+
+            // Interface including: rfid, barcode, card
+            String interfaceMethod = "";
+
+            // mode including: normal, realname, invitation, event
+            String dataUploadMode = "Normal";
+
+            switch (VMSEdgeCache.getInstance().getVms_kiosk_mode()) {
+                case 0:
+                    isVisitor = true;
+                    interfaceMethod = "";
+                    dataUploadMode = "Normal";
+                    break;
+                case 1:
+                    isVisitor = false;
+                    if (App.isRFIDFunctionOn) {
+                        interfaceMethod = "rfid";
+                    } else if (App.isBarCodeFunctionOn) {
+                        interfaceMethod = "barcode";
+                    }
+                    dataUploadMode = "RealName";
+                    break;
+            }
+
+            boolean isWearMask = false;
+
+            switch (maskResults) {
+                case 0: // wear mask
+                    isWearMask = true;
+                    break;
+                case 1: // no wear mask
+                    isWearMask = false;
+                    break;
+            }
+
+            // status including: Filling-out, Exception
+            // exception including: No-Wear-Mask, High-Fever, "" (empty), Invalid-Barcode,
+            String status = "Filling-out".toLowerCase();
+            String exception = "";
+            if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_mask()) {
+                if (!isWearMask) {
+                    exception = "No-Wear-Mask".toLowerCase();
+                    status = "Exception".toLowerCase();
+                }
+            }
+
+            if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
+                if (Float.valueOf(String.valueOf(tempDetectFormatter.format(person_temp_static))) >=
+                        VMSEdgeCache.getInstance().getVms_kiosk_avalo_alert_temp()) {
+                    exception = "High-Fever".toLowerCase();
+                    status = "Exception".toLowerCase();
+                }
+            }
+
+
             VmsUpload_TPE mMap = new VmsUpload_TPE(encoded,
                     isWearMask,
                     String.valueOf(tempDetectFormatter.format(person_temp_static)),
@@ -540,6 +542,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
             uploadPersonData = null;
         }
 
+        maskProcessBitmap = null;
         reCheckHandler.removeCallbacks(mFragmentRunnable);
         tick_count = 0;
         isFullDetectProcessDone = false;
@@ -1215,6 +1218,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                             mLog.d(TAG, "results.getConfidence():> " + results.getConfidence());
                             return;
                         }
+                        if (maskProcessBitmap == null) return;
                         maskProcessBitmapShowOn = maskProcessBitmap;
                         maskResults = results.getClasses();
                         detectResult = results;

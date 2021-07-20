@@ -26,6 +26,7 @@ import android.view.InputDevice;
 import android.widget.Toast;
 
 import com.blankj.utilcode.util.DeviceUtils;
+import com.potterhsu.Pinger;
 
 import acl.siot.opencvwpc20191007noc.thc11001huApi.PostConfig.PostConfig;
 import acl.siot.opencvwpc20191007noc.thc11001huApi.firmware14181.Firmware14181Temp;
@@ -36,12 +37,20 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -49,7 +58,9 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -73,6 +84,13 @@ import acl.siot.opencvwpc20191007noc.util.NullX509TrustManager;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskApplyUpdate;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskHB;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskSync;
+import okhttp3.ConnectionPool;
+import okhttp3.FormBody;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CAMERA_NOT_GRANTED;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_AVALO_THERMAL_POST_CONFIG;
@@ -113,6 +131,7 @@ import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.A
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_SERVER_UPLOAD_SUCCESS;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.RequestCode.APP_CODE_UPDATE_IMAGE_SUCCESS;
+import static acl.siot.opencvwpc20191007noc.vfr.detect.VFRDetect20210303Fragment.canShowTempFlag;
 
 /**
  * Application class.
@@ -190,6 +209,8 @@ public class App extends Application {
 //            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
         threadObject.setRunning(true);
     }
+
+    private Pinger avaloPinger;
 
     // vms backend connect Status
     public static boolean isVmsConnected = false;
@@ -331,10 +352,32 @@ public class App extends Application {
 
         private static final long task_minimum_tick_time_msec = 800; // 0.8 second
 
+
         @Override
         public void run() {
             long tick_count = 0;
             mLog.d(TAG, "task_minimum_tick_time_msec= " + (task_minimum_tick_time_msec));
+
+            avaloPinger = new Pinger();
+            avaloPinger.setOnPingListener(new Pinger.OnPingListener() {
+                @Override
+                public void onPingSuccess() {
+                    mLog.d(TAG, " *** onPingSuccess");
+                    isThermometerServerConnected = true;
+
+                }
+
+                @Override
+                public void onPingFailure() {
+                    mLog.d(TAG, " *** onPingFailure");
+                    isThermometerServerConnected = false;
+                }
+
+                @Override
+                public void onPingFinish() {
+//                    mLog.d(TAG, " *** onPingFinish");
+                }
+            });
 
             while (threadObject.isRunning()) {
                 try {
@@ -347,14 +390,16 @@ public class App extends Application {
                     if (tick_count % 1 == 0) {
                         if (isThermometerServerConnected) {
                             if (isAvaloFirmwareOver14181) {
-                                HashMap<String, String> mMap = new Firmware14181Temp();
-                                OKHttpAgent.getInstance().postAvaloTempRequest(mMap, APP_CODE_AVALO_THERMAL_POST_TEMP);
+//                                mLog.d(TAG, "QQQQQ");
+//                                AppBus.getInstance().post(new BusEvent("vms HB", 9988));
+                                AppBus.getInstance().post(new BusEvent("vms HB", 9999));
+//                                HashMap<String, String> mMap = new Firmware14181Temp();
+//                                OKHttpAgent.getInstance().postAvaloTempRequest(mMap, APP_CODE_AVALO_THERMAL_POST_TEMP);
                             } else {
                                 HashMap<String, String> mMap = new GetTemp();
                                 OKHttpAgent.getInstance().getRequest(mMap, APP_CODE_THC_1101_HU_GET_TEMP);
                             }
                         }
-
                     }
 
                     if (tick_count % 20 == 2) {
@@ -375,8 +420,15 @@ public class App extends Application {
                         AppBus.getInstance().post(new BusEvent("vms HB", APP_CODE_VMS_KIOSK_DEVICE_HB));
                     }
 
-                    if (tick_count % 5 == 0) {
+                    if (tick_count % 5 == 2) {
                         AppBus.getInstance().post(new BusEvent("time tick", TIME_TICK));
+                    }
+
+                    if (tick_count % 5 == 3) {
+                        avaloPinger.cancel();
+//                        avaloPinger.ping(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 3);
+                        avaloPinger.pingUntilSucceeded(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
+                        avaloPinger.pingUntilFailed(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
                     }
 
                     if (tick_count % 10 == 1) {
@@ -713,7 +765,7 @@ public class App extends Application {
             }
         }
     }
-
+    private final Object mSyncObject_PostAvaloTempThread = new Object();
     public void onEventBackgroundThread(BusEvent event) {
         switch (event.getEventType()) {
             case APP_CODE_VMS_KIOSK_DEVICE_APPLY_UPDATE_SUCCESS:
@@ -723,9 +775,53 @@ public class App extends Application {
                 AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS));
 //                MessageTools.showLongToast(getBaseContext(), "此設備已經停用");
                 break;
+            case 9988:
+
+//                RequestBody formBody = new FormBody.Builder()
+//                        .build();
+//
+//                Request request = new Request.Builder()
+//                        .url("http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host()+"/temp")
+//                        .post(formBody)
+//                        .build();
+//
+//                OkHttpClient client = new OkHttpClient.Builder()
+//                        .connectionPool(new ConnectionPool(32,5,TimeUnit.MINUTES))
+//                    .connectTimeout(5, TimeUnit.SECONDS)
+//                    .writeTimeout(5, TimeUnit.SECONDS)
+//                    .readTimeout(5, TimeUnit.SECONDS)
+//                    .build();
+//                try {
+//                    Response response = client.newCall(request).execute();
+//                    String result = response.body().string();
+////                mLog.d(TAG, "[POST] result:> " + result);
+//                    mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response.code()= " + response.code() + ", [POST] result:> " + result);
+//                    // Do something with the response.
+//                } catch (IOException e) {
+//                    mLog.e(TAG, "error:> " + e.toString());
+//                    e.printStackTrace();
+//                }
+                break;
+            case 9999:
+                HttpPost httpRequest = new HttpPost("http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host()+"/temp");
+                HttpClient httpclient = new DefaultHttpClient(); // 取得HttpResponse HttpResponse httpResponse = httpclient.execute(httpRequest); // HttpStatus.SC_OK表示连接成功 if
+                try {
+                    HttpResponse httpResponse = httpclient.execute(httpRequest);
+                    if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) { // 取得返回的字符串 String strResult = EntityUtils.toString(httpResponse.getEntity()); mTextView.setText(strResult); } else { mTextView.setText("请求错误!"); }
+                        String strResult = EntityUtils.toString(httpResponse.getEntity());
+                        mLog.d(TAG, "strResult:> " + strResult.toString());
+                        AppBus.getInstance().post(new BusEvent(strResult, APP_CODE_AVALO_THERMAL_POST_TEMP_SUCCESS));
+                    } else {
+
+                    }
+                } catch (ClientProtocolException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
         }
     }
-
     public void onEventMainThread(BusEvent event) {
         switch (event.getEventType()) {
             case DEVICE_NOT_SUPPORT:
@@ -785,5 +881,6 @@ public class App extends Application {
             }
         }
     }
+
 
 }
