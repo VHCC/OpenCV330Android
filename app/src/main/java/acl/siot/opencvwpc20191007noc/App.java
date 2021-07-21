@@ -362,14 +362,14 @@ public class App extends Application {
             avaloPinger.setOnPingListener(new Pinger.OnPingListener() {
                 @Override
                 public void onPingSuccess() {
-                    mLog.d(TAG, " *** onPingSuccess");
+//                    mLog.d(TAG, " *** onPingSuccess");
                     isThermometerServerConnected = true;
 
                 }
 
                 @Override
                 public void onPingFailure() {
-                    mLog.d(TAG, " *** onPingFailure");
+//                    mLog.d(TAG, " *** onPingFailure");
                     isThermometerServerConnected = false;
                 }
 
@@ -693,16 +693,41 @@ public class App extends Application {
                             JSONObject avaloConfig = new JSONObject(response);
                             String firmwareVersion = avaloConfig.getString("firmware_version");
                             mLog.d(TAG, " [Avalo] firmwareVersion:> " + firmwareVersion);
-                            switch (firmwareVersion) {
-                                case "ADV_1.4.18.1":
-                                    isAvaloFirmwareOver14181 = true;
-                                    break;
-                                default:
-//                                    isAvaloFirmwareOver14181 = false;
-                                    break;
+                            String[] firmwareStringSplit = firmwareVersion.split("ADV_");
+//                            mLog.d(TAG, "firmwareStringSplit:> " + firmwareStringSplit.length);
+                            if (firmwareStringSplit.length >= 2) {
+//                                mLog.d(TAG, "firmwareStringSplit:> " + firmwareStringSplit[1].toString());
+                                String[] versionCheckNumber = firmwareStringSplit[1].toString().split("\\.");
+//                                mLog.d(TAG, "versionCheckNumber:> " + versionCheckNumber.length);
+                                if (versionCheckNumber.length > 0) {
+                                    String firmwareVersionString = "";
+                                    firmwareVersionString += versionCheckNumber[0];
+                                    firmwareVersionString += versionCheckNumber[1];
+                                    firmwareVersionString += versionCheckNumber[2];
+//                                    mLog.d(TAG, "firmwareVersionString:> " + firmwareVersionString);
+//                                    mLog.d(TAG, "firmwareVersionString:> int:> " + Integer.valueOf(firmwareVersionString));
+                                    if (Integer.valueOf(firmwareVersionString) >= 1418) {
+                                        mLog.i(TAG, " [Avalo] firmware version is over 1.4.18, it will use new api [/temp]");
+                                        isAvaloFirmwareOver14181 = true;
+                                    } else {
+                                        isAvaloFirmwareOver14181 = false;
+                                    }
+                                }
                             }
+
+//                            switch (firmwareVersion) {
+//                                case "ADV_1.4.18.1":
+////                                    isAvaloFirmwareOver14181 = true;
+//                                    break;
+//                                default:
+////                                    isAvaloFirmwareOver14181 = false;
+//                                    break;
+//                            }
                         } catch (JSONException e) {
                             mLog.e(TAG, "JSONException, err:> " + e);
+                            e.printStackTrace();
+                        } catch (Exception e) {
+                            mLog.e(TAG, "Exception, err:> " + e);
                             e.printStackTrace();
                         }
                     }
