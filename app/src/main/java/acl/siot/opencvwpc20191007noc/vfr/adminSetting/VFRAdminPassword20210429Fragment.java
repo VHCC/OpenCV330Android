@@ -267,7 +267,7 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
             case TIME_TICK:
                 Date d = new Date();
                 CharSequence s_1 = android.text.format.DateFormat.format("yyyy-MM-dd", d.getTime());
-                CharSequence s_2 = android.text.format.DateFormat.format("hh:mm", d.getTime());
+                CharSequence s_2 = android.text.format.DateFormat.format("HH:mm", d.getTime());
                 time_left.setText(s_1);
                 time_right.setText(s_2);
                 break;

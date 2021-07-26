@@ -170,6 +170,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     private TextView time_right;
     private TextView msg_big;
     private TextView msg_small;
+    private FrameLayout detect_bg;
 
     // Core View
     private FrameLayout detectFrame;
@@ -266,6 +267,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
     }
 
     private void initViewIDs(View rootView) {
+        detect_bg = rootView.findViewById(R.id.detect_bg);
+
         appVersion = rootView.findViewById(R.id.appVersion);
         promptTv = rootView.findViewById(R.id.promptTv);
         tempDetected = rootView.findViewById(R.id.tempDetected);
@@ -584,6 +587,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                 e.getStackTrace();
             }
         }
+
+        detect_bg.setBackground(getResources().getDrawable(R.drawable.bg_basic));
     }
 
     @Override
@@ -651,7 +656,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                 toast.show();
             }
 
-            initClassifier();
+//            initClassifier();
 
             if (detectPageThread != null && detectPageThread.isAlive()) {
                 detectPageThread.interrupt();
@@ -677,6 +682,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                     e.getStackTrace();
                 }
             }
+
+            detect_bg.setBackground(getResources().getDrawable(R.drawable.bg_basic));
 
         }
     }
@@ -990,8 +997,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
             e.printStackTrace();
             mLog.e(TAG, "Error loading cascade", e);
         }
-//        openCvCameraView.enableView();
-//        openCvCameraView.enableFpsMeter();
+        openCvCameraView.enableView();
+        openCvCameraView.enableFpsMeter();
     }
 
     Display display;
@@ -1135,7 +1142,7 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
             case TIME_TICK:
                 Date d = new Date();
                 CharSequence s_1 = android.text.format.DateFormat.format("yyyy-MM-dd", d.getTime());
-                CharSequence s_2 = android.text.format.DateFormat.format("hh:mm", d.getTime());
+                CharSequence s_2 = android.text.format.DateFormat.format("HH:mm", d.getTime());
                 time_left.setText(s_1);
                 time_right.setText(s_2);
                 break;
@@ -1162,6 +1169,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
                 detectFrame.setVisibility(View.INVISIBLE);
                 faceCapture.setVisibility(View.VISIBLE);
                 faceCapture.setImageBitmap(VMSEdgeCache.getInstance().getVms_kiosk_video_type() == 0 ? maskProcessBitmapShowOn : thermalBitmap);
+                detect_bg.setBackground(getResources().getDrawable(R.drawable.bg_frame_20210304));
+
                 if (isVmsConnected) {
                     confirmBtn.setVisibility(View.INVISIBLE);
                     reCheckBtn.setVisibility(View.VISIBLE);
@@ -1517,8 +1526,8 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
         public void onPreviewFrame(byte[] data, Camera camera) {
             if (mPreviewSize == null) {
                 mPreviewSize = camera.getParameters().getPreviewSize();
-                Log.d(TAG, "mCameraPreview.getWidth():> " + mCameraPreview.getWidth() + ", mCameraPreview.getHeight():> " + mCameraPreview.getHeight());
-                Log.d(TAG, "mPreviewSize.width:> " + mPreviewSize.width + ", mPreviewSize.height:> " + mPreviewSize.height);
+                mLog.d(TAG, "mCameraPreview.getWidth():> " + mCameraPreview.getWidth() + ", mCameraPreview.getHeight():> " + mCameraPreview.getHeight());
+                mLog.d(TAG, "mPreviewSize.width:> " + mPreviewSize.width + ", mPreviewSize.height:> " + mPreviewSize.height);
 //                mPreviewScaleX = (float) (mCameraPreview.getHeight()) / mPreviewSize.width;
 //                mPreviewScaleY = (float) (mCameraPreview.getWidth()) / mPreviewSize.height;
             }

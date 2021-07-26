@@ -1,13 +1,27 @@
 package acl.siot.opencvwpc20191007noc;
 
 import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
 import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,11 +33,15 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import acl.siot.opencvwpc20191007noc.cache.VMSEdgeCache;
 import acl.siot.opencvwpc20191007noc.dbHelper.DBAdapter;
 import acl.siot.opencvwpc20191007noc.page.subPage.SubPageEmptyFragment;
 import acl.siot.opencvwpc20191007noc.page.tranform.FadeInOutBetterTransformer;
+
+import com.jaeger.library.StatusBarUtil;
 import com.seeta.*;
 import acl.siot.opencvwpc20191007noc.util.FileUtils;
 import acl.siot.opencvwpc20191007noc.util.MLog;
@@ -43,6 +61,7 @@ import static acl.siot.opencvwpc20191007noc.VMSMainActivity.SectionsPagerAdapter
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.APP_CODE_VMS_KIOSK_RFID_DETECT_DONE;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO;
 import static acl.siot.opencvwpc20191007noc.api.OKHttpConstants.FrsRequestCode.DB_CODE_INSERT_DETECT_INFO_SUCCESS;
+import static com.just.agentweb.ActionActivity.REQUEST_CODE;
 
 public class VMSMainActivity extends AppCompatActivity {
 
@@ -58,6 +77,82 @@ public class VMSMainActivity extends AppCompatActivity {
 
     private DBAdapter mDBAdapter;
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        mLog.d(TAG, "onWindowFocusChanged:> " + hasFocus);
+        mLog.d(TAG, "Build.VERSION.SDK_INT:> " + Build.VERSION.SDK_INT);
+//        super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus) {
+//            getWindow().getDecorView().setSystemUiVisibility(
+//                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    public static void preventStatusBarExpansion(Context context) {
+        WindowManager manager = ((WindowManager) context.getApplicationContext()
+                .getSystemService(Context.WINDOW_SERVICE));
+
+        Activity activity = (Activity)context;
+        WindowManager.LayoutParams localLayoutParams = new WindowManager.LayoutParams();
+        localLayoutParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ERROR ;
+        localLayoutParams.gravity = Gravity.TOP;
+        localLayoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+
+                // this is to enable the notification to recieve touch events
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+
+                // Draws over status bar
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+
+        localLayoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+        int resId = activity.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        int result = 0;
+        if (resId > 0) {
+            result = activity.getResources().getDimensionPixelSize(resId);
+        }
+
+        localLayoutParams.height = result;
+
+        localLayoutParams.format = PixelFormat.TRANSPARENT;
+
+        customViewGroup view = new customViewGroup(context);
+
+        manager.addView(view, localLayoutParams);
+    }
+
+    public static class customViewGroup extends ViewGroup {
+
+        public customViewGroup(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        }
+
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent ev) {
+            mLog.v("VMSMain", "**********Intercepted");
+            return true;
+        }
+    }
+
+
     /**
      * The {@link androidx.viewpager.widget.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -68,6 +163,7 @@ public class VMSMainActivity extends AppCompatActivity {
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         mLog.d(TAG, "* onCreate()");
@@ -75,6 +171,7 @@ public class VMSMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        checkDrawOverlayPermission();
         checkPermission();
 
         AppBus.getInstance().register(this);
@@ -98,6 +195,38 @@ public class VMSMainActivity extends AppCompatActivity {
 //        LocaleUtils.updateConfig(this);
 //        startUSBService();
         copyModel();
+
+        View decorView  = getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int visibility) {
+                mLog.d(TAG, "onSystemUiVisibilityChange");
+//                getWindow().getDecorView().setSystemUiVisibility(
+//                                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+//                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+
+                Window window = getWindow();
+                WindowManager.LayoutParams params = window.getAttributes();
+                params.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE;
+                window.setAttributes(params);
+            }
+        });
+
+//        getWindow().getDecorView().setSystemUiVisibility(
+//                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+//                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+//                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        Window window = getWindow();
+        WindowManager.LayoutParams params = window.getAttributes();
+        params.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE;
+        window.setAttributes(params);
     }
 
 //    private void startUSBService() {
@@ -600,6 +729,66 @@ public class VMSMainActivity extends AppCompatActivity {
         if (file.exists()) return true;
 
         return false;
+    }
+
+    private void disablePullNotificationTouch() {
+//        try {
+//            mLog.v("App", "Disable Pull Notification");
+//
+//            private HUDView mView = new HUDView(this);
+//            int statusBarHeight = (int) Math.ceil(25 * getResources().getDisplayMetrics().density);
+//            mLog.v("App", "" + statusBarHeight);
+//
+//            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+//                    WindowManager.LayoutParams.MATCH_PARENT,
+//                    statusBarHeight,
+//                    WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
+//                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+//                            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN, //Disables status bar
+//                    PixelFormat.TRANSPARENT); //Transparent
+//
+//            params.gravity = Gravity.CENTER | Gravity.TOP;
+//            WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+//            wm.addView(mView, params);
+//        } catch (Exception e) {
+//            mLog.v("App", "Exception: " + e.getMessage());
+//
+//        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    public void checkDrawOverlayPermission() {
+        mLog.v("VMSMainActivity", "Package Name: " + getApplicationContext().getPackageName());
+
+        // check if we already  have permission to draw over other apps
+        if (!Settings.canDrawOverlays(getApplicationContext())) {
+            mLog.v("VMSMainActivity", "Requesting Permission" + Settings.canDrawOverlays(getApplicationContext()));
+            // if not construct intent to request permission
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getApplicationContext().getPackageName()));
+    // request permission via start activity for result
+            startActivityForResult(intent, REQUEST_CODE);
+        } else {
+            mLog.v("VMSMainActivity", "We already have permission for it.");
+//            disablePullNotificationTouch();
+            preventStatusBarExpansion(this);
+        }
+    }
+    @TargetApi(Build.VERSION_CODES.M)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        mLog.v("VMSMainActivity", "OnActivity Result.");
+        //check if received result code
+        //  is equal our requested code for draw permission
+        if (requestCode == REQUEST_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+//                    disablePullNotificationTouch();
+                    preventStatusBarExpansion(this);
+                }
+            }
+        }
     }
 
 }

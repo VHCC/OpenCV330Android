@@ -23,6 +23,7 @@ import android.hardware.input.InputManager;
 import android.icu.text.SimpleDateFormat;
 import android.os.Build;
 import android.view.InputDevice;
+import android.view.View;
 import android.widget.Toast;
 
 import com.blankj.utilcode.util.DeviceUtils;
@@ -30,6 +31,7 @@ import com.potterhsu.Pinger;
 
 import acl.siot.opencvwpc20191007noc.thc11001huApi.PostConfig.PostConfig;
 import acl.siot.opencvwpc20191007noc.thc11001huApi.firmware14181.Firmware14181Temp;
+import acl.siot.opencvwpc20191007noc.util.VMSPinger;
 import acl.siot.opencvwpc20191007noc.vms.VmsKioskUpdateLogFileList;
 import acl.siot.opencvwpc20191007noc.vms.VmsLogUploadFile;
 import androidx.annotation.NonNull;
@@ -208,9 +210,10 @@ public class App extends Application {
 //        if (TRAIL_IS_EXPIRE)
 //            AppBus.getInstance().post(new BusEvent("face detect done", DEVICE_NOT_SUPPORT));
         threadObject.setRunning(true);
+
     }
 
-    private Pinger avaloPinger;
+    private VMSPinger avaloPinger;
 
     // vms backend connect Status
     public static boolean isVmsConnected = false;
@@ -358,24 +361,19 @@ public class App extends Application {
             long tick_count = 0;
             mLog.d(TAG, "task_minimum_tick_time_msec= " + (task_minimum_tick_time_msec));
 
-            avaloPinger = new Pinger();
-            avaloPinger.setOnPingListener(new Pinger.OnPingListener() {
+            avaloPinger = new VMSPinger();
+            avaloPinger.setOnPingListener(new VMSPinger.OnPingListener() {
                 @Override
                 public void onPingSuccess() {
-//                    mLog.d(TAG, " *** onPingSuccess");
+                    mLog.d(TAG, " *** onPingSuccess");
                     isThermometerServerConnected = true;
-
                 }
 
                 @Override
                 public void onPingFailure() {
-//                    mLog.d(TAG, " *** onPingFailure");
+                    mLog.d(TAG, " *** onPingFailure");
+                    VMSPinger.isRunning = false;
                     isThermometerServerConnected = false;
-                }
-
-                @Override
-                public void onPingFinish() {
-//                    mLog.d(TAG, " *** onPingFinish");
                 }
             });
 
@@ -387,7 +385,7 @@ public class App extends Application {
                         AppBus.getInstance().post(new BusEvent("VFR heart beats", VFR_HEART_BEATS));
                     }
 
-                    if (tick_count % 1 == 0) {
+                    if (tick_count % 2 == 1) {
                         if (isThermometerServerConnected) {
                             if (isAvaloFirmwareOver14181) {
 //                                mLog.d(TAG, "QQQQQ");
@@ -421,14 +419,16 @@ public class App extends Application {
                     }
 
                     if (tick_count % 5 == 2) {
+
                         AppBus.getInstance().post(new BusEvent("time tick", TIME_TICK));
                     }
 
-                    if (tick_count % 5 == 3) {
-                        avaloPinger.cancel();
-//                        avaloPinger.ping(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 3);
-                        avaloPinger.pingUntilSucceeded(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
-                        avaloPinger.pingUntilFailed(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
+                    if (tick_count % 6 == 3) {
+                        if (!VMSPinger.isRunning) {
+                            avaloPinger.pingUntilFailed(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
+                        }
+//                        avaloPinger.pingUntilSucceeded(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 1000);
+//                        avaloPinger.pingUntilFailed(VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host(), 2000);
                     }
 
                     if (tick_count % 10 == 1) {
