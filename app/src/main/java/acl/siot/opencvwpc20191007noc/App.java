@@ -385,12 +385,10 @@ public class App extends Application {
                         AppBus.getInstance().post(new BusEvent("VFR heart beats", VFR_HEART_BEATS));
                     }
 
-                    if (tick_count % 2 == 1) {
+                    if (tick_count % 1 == 0) {
                         if (isThermometerServerConnected) {
                             if (isAvaloFirmwareOver14181) {
-//                                mLog.d(TAG, "QQQQQ");
-//                                AppBus.getInstance().post(new BusEvent("vms HB", 9988));
-                                AppBus.getInstance().post(new BusEvent("vms HB", 9999));
+                                AppBus.getInstance().post(new BusEvent("avalo post temp", 9999));
 //                                HashMap<String, String> mMap = new Firmware14181Temp();
 //                                OKHttpAgent.getInstance().postAvaloTempRequest(mMap, APP_CODE_AVALO_THERMAL_POST_TEMP);
                             } else {
@@ -799,33 +797,6 @@ public class App extends Application {
             case APP_CODE_VMS_KIOSK_STATUS_INACTIVE:
                 AppBus.getInstance().post(new BusEvent("", APP_CODE_VMS_KIOSK_STATUS_INACTIVE_SUCCESS));
 //                MessageTools.showLongToast(getBaseContext(), "此設備已經停用");
-                break;
-            case 9988:
-
-//                RequestBody formBody = new FormBody.Builder()
-//                        .build();
-//
-//                Request request = new Request.Builder()
-//                        .url("http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host()+"/temp")
-//                        .post(formBody)
-//                        .build();
-//
-//                OkHttpClient client = new OkHttpClient.Builder()
-//                        .connectionPool(new ConnectionPool(32,5,TimeUnit.MINUTES))
-//                    .connectTimeout(5, TimeUnit.SECONDS)
-//                    .writeTimeout(5, TimeUnit.SECONDS)
-//                    .readTimeout(5, TimeUnit.SECONDS)
-//                    .build();
-//                try {
-//                    Response response = client.newCall(request).execute();
-//                    String result = response.body().string();
-////                mLog.d(TAG, "[POST] result:> " + result);
-//                    mLog.d(TAG, "PostAvaloTempThread@" + this.hashCode() + ", response.code()= " + response.code() + ", [POST] result:> " + result);
-//                    // Do something with the response.
-//                } catch (IOException e) {
-//                    mLog.e(TAG, "error:> " + e.toString());
-//                    e.printStackTrace();
-//                }
                 break;
             case 9999:
                 HttpPost httpRequest = new HttpPost("http://" + VMSEdgeCache.getInstance().getVms_kiosk_avalo_device_host()+"/temp");
