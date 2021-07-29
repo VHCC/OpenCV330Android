@@ -272,6 +272,14 @@ public class VMSAdminSettingFragment extends Fragment {
         adminHomeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                rootView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(rootView.getWindowToken(), 0);
+                    }
+                },100);
                 onFragmentInteractionListener.clickBackToHomePage();
             }
         });

@@ -1,11 +1,13 @@
 package acl.siot.opencvwpc20191007noc.vfr.adminSetting;
 
+import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -95,11 +97,13 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
         AppBus.getInstance().register(this);
     }
 
+    private View rootView;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mLog.d(TAG, " * onCreateView");
-        View rootView = inflater.inflate(R.layout.vfr_fragment_admin_password_20210429, container, false);
+        rootView = inflater.inflate(R.layout.vfr_fragment_admin_password_20210429, container, false);
 
         initViewIDs(rootView);
         initViewsFeature();
@@ -141,6 +145,14 @@ public class VFRAdminPassword20210429Fragment extends Fragment {
         adminHomeBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                rootView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // TODO Auto-generated method stub
+                        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(rootView.getWindowToken(), 0);
+                    }
+                },100);
                 onFragmentInteractionListener.clickBackToDetectPage();
             }
         });

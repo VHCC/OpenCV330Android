@@ -865,7 +865,11 @@ public class VFRDetect20210303Fragment extends Fragment implements VerificationC
 
                         if (VMSEdgeCache.getInstance().getVms_kiosk_is_enable_temp()) {
                             if (person_temp_static <= TEMP_BASIC_THRESHOLD) return;
-                            tempDetected.setText(person_temp_static > TEMP_BASIC_THRESHOLD ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
+                            if (person_temp_static > TEMP_UPPER_THRESHOLD) {
+                                tempDetected.setText("40 +");
+                            } else {
+                                tempDetected.setText(person_temp_static > TEMP_BASIC_THRESHOLD ? String.valueOf(tempDetectFormatter.format(person_temp_static)) : "");
+                            }
                             thermalDetect_bg.setImageBitmap(tempValidate ? getBitmap(R.drawable.ic_temp_fail) : getBitmap(R.drawable.ic_temp_ok));
                         }
 
